@@ -42,9 +42,30 @@ pnpm lint         # next lint
 pnpm format       # prettier --write .
 pnpm test         # vitest run
 pnpm e2e          # playwright test
+pnpm e2e:install  # playwright install --with-deps chromium (first time)
 pnpm price:check  # CI guard — fail on any price term
 pnpm i18n:check   # CI guard — fail on missing/unreviewed catalog keys
+pnpm build:cf     # build via @cloudflare/next-on-pages
+pnpm preview:cf   # wrangler pages dev .vercel/output/static
 ```
+
+## Deploy
+
+Hosted on **Cloudflare Pages** (not Vercel — see `_archive/CHANGES.md`).
+Cloudflare's Git integration auto-deploys:
+
+- `main` branch → production (`*.pages.dev`, then `knsis.kz` at M6 cutover)
+- pull requests → preview deployments
+
+Cloudflare Pages build settings (configured in the Pages dashboard):
+
+| Setting                | Value                                                                   |
+| ---------------------- | ----------------------------------------------------------------------- |
+| Build command          | `pnpm install --frozen-lockfile && pnpm exec @cloudflare/next-on-pages` |
+| Build output directory | `.vercel/output/static`                                                 |
+| Root directory         | `/`                                                                     |
+| Node version           | `22`                                                                    |
+| Compatibility flags    | `nodejs_compat`                                                         |
 
 ## Hard rules
 

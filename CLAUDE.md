@@ -63,8 +63,11 @@ PostgreSQL 16 on Supabase (EU, Stockholm) · Prisma · Supabase Storage ·
 Supabase Realtime (chat) · Better-Auth (email+password, staff only) ·
 Resend (transactional email only).
 
-Vercel · Cloudflare DNS · Sentry · PostHog · GitHub Actions · Playwright ·
-Vitest.
+Cloudflare Pages (via `@cloudflare/next-on-pages`) · Cloudflare DNS ·
+Sentry · PostHog · GitHub Actions · Playwright · Vitest.
+
+> The spec says Vercel; we ship on Cloudflare Pages for cost +
+> single-vendor (DNS already on Cloudflare). See `_archive/CHANGES.md`.
 
 Deferred to M-POST (do not add deps): Inngest, Twilio/Mobizon, WhatsApp
 Cloud API, Telegram Bot API, OTP providers, web push (VAPID).
@@ -134,6 +137,22 @@ cp .env.example .env.local
 # (M0-03 onwards) pnpm db:migrate:dev && pnpm db:seed
 pnpm dev    # → http://localhost:3000
 ```
+
+Local edge-runtime smoke (matches Cloudflare Pages behaviour):
+
+```bash
+pnpm build:cf       # @cloudflare/next-on-pages
+pnpm preview:cf     # wrangler pages dev .vercel/output/static
+```
+
+CI:
+
+- `.github/workflows/pr.yml` runs typecheck, lint, format:check,
+  price:check, i18n:check, and `next build` on every PR (matrix, parallel).
+- `.github/workflows/main.yml` adds a Playwright smoke e2e after the same
+  matrix on push to `main`.
+- Cloudflare Pages' Git integration deploys PR previews and `main` to
+  Pages automatically — no GitHub Actions step deploys.
 
 ## 10. Open questions
 
