@@ -66,6 +66,35 @@ CacheFirst for hashed assets) is unchanged from the spec's E2 decision.
 
 ---
 
+## next-on-pages retention decision (end of M0)
+
+- A swap to `@opennextjs/cloudflare` is **not an adapter swap** — it's
+  a Pages → Workers hosting-model change. Confirmed by a pre-PR-A
+  spike.
+- Change surface area spans six discrete things, all on the public path:
+  build output directory (`.vercel/output/static` → `.open-next/`),
+  wrangler schema (Pages `pages_build_output_dir` → Workers
+  `main` + `assets`), deploy model (Cloudflare Git integration →
+  GitHub Actions running `wrangler deploy` with an API token),
+  preview URL pattern (`*.pages.dev` → Workers preview deployments),
+  local dev command (`wrangler pages dev` → `wrangler dev`), and DNS
+  attachment (Pages domain bind → Workers custom domain).
+- That bundle of changes doesn't fit inside the MVP's 8-week budget
+  and would re-open decisions C4–C5 of the M0 PR (no GH-Actions deploy
+  step, no Cloudflare API token in CI).
+- **Retention rationale**: `@cloudflare/next-on-pages` still works on
+  Next 14 App Router. Its deprecation status is known and accepted.
+- **Re-evaluation triggers** — revisit OpenNext/Workers when any of:
+  1. We try to upgrade to Next 15+ and the adapter stops keeping up.
+  2. Cloudflare formally EOLs Pages support for Next.js (today: only a
+     "maintenance" label on the adapter, not on Pages itself).
+  3. M-POST introduces a Workers-only need (Inngest workers, Workers
+     KV, D1, R2 bindings without the Pages binding shim).
+- Owner: whoever picks up M-POST should re-read this entry before
+  spec'ing the WhatsApp / Inngest queues.
+
+---
+
 ## (running deviation note)
 
 Known follow-up: `@cloudflare/next-on-pages` is in maintenance mode;
