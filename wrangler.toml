@@ -1,0 +1,9 @@
+# knsis.kz — Cloudflare Pages project config.
+# Used by `wrangler pages dev` for local edge-runtime smoke and by
+# Cloudflare Pages Git integration when it builds from the repo.
+# Bindings are added as they're needed (M3 onwards for R2 / KV if any).
+
+name = "knsis"
+compatibility_date = "2025-05-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"

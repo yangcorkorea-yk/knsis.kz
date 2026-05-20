@@ -1,0 +1,352 @@
+// knsis.kz — MVP Prisma schema (M0-03).
+// Source of truth for the data model. Mirrors §07 of MVP Roadmap & WBS.html.
+// See _archive/CHANGES.md and _archive/v1-handoff/handoff-package/prisma/schema.prisma
+// for the v1 (pre-MVP) shape.
+//
+// Hard rules baked into this schema:
+//   - NO price field. Anywhere. Forever.
+//   - PII (phone, email, photo paths) lives in plain columns — Supabase
+//     provides at-rest disk encryption; column-level encryption is a
+//     post-MVP decision (M6-04 security review).
+//   - Channel enum keeps wa/tg/sms values for forward-compat with M-POST,
+//     but only `inapp` and `email` are ever written. lib/messaging/send.ts
+//     enforces this at the application boundary.
+//   - Template, AutomationRule, PushSubscription, OtpAttempt are
+//     deliberately absent. They land in a single additive migration when
+//     M-POST begins.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ─────────────────────────────────────────────────────────────
+
+enum Locale {
+  kz
+  ru
+  kr
+}
+
+enum Role {
+  guest
+  customer
+  support
+  manager
+  head
+  admin
+}
+
+enum LeadStatus {
+  new
+  contacted
+  in_progress
+  scheduled
+  done
+  on_hold
+}
+
+enum LeadKind {
+  korea
+  local
+}
+
+/// MVP writes only `inapp` and `email`. `wa`, `tg`, `sms` are reserved
+/// for M-POST and rejected by lib/messaging/send.ts at write time.
+enum Channel {
+  inapp
+  email
+  wa
+  tg
+  sms
+}
+
+enum ClinicKind {
+  korea
+  local
+}
+
+enum ClinicVerifyState {
+  verified
+  pending
+  suspended
+}
+
+enum TreatmentCategory {
+  skin
+  botox
+  filler
+  lift
+  acne
+  pigment
+  hair
+  cosmetic
+  scalp
+}
+
+enum ReviewState {
+  pending
+  flagged
+  published
+  rejected
+}
+
+enum MessageDirection {
+  in
+  out
+}
+
+enum MessageStatus {
+  queued
+  sent
+  delivered
+  read
+  failed
+}
+
+// ─── Core entities ─────────────────────────────────────────────────────
+
+/// Single User table covers everyone — guests, customers, and staff.
+/// First request from a new visitor creates a row with role=guest +
+/// guestId set to the cookie value. Lead.userId is always non-null.
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  guestId      String?   @unique @db.Uuid
+  phone        String?
+  email        String?   @unique
+  passwordHash String?
+  name         String?
+  locale       Locale    @default(kz)
+  role         Role      @default(guest)
+  consentTos   Boolean   @default(false)
+  consentMkt   Boolean   @default(false)
+  consentedAt  DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  leads         Lead[]         @relation("LeadOwner")
+  ownedLeads    Lead[]         @relation("LeadManager")
+  reviews       Review[]
+  favorites     Favorite[]
+  notifications Notification[]
+  sessions      Session[]
+  notes         Note[]
+  auditLogs     AuditLog[]     @relation("AuditActor")
+
+  @@index([role])
+  @@index([createdAt])
+}
+
+model Lead {
+  id           String     @id @default(uuid()) @db.Uuid
+  code         String     @unique // e.g. KB-2025-####
+  userId       String     @db.Uuid
+  user         User       @relation("LeadOwner", fields: [userId], references: [id])
+  ownerId      String?    @db.Uuid
+  owner        User?      @relation("LeadManager", fields: [ownerId], references: [id])
+  clinicId     String?    @db.Uuid
+  clinic       Clinic?    @relation(fields: [clinicId], references: [id])
+  channelPref  Channel    @default(inapp)
+  treatmentIds String[]   @db.Uuid
+  regions      String[]
+  kind         LeadKind[]
+  status       LeadStatus @default(new)
+  photos       String[] // private bucket paths, served via 5-min signed URLs
+  message      String?
+  // NO PRICE FIELD. EVER.
+
+  koreaVisit KoreaVisit?
+  messages   Message[]
+  notes      Note[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([ownerId, status])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model Clinic {
+  id           String            @id @default(uuid()) @db.Uuid
+  slug         String            @unique
+  name         Json // { kz, ru, kr }
+  kind         ClinicKind
+  location     Json // { country, city, area, geo: [lat, lng] }
+  interpreters String[]
+  treatmentIds String[]          @db.Uuid
+  verifyState  ClinicVerifyState @default(pending)
+  hours        Json
+  about        Json? // { kz, ru, kr }
+
+  leads   Lead[]
+  reviews Review[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([verifyState])
+  @@index([kind])
+}
+
+model Treatment {
+  id          String            @id @default(uuid()) @db.Uuid
+  slug        String            @unique
+  category    TreatmentCategory
+  title       Json // { kz, ru, kr }
+  summary     Json // { kz, ru, kr }
+  durationMin Int
+  recovery    Json // { kz, ru, kr }
+  expects     Json // { kz: string[], ru: string[], kr: string[] }
+  // NO PRICE FIELD. EVER.
+
+  reviews Review[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([category])
+}
+
+model Review {
+  id           String      @id @default(uuid()) @db.Uuid
+  code         String      @unique
+  userId       String      @db.Uuid
+  user         User        @relation(fields: [userId], references: [id])
+  clinicId     String?     @db.Uuid
+  clinic       Clinic?     @relation(fields: [clinicId], references: [id])
+  txId         String?     @db.Uuid
+  treatment    Treatment?  @relation(fields: [txId], references: [id])
+  rating       Int
+  body         String
+  photos       String[]
+  photoConsent Boolean     @default(false)
+  state        ReviewState @default(pending)
+  flagReason   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([state, createdAt(sort: Desc)])
+  @@index([clinicId])
+  @@index([txId])
+}
+
+/// In-app conversation log between customer (Lead.user) and manager.
+/// MVP writes only Channel.inapp and Channel.email rows. wa/tg/sms enum
+/// values exist for forward-compat and are rejected by send.ts.
+model Message {
+  id         String           @id @default(uuid()) @db.Uuid
+  leadId     String           @db.Uuid
+  lead       Lead             @relation(fields: [leadId], references: [id])
+  channel    Channel
+  direction  MessageDirection
+  body       String
+  status     MessageStatus    @default(queued)
+  /// Reserved for M-POST external adapters (WA/TG/SMS message id).
+  /// Always null in MVP writes.
+  providerId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([leadId, createdAt])
+  @@index([status])
+}
+
+model KoreaVisit {
+  id            String   @id @default(uuid()) @db.Uuid
+  leadId        String   @unique @db.Uuid
+  lead          Lead     @relation(fields: [leadId], references: [id])
+  dateFrom      DateTime
+  dateTo        DateTime
+  airport       String?
+  hotelPref     String?
+  interpreter   String?
+  aftercareDays Int?
+  notes         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Favorite {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
+  kind   String // 'treatment' | 'clinic'
+  refId  String @db.Uuid
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, kind, refId])
+}
+
+model Notification {
+  id     String  @id @default(uuid()) @db.Uuid
+  userId String  @db.Uuid
+  user   User    @relation(fields: [userId], references: [id])
+  kind   String // 'consult' | 'review' | 'promo'
+  title  Json // { kz, ru, kr }
+  body   Json // { kz, ru, kr }
+  read   Boolean @default(false)
+  meta   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt(sort: Desc)])
+}
+
+model Note {
+  id       String @id @default(uuid()) @db.Uuid
+  leadId   String @db.Uuid
+  lead     Lead   @relation(fields: [leadId], references: [id])
+  authorId String @db.Uuid
+  author   User   @relation(fields: [authorId], references: [id])
+  body     String
+
+  createdAt DateTime @default(now())
+
+  @@index([leadId, createdAt])
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  ip        String?
+  ua        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id       String  @id @default(uuid()) @db.Uuid
+  actorId  String  @db.Uuid
+  actor    User    @relation("AuditActor", fields: [actorId], references: [id])
+  action   String
+  entity   String
+  entityId String  @db.Uuid
+  before   Json?
+  after    Json?
+  ip       String?
+  ua       String?
+
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId, createdAt(sort: Desc)])
+}

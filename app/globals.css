@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens — mirrors docs/prototype/theme.jsx (the SoT) and
+ * tailwind.config.ts (the runtime Tailwind alias map).
+ *
+ * Names align with the Tailwind aliases (e.g. --rose-deep maps to
+ * Tailwind's `rose-deep`) so a class refactor doesn't require touching
+ * inline-style usages.
+ *
+ * Pretendard Variable is wired in app/layout.tsx via next/font/local
+ * which sets `--font-sans`.
+ */
+
+:root {
+  /* Surfaces */
+  --paper: #ffffff;
+  --warm: #fbf8f5;
+  --ground: #f7f4f0;
+
+  /* Brand — Rose (primary) */
+  --rose: #e8607a;
+  --rose-deep: #c84365;
+  --rose-soft: #fce7ec;
+  --rose-tint: #fdf1f4;
+
+  /* Brand — accents */
+  --lavender: #b8a4d4;
+  --lavender-soft: #efe8f8;
+  --beige: #d4b896;
+  --beige-soft: #f5efe6;
+
+  /* Ink (text) */
+  --ink: #1a1a1a;
+  --ink-2: #3a3a3a;
+  --ink-body: #5a5a5a;
+  --ink-mute: #8a8a8a;
+
+  /* Hairlines */
+  --line: #ece8e3;
+  --line-soft: #f2eeea;
+
+  /* State */
+  --success: #2f9e6a;
+  --warn: #d08a2c;
+  --danger: #a04432;
+
+  /* Radii */
+  --r-sm: 6px;
+  --r: 8px;
+  --r-md: 11px;
+  --r-lg: 14px;
+  --r-xl: 16px;
+  --r-2xl: 18px;
+  --r-full: 999px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-cta: 0 4px 14px rgba(232, 96, 122, 0.32);
+  --shadow-sheet: 0 -8px 24px rgba(0, 0, 0, 0.08);
+}
+
+html {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--paper);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
