@@ -24,6 +24,7 @@ jobs:
           - format:check
           - price:check
           - i18n:check
+          - test
           - build
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +36,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prisma generate
       - run: pnpm ${{ matrix.check }}
 
   e2e:
@@ -51,6 +53,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prisma generate
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
       - run: pnpm build
