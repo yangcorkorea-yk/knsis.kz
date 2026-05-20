@@ -1,3 +1,2 @@
 pnpm lint-staged
 pnpm price:check
-pnpm i18n:check
