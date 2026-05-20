@@ -4,12 +4,11 @@
 
 /*
  * Design tokens — mirrors docs/prototype/theme.jsx (the SoT) and
- * _archive/v1-handoff/handoff-package/docs/08-design-tokens.md.
+ * tailwind.config.ts (the runtime Tailwind alias map).
  *
- * These CSS custom properties exist so components can drop into
- * inline styles (`style={{ color: 'var(--ink)' }}`) when a Tailwind
- * alias is awkward; the same values live as `theme.extend.colors`
- * etc. in tailwind.config.ts.
+ * Names align with the Tailwind aliases (e.g. --rose-deep maps to
+ * Tailwind's `rose-deep`) so a class refactor doesn't require touching
+ * inline-style usages.
  *
  * Pretendard Variable is wired in app/layout.tsx via next/font/local
  * which sets `--font-sans`.
@@ -17,9 +16,9 @@
 
 :root {
   /* Surfaces */
-  --bg: #ffffff;
-  --bg-warm: #fbf8f5;
-  --bg-soft: #f7f4f0;
+  --paper: #ffffff;
+  --warm: #fbf8f5;
+  --ground: #f7f4f0;
 
   /* Brand — Rose (primary) */
   --rose: #e8607a;
@@ -33,13 +32,15 @@
   --beige: #d4b896;
   --beige-soft: #f5efe6;
 
-  /* Neutrals */
+  /* Ink (text) */
   --ink: #1a1a1a;
   --ink-2: #3a3a3a;
-  --text: #5a5a5a;
-  --text-mute: #8a8a8a;
-  --border: #ece8e3;
-  --border-soft: #f2eeea;
+  --ink-body: #5a5a5a;
+  --ink-mute: #8a8a8a;
+
+  /* Hairlines */
+  --line: #ece8e3;
+  --line-soft: #f2eeea;
 
   /* State */
   --success: #2f9e6a;
@@ -64,7 +65,7 @@
 html {
   font-family: var(--font-sans);
   color: var(--ink);
-  background: var(--bg);
+  background: var(--paper);
 }
 
 body {

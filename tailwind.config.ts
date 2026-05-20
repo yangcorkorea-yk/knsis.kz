@@ -3,17 +3,20 @@ import type { Config } from "tailwindcss";
 /*
  * Token table mirrors docs/prototype/theme.jsx + globals.css :root vars.
  * Keep these in sync — the prototype is the visual SoT.
+ *
+ * Surface naming flattens the prototype's bg / bgWarm / bgSoft to
+ * `paper / warm / ground` so utilities read naturally (`bg-warm` instead
+ * of `bg-bg-warm`). Ink subtree folds in body/mute so `text-ink-body`
+ * works without an awkward `text-text-mute`.
  */
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        bg: {
-          DEFAULT: "#FFFFFF",
-          warm: "#FBF8F5",
-          soft: "#F7F4F0",
-        },
+        paper: "#FFFFFF",
+        warm: "#FBF8F5",
+        ground: "#F7F4F0",
         rose: {
           DEFAULT: "#E8607A",
           deep: "#C84365",
@@ -31,9 +34,7 @@ const config: Config = {
         ink: {
           DEFAULT: "#1A1A1A",
           2: "#3A3A3A",
-        },
-        text: {
-          DEFAULT: "#5A5A5A",
+          body: "#5A5A5A",
           mute: "#8A8A8A",
         },
         line: {
@@ -72,7 +73,6 @@ const config: Config = {
       },
       letterSpacing: {
         display: "-0.04em",
-        title: "-0.0094em", // -0.3px @ 32px ≈ -0.0094em; usable on title sizes
       },
     },
   },
