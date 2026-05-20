@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<title>knsis.kz — Claude Code Handoff Package</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+<style>
+  :root {
+    --ink:#1A1A1A; --ink2:#3A3A3A; --text:#5A5A5A; --mute:#8A8A8A;
+    --bg:#0F0E0D; --paper:#1A1815; --soft:#23201C; --border:#2E2A24; --hair:#26221D;
+    --rose:#E8607A; --roseDeep:#FF7A95; --roseTint:#3A1F26; --roseSoft:#2D1A20;
+    --lav:#B8A4D4; --beige:#D4B896; --success:#5BBE8B; --warn:#D9A45A;
+    --mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+    --font: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
+            "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: #E8E4DC;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: var(--roseDeep); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #2A1F26 0%, #1A1815 60%, #23201C 100%);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 36px 38px 38px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: ""; position:absolute; top:-100px; right:-80px;
+    width: 320px; height: 320px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(232,96,122,0.22) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .kicker {
+    font-size: 10.5px; font-weight: 800; color: var(--roseDeep);
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  h1 {
+    font-size: clamp(30px, 4.4vw, 46px);
+    line-height: 1.05; letter-spacing: -0.04em;
+    font-weight: 800; margin: 12px 0 10px; color: #fff;
+  }
+  h1 .accent { color: var(--rose); }
+  .lede { font-size: 15px; color: #C5BEB1; max-width: 760px; line-height: 1.65; }
+  .hero-actions {
+    margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; position: relative; z-index: 1;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 18px; border-radius: 11px;
+    font-weight: 700; font-size: 13px; letter-spacing: -0.2px;
+    cursor: pointer; border: none; font-family: var(--font);
+    transition: transform .12s, opacity .15s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); opacity: 0.85; }
+  .btn-primary { background: var(--rose); color: #fff; box-shadow: 0 6px 18px rgba(232,96,122,0.32); }
+  .btn-ghost   { background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.10); }
+  .btn .ico { width: 14px; height: 14px; }
+
+  .meta-row { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 22px 36px; position: relative; z-index: 1; }
+  .stat .n { font-size: 24px; font-weight: 800; color: #fff; letter-spacing: -0.04em; line-height: 1; }
+  .stat .l { font-size: 11px; color: #8E8779; margin-top: 5px; letter-spacing: 0.2px; }
+
+  /* SECTION */
+  section { margin-top: 38px; }
+  h2 {
+    font-size: 20px; font-weight: 800; color: #fff;
+    letter-spacing: -0.03em; margin: 0 0 6px;
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  h2 .num {
+    font-family: var(--mono); font-size: 11px; color: var(--mute);
+    font-weight: 800; letter-spacing: 1.5px;
+  }
+  .sub { color: var(--mute); font-size: 12.5px; margin-bottom: 18px; }
+
+  /* CARDS */
+  .grid { display: grid; gap: 12px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 980px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .hero { padding: 24px 22px; }
+    .wrap { padding: 18px 14px 60px; }
+  }
+
+  .card {
+    background: var(--paper); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 18px;
+    transition: border-color .15s, transform .15s;
+  }
+  .card:hover { border-color: #423B33; }
+  .card .name {
+    font-family: var(--mono); font-size: 11px; color: var(--roseDeep);
+    font-weight: 800; letter-spacing: 1.5px;
+  }
+  .card .ttl {
+    font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -0.2px;
+    margin: 4px 0 4px;
+  }
+  .card .span { font-size: 11.5px; color: var(--mute); margin-bottom: 9px; }
+  .card ul { margin: 8px 0 0; padding-left: 18px; }
+  .card li { font-size: 12.5px; color: #C5BEB1; }
+  .card li + li { margin-top: 3px; }
+  .card .out {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--hair);
+    font-size: 11px; color: var(--mute);
+  }
+  .card .out b { color: #E8E4DC; }
+
+  /* FILE TREE */
+  .tree {
+    background: var(--paper); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 22px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.85;
+    overflow-x: auto;
+  }
+  .tree .dir { color: var(--rose); font-weight: 700; }
+  .tree .file { color: #C5BEB1; }
+  .tree a { color: inherit; text-decoration: none; }
+  .tree a:hover { color: var(--roseDeep); text-decoration: underline; }
+  .tree .desc { color: var(--mute); margin-left: 8px; }
+  .tree .star { color: var(--warn); margin-left: 6px; }
+
+  /* DOC LINK CARDS */
+  .doc-card {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--paper); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+    transition: border-color .15s, background .15s;
+  }
+  .doc-card:hover { border-color: var(--roseSoft); background: #1F1A18; text-decoration: none; }
+  .doc-card .id {
+    font-family: var(--mono); font-size: 10.5px; color: var(--roseDeep);
+    font-weight: 800; flex-shrink: 0; width: 38px;
+    letter-spacing: 0.5px;
+  }
+  .doc-card .body { flex: 1; min-width: 0; }
+  .doc-card .ttl { font-size: 13.5px; color: #fff; font-weight: 700; letter-spacing: -0.2px; }
+  .doc-card .desc { font-size: 11.5px; color: var(--mute); margin-top: 2px; }
+  .doc-card .arrow { color: var(--mute); flex-shrink: 0; font-size: 14px; }
+
+  /* PROMPT BLOCK */
+  .prompt {
+    background: #0A0908; border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; font-family: var(--mono); font-size: 12.5px;
+    color: #C5BEB1; line-height: 1.7; overflow-x: auto;
+    position: relative;
+  }
+  .prompt .copy {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(255,255,255,0.06); color: #fff;
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 10px; font-size: 10.5px; font-weight: 700; font-family: var(--font);
+    cursor: pointer; transition: background .12s;
+  }
+  .prompt .copy:hover { background: rgba(255,255,255,0.12); }
+  .prompt .copy.done { background: var(--success); border-color: var(--success); }
+  .prompt .c { color: #6B6356; }
+  .prompt .v { color: var(--roseDeep); }
+  .prompt .k { color: var(--lav); }
+
+  /* RULES */
+  .rules { background: var(--paper); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .rules .row {
+    display: grid; grid-template-columns: 36px 1fr; gap: 14px;
+    padding: 14px 18px; border-bottom: 1px solid var(--hair);
+  }
+  .rules .row:last-child { border-bottom: none; }
+  .rules .num {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--roseSoft); color: var(--roseDeep);
+    font-family: var(--mono); font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rules .ttl { font-size: 13.5px; font-weight: 700; color: #fff; letter-spacing: -0.2px; }
+  .rules .desc { font-size: 12px; color: var(--mute); margin-top: 3px; line-height: 1.55; }
+
+  hr { border: none; border-top: 1px solid var(--hair); margin: 36px 0 24px; }
+  .legend { font-size: 11px; color: var(--mute); margin-top: 12px; }
+
+  footer {
+    margin-top: 50px; padding-top: 24px;
+    border-top: 1px solid var(--hair);
+    color: var(--mute); font-size: 11.5px; text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="kicker">Engineering handoff · v0.3 · For Claude Code</div>
+    <h1>knsis.kz<br/><span class="accent">Claude Code handoff package</span></h1>
+    <div class="lede">
+      Everything an engineering team (or Claude Code) needs to build the K-Beauty consultation platform end-to-end —
+      master <code style="color:#fff;background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:12px;">CLAUDE.md</code>,
+      reference specs, phase-by-phase WBS task sheets, starter Prisma schema, and a price-guard CI lint that enforces
+      our hardest product rule.
+    </div>
+    <div class="hero-actions">
+      <button class="btn btn-primary" onclick="downloadZip()">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download package (.zip)
+      </button>
+      <a class="btn btn-ghost" href="Build Roadmap &amp; WBS.html">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Roadmap document
+      </a>
+      <a class="btn btn-ghost" href="K-Beauty Сana MVP.html">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Visual prototype
+      </a>
+    </div>
+    <div class="meta-row">
+      <div class="stat"><div class="n">26</div><div class="l">Files in package</div></div>
+      <div class="stat"><div class="n">8</div><div class="l">Reference specs (docs/)</div></div>
+      <div class="stat"><div class="n">8</div><div class="l">Phase task sheets (wbs/)</div></div>
+      <div class="stat"><div class="n">28</div><div class="l">Designed screens</div></div>
+      <div class="stat"><div class="n">~125</div><div class="l">Person-days estimate</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">Price fields anywhere</div></div>
+    </div>
+  </div>
+
+  <!-- HOW TO USE -->
+  <section>
+    <h2><span class="num">01</span> How to hand this to Claude Code</h2>
+    <div class="sub">Paste the prompt below into Claude Code with the unzipped package as the working directory.</div>
+    <div class="prompt">
+      <button class="copy" id="copyBtn" onclick="copyPrompt(this)">Copy</button>
+<span id="promptText"><span class="c"># Drop the unzipped folder at the repo root, then:</span>
+
+<span class="k">Read</span> <span class="v">claude-code-handoff/CLAUDE.md</span> end to end.
+<span class="k">Then read</span> <span class="v">claude-code-handoff/wbs/M0-foundation.md</span><span class="c">.</span>
+
+<span class="c"># For each task in the phase file:</span>
+1. Read the task spec (deps, DoD, owner, est).
+2. Read referenced docs (e.g. <span class="v">docs/02-data-model.md</span> for schema work).
+3. Implement the smallest vertical slice that satisfies DoD.
+4. Run <span class="v">pnpm typecheck &amp;&amp; pnpm lint &amp;&amp; pnpm test &amp;&amp; pnpm price:check</span>.
+5. Open a PR titled with the task ID (e.g. <span class="v">"M2-03: treatment detail page"</span>).
+6. Move to next task.
+
+<span class="c"># When a phase's "Phase done when" gate passes, move to the next file.</span>
+<span class="c"># Stop and ping the PM if you hit an OPEN question (docs/99-open-questions.md).</span>
+
+<span class="c"># Hard rules — never break (see CLAUDE.md §2):</span>
+<span class="c"># - No prices anywhere (CI lint enforces it).</span>
+<span class="c"># - PII encrypted at rest. Photos private + signed URLs only.</span>
+<span class="c"># - i18n catalogs are source-of-truth past M1.</span>
+<span class="c"># - Audit-log every admin mutation.</span></span>
+    </div>
+    <div class="legend">Tip: keep this index page open in a tab — every file link below is clickable for a quick read before you tell Claude Code to go.</div>
+  </section>
+
+  <!-- HARD RULES -->
+  <section>
+    <h2><span class="num">02</span> Hard rules — never break</h2>
+    <div class="sub">Lifted from <code style="color:#C5BEB1;background:var(--soft);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:12px;">CLAUDE.md §2</code>. Bake these into PR templates and CI.</div>
+    <div class="rules">
+      <div class="row">
+        <div class="num">01</div>
+        <div>
+          <div class="ttl">No prices, ever.</div>
+          <div class="desc">No price field in schema, UI, templates, or content. A CI lint (<code style="color:var(--roseDeep);font-family:var(--mono);font-size:11px;">pnpm price:check</code>) greps source and fails PRs. Quotes are delivered 1-on-1 by a manager.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="num">02</div>
+        <div>
+          <div class="ttl">PII encrypted at rest.</div>
+          <div class="desc">Phone, email, photos. Photos live in a private bucket served by 5-min signed URLs only.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="num">03</div>
+        <div>
+          <div class="ttl">Consent captured + timestamped.</div>
+          <div class="desc">ToS required. Marketing + photo-publishing consents optional. Schema: boolean + <code style="color:#C5BEB1;font-family:var(--mono);font-size:11px;">consentedAt</code> column.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="num">04</div>
+        <div>
+          <div class="ttl">Audit-log every admin mutation.</div>
+          <div class="desc">Actor, action, entity, before, after, IP, UA, timestamp.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="num">05</div>
+        <div>
+          <div class="ttl">i18n catalogs are source-of-truth.</div>
+          <div class="desc">No hardcoded strings in components past M1. <code style="color:var(--roseDeep);font-family:var(--mono);font-size:11px;">pnpm i18n:check</code> blocks PRs on missing or <code style="color:#C5BEB1;font-family:var(--mono);font-size:11px;">TODO: review</code> keys.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="num">06</div>
+        <div>
+          <div class="ttl">No medical claims in UI copy.</div>
+          <div class="desc">Every treatment and clinic page carries the disclaimer.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="num">07</div>
+        <div>
+          <div class="ttl">PWA only in v1.</div>
+          <div class="desc">No native apps. Schema is forward-compatible for an Expo wrapper later.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FILE TREE -->
+  <section>
+    <h2><span class="num">03</span> Package contents</h2>
+    <div class="sub">26 files. Click any to preview.</div>
+    <div class="tree">
+<span class="dir">claude-code-handoff/</span>
+├─ <a href="claude-code-handoff/CLAUDE.md" class="file">CLAUDE.md</a>             <span class="star">★ start here</span>
+├─ <a href="claude-code-handoff/README.md" class="file">README.md</a>
+├─ <span class="dir">docs/</span><span class="desc">                # Reference specs</span>
+│  ├─ <a href="claude-code-handoff/docs/00-stack.md" class="file">00-stack.md</a>
+│  ├─ <a href="claude-code-handoff/docs/01-responsive.md" class="file">01-responsive.md</a>
+│  ├─ <a href="claude-code-handoff/docs/02-data-model.md" class="file">02-data-model.md</a>
+│  ├─ <a href="claude-code-handoff/docs/03-api.md" class="file">03-api.md</a>
+│  ├─ <a href="claude-code-handoff/docs/04-i18n.md" class="file">04-i18n.md</a>
+│  ├─ <a href="claude-code-handoff/docs/05-permissions.md" class="file">05-permissions.md</a>
+│  ├─ <a href="claude-code-handoff/docs/06-nfr.md" class="file">06-nfr.md</a>
+│  ├─ <a href="claude-code-handoff/docs/07-screens.md" class="file">07-screens.md</a>
+│  ├─ <a href="claude-code-handoff/docs/08-design-tokens.md" class="file">08-design-tokens.md</a>
+│  └─ <a href="claude-code-handoff/docs/99-open-questions.md" class="file">99-open-questions.md</a>
+├─ <span class="dir">wbs/</span><span class="desc">                 # Phase task sheets — execute in order</span>
+│  ├─ <a href="claude-code-handoff/wbs/M0-foundation.md" class="file">M0-foundation.md</a>
+│  ├─ <a href="claude-code-handoff/wbs/M1-auth.md" class="file">M1-auth.md</a>
+│  ├─ <a href="claude-code-handoff/wbs/M2-discovery.md" class="file">M2-discovery.md</a>
+│  ├─ <a href="claude-code-handoff/wbs/M3-lead-capture.md" class="file">M3-lead-capture.md</a>
+│  ├─ <a href="claude-code-handoff/wbs/M4-kv-chat-notif.md" class="file">M4-kv-chat-notif.md</a>
+│  ├─ <a href="claude-code-handoff/wbs/M5-admin-core.md" class="file">M5-admin-core.md</a>
+│  ├─ <a href="claude-code-handoff/wbs/M6-notifications-workflow.md" class="file">M6-notifications-workflow.md</a>
+│  └─ <a href="claude-code-handoff/wbs/M7-launch.md" class="file">M7-launch.md</a>
+├─ <span class="dir">prisma/</span>
+│  └─ <a href="claude-code-handoff/prisma/schema.prisma" class="file">schema.prisma</a><span class="desc">       # Starter Prisma schema (M0-03)</span>
+├─ <span class="dir">scripts/</span>
+│  ├─ <a href="claude-code-handoff/scripts/no-price-guard.ts" class="file">no-price-guard.ts</a><span class="desc">   # CI lint: blocks any price term</span>
+│  └─ <a href="claude-code-handoff/scripts/i18n-check.ts" class="file">i18n-check.ts</a><span class="desc">       # CI lint: missing / unreviewed keys</span>
+├─ <a href="claude-code-handoff/package.json" class="file">package.json</a><span class="desc">          # Pinned deps + scripts</span>
+├─ <a href="claude-code-handoff/.env.example" class="file">.env.example</a>
+└─ <a href="claude-code-handoff/.gitignore" class="file">.gitignore</a>
+    </div>
+  </section>
+
+  <!-- REFERENCE DOCS -->
+  <section>
+    <h2><span class="num">04</span> Reference specs <span class="num" style="color:var(--mute);">docs/</span></h2>
+    <div class="sub">The "why" and the "what". Read these alongside the task sheets.</div>
+    <div class="grid grid-2">
+      <a class="doc-card" href="claude-code-handoff/docs/00-stack.md">
+        <div class="id">00</div>
+        <div class="body"><div class="ttl">Tech stack</div><div class="desc">Next.js · Supabase · Prisma · Inngest. Versions + rationale.</div></div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="doc-card" href="claude-code-handoff/docs/01-responsive.md">
+        <div class="id">01</div>
+        <div class="body"><div class="ttl">Responsive strategy</div><div class="desc">Mobile-first public · desktop-first admin · breakpoint contract.</div></div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="doc-card" href="claude-code-handoff/docs/02-data-model.md">
+        <div class="id">02</div>
+        <div class="body"><div class="ttl">Data model</div><div class="desc">Entities, JSON-i18n columns, indexes. SoT: schema.prisma.</div></div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="doc-card" href="claude-code-handoff/docs/03-api.md">
+        <div class="id">03</div>
+        <div class="body"><div class="ttl">API surface</div><div class="desc">~35 REST endpoints + webhooks + rate-limit table.</div></div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="doc-card" href="claude-code-handoff/docs/04-i18n.md">
+        <div class="id">04</div>
+        <div class="body"><div class="ttl">i18n &amp; content</div><div class="desc">KZ default · catalogs as SoT · workflow for native review.</div></div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="doc-card" href="claude-code-handoff/docs/05-permissions.md">
+        <div class="id">05</div>
+        <div class="body"><div class="ttl">Permissions matrix</div><div class="desc">5 roles × 12 areas. Code-ready policy map.</div></div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="doc-card" href="claude-code-handoff/docs/06-nfr.md">
+        <div class="id">06</div>
+        <div class="body"><div class="ttl">Non-functional reqs</div><div class="desc">Perf budgets · a11y · security · observability.</div></div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="doc-card" href="claude-code-handoff/docs/07-screens.md">
+        <div class="id">07</div>
+        <div class="body"><div class="ttl">Screens · acceptance</div><div class="desc">All 28 screens · per-screen DoD · WBS task linkage.</div></div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="doc-card" href="claude-code-handoff/docs/08-design-tokens.md">
+        <div class="id">08</div>
+        <div class="body"><div class="ttl">Design tokens</div><div class="desc">Color · type · radii · shadows → tailwind.config.ts.</div></div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="doc-card" href="claude-code-handoff/docs/99-open-questions.md">
+        <div class="id">99</div>
+        <div class="body"><div class="ttl">Open questions</div><div class="desc">10 PM-blocking decisions before kickoff.</div></div>
+        <div class="arrow">→</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- PHASES -->
+  <section>
+    <h2><span class="num">05</span> Phase task sheets <span class="num" style="color:var(--mute);">wbs/</span></h2>
+    <div class="sub">Execute top to bottom. Each phase opens with its "Phase done when" gate. ~125 person-days total.</div>
+    <div class="grid grid-2">
+      <a class="card" href="claude-code-handoff/wbs/M0-foundation.md" style="text-decoration:none; color:inherit;">
+        <div class="name">M0 · WEEK 1–2</div>
+        <div class="ttl">Foundation</div>
+        <div class="span">Setup · tokens · base UI · auth scaffold</div>
+        <ul>
+          <li>Monorepo + CI/CD + Vercel previews</li>
+          <li>Supabase + Prisma v0</li>
+          <li>Design tokens → Tailwind + Pretendard</li>
+          <li>15 base components + Storybook playground</li>
+          <li>next-intl scaffold + PWA manifest</li>
+        </ul>
+        <div class="out"><b>Done when:</b> deployable shell with locale routing + 8+ primitives.</div>
+      </a>
+      <a class="card" href="claude-code-handoff/wbs/M1-auth.md" style="text-decoration:none; color:inherit;">
+        <div class="name">M1 · WEEK 2–3</div>
+        <div class="ttl">Auth &amp; profile</div>
+        <div class="span">Phone OTP · consent · read-only profile</div>
+        <ul>
+          <li>OTP via Mobizon / Twilio Verify</li>
+          <li>3-screen login → OTP → consent flow</li>
+          <li>Better-Auth session + middleware</li>
+          <li>RBAC primitives (5 roles)</li>
+        </ul>
+        <div class="out"><b>Done when:</b> user signs in, lands on /me, signs out — all 3 langs.</div>
+      </a>
+      <a class="card" href="claude-code-handoff/wbs/M2-discovery.md" style="text-decoration:none; color:inherit;">
+        <div class="name">M2 · WEEK 3–5</div>
+        <div class="ttl">Discovery surface</div>
+        <div class="span">Browsable public site, no lead capture yet</div>
+        <ul>
+          <li>Home · Categories · Treatment · Clinics · Reviews</li>
+          <li>Before/After gallery + Search results</li>
+          <li>Seed pipeline (CSV import)</li>
+        </ul>
+        <div class="out"><b>Done when:</b> entire public site browsable in 3 languages.</div>
+      </a>
+      <a class="card" href="claude-code-handoff/wbs/M3-lead-capture.md" style="text-decoration:none; color:inherit;">
+        <div class="name">M3 · WEEK 4–6</div>
+        <div class="ttl">Lead capture</div>
+        <div class="span">Consult form · photo upload · admin handoff</div>
+        <ul>
+          <li>Multi-step consult form (Zod)</li>
+          <li>Presigned upload + EXIF strip</li>
+          <li>Lead create + idempotency-key</li>
+          <li>Turnstile + rate limits</li>
+        </ul>
+        <div class="out"><b>Done when:</b> e2e — submit lead, see it in admin inbox.</div>
+      </a>
+      <a class="card" href="claude-code-handoff/wbs/M4-kv-chat-notif.md" style="text-decoration:none; color:inherit;">
+        <div class="name">M4 · WEEK 5–7</div>
+        <div class="ttl">KV · chat · notifications</div>
+        <div class="span">VIP path — parallelizable with M3</div>
+        <ul>
+          <li>Korea Visit 3-screen flow</li>
+          <li>In-app chat (Supabase Realtime)</li>
+          <li>Notifications inbox + web push</li>
+          <li>Settings screen wiring</li>
+        </ul>
+        <div class="out"><b>Done when:</b> discover → consult → chat → KV plan works end-to-end.</div>
+      </a>
+      <a class="card" href="claude-code-handoff/wbs/M5-admin-core.md" style="text-decoration:none; color:inherit;">
+        <div class="name">M5 · WEEK 6–9</div>
+        <div class="ttl">Admin core</div>
+        <div class="span">Desktop manager workbench</div>
+        <ul>
+          <li>Admin shell (sidebar + topbar + drawer)</li>
+          <li>Dashboard · Leads · Customers · Clinics</li>
+          <li>Review moderation (with price-keyword scan)</li>
+          <li>Managers + permission matrix</li>
+        </ul>
+        <div class="out"><b>Done when:</b> a manager runs their whole day inside the admin.</div>
+      </a>
+      <a class="card" href="claude-code-handoff/wbs/M6-notifications-workflow.md" style="text-decoration:none; color:inherit;">
+        <div class="name">M6 · WEEK 8–10</div>
+        <div class="ttl">Notifications workflow</div>
+        <div class="span">Templates · automation · send log · B/A</div>
+        <ul>
+          <li>Template editor (4 channels × 3 langs)</li>
+          <li>Automation rules + Inngest workers</li>
+          <li>WhatsApp / Telegram / SMS adapters</li>
+          <li>Send log with retry · B/A admin</li>
+        </ul>
+        <div class="out"><b>Done when:</b> "lead received → templated WA out in 5 min" runs hands-off.</div>
+      </a>
+      <a class="card" href="claude-code-handoff/wbs/M7-launch.md" style="text-decoration:none; color:inherit;">
+        <div class="name">M7 · WEEK 10–12</div>
+        <div class="ttl">Hardening &amp; launch</div>
+        <div class="span">Perf · a11y · i18n QA · security · soft launch · GA</div>
+        <ul>
+          <li>Lighthouse budget in CI</li>
+          <li>WCAG 2.1 AA sweep</li>
+          <li>Native KZ + KR review pass</li>
+          <li>5 Playwright journeys</li>
+          <li>Soft launch (50 users / 7 days) → GA</li>
+        </ul>
+        <div class="out"><b>Done when:</b> DNS cut to knsis.kz, status page live, runbook committed.</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- COMPANION -->
+  <section>
+    <h2><span class="num">06</span> Companion artifacts</h2>
+    <div class="sub">Already in this project. Engineers should read these alongside the handoff.</div>
+    <div class="grid grid-2">
+      <a class="doc-card" href="K-Beauty Сana MVP.html">
+        <div class="id">★</div>
+        <div class="body">
+          <div class="ttl">Visual prototype · K-Beauty Сana MVP</div>
+          <div class="desc">28 screens · 3 languages · live interactive flow. Treat as design source-of-truth.</div>
+        </div>
+        <div class="arrow">→</div>
+      </a>
+      <a class="doc-card" href="Build Roadmap &amp; WBS.html">
+        <div class="id">★</div>
+        <div class="body">
+          <div class="ttl">Build Roadmap &amp; WBS document</div>
+          <div class="desc">The narrative roadmap this package is derived from. Useful for PM &amp; leadership.</div>
+        </div>
+        <div class="arrow">→</div>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    knsis.kz · Claude Code handoff package · v0.3 · 26 files · ~125 person-days
+  </footer>
+
+</div>
+
+<script>
+  // Download the package as zip via the host's mechanism
+  function downloadZip() {
+    // Re-uses the host download API: navigates to the project download URL
+    // (the host shows a download card in chat when we use present_fs_item_for_download)
+    // From inside the iframe we just nudge the user to the surfaced download card.
+    alert("The download card appears in the chat just below. If you can't see it, ask the assistant to surface the download again.");
+  }
+  function copyPrompt(btn) {
+    const node = document.getElementById('promptText');
+    const text = node.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('done');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('done');
+      }, 1600);
+    });
+  }
+</script>
+
+</body>
+</html>

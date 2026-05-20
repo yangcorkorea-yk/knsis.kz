@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<title>knsis.kz — MVP Roadmap &amp; WBS · launch-ready scope</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+<style>
+  :root {
+    --ink:#1A1A1A; --ink2:#3A3A3A; --text:#5A5A5A; --mute:#8A8A8A;
+    --bg:#FBF8F5; --paper:#FFFFFF; --soft:#F5F2EC; --border:#ECE6DC; --hair:#F2EEE6;
+    --rose:#E8607A; --roseDeep:#C84365; --roseTint:#FDF1F4; --roseSoft:#FCE7EC;
+    --lav:#B8A4D4; --lavSoft:#EFE8F8; --beige:#D4B896; --beigeSoft:#F5EFE6;
+    --success:#1F7A4D; --warn:#A07012; --danger:#A04432;
+    --mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+    --font: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
+            "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    font-family: var(--font); background: var(--bg); color: var(--ink);
+    -webkit-font-smoothing: antialiased; line-height: 1.55;
+  }
+  .layout {
+    display:grid; grid-template-columns: 240px minmax(0, 1fr);
+    max-width: 1280px; margin: 0 auto; gap: 40px; padding: 32px 28px 80px;
+  }
+  .toc { position: sticky; top: 24px; align-self: start; max-height: calc(100vh - 48px);
+    overflow-y: auto; padding-right: 8px; font-size: 12.5px; }
+  .toc .crumb { font-size:10px; letter-spacing:1px; color:var(--mute); font-weight:700; }
+  .toc .title { font-size:14px; font-weight:700; margin: 4px 0 16px; letter-spacing:-0.3px; }
+  .toc ol { list-style:none; padding:0; margin:0; counter-reset: t; }
+  .toc li { counter-increment: t; }
+  .toc a { display:block; padding: 6px 10px 6px 30px; color: var(--text);
+    text-decoration: none; border-left: 1px solid var(--hair); position: relative;
+    transition: color .15s, background .15s, border-color .15s; }
+  .toc a::before { content: counter(t, decimal-leading-zero); position:absolute; left:8px; top:6px;
+    font-size:10px; color:var(--mute); font-weight:700; font-family: var(--mono); }
+  .toc a:hover { color: var(--roseDeep); background: var(--roseTint); border-left-color: var(--rose); }
+  .toc .meta { font-size:11px; color: var(--mute); margin-top:18px; line-height:1.6; padding: 0 6px; }
+  main { min-width: 0; }
+  .hero { padding: 28px 32px 32px; background: var(--paper); border: 1px solid var(--border);
+    border-radius: 14px; position: relative; overflow: hidden; }
+  .hero::after { content: ""; position:absolute; top:-60px; right:-60px; width:200px; height:200px;
+    border-radius:50%; background: radial-gradient(circle, var(--roseSoft) 0%, transparent 70%); }
+  .kicker { font-size:10.5px; font-weight:700; color: var(--roseDeep);
+    letter-spacing: 1.8px; text-transform: uppercase; }
+  h1 { font-size: clamp(28px, 4vw, 42px); line-height: 1.1; letter-spacing: -0.035em;
+    font-weight: 800; margin: 10px 0 8px; }
+  .hero .lede { font-size: 15px; color: var(--text); max-width: 720px; line-height:1.6; }
+  .hero .meta { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 18px 28px; position:relative; z-index:1; }
+  .hero .meta .stat .n { font-size:22px; font-weight:800; letter-spacing:-0.04em; }
+  .hero .meta .stat .l { font-size:11px; color: var(--mute); margin-top:2px; }
+  section { margin-top: 36px; scroll-margin-top: 18px; }
+  h2 { font-size: 22px; letter-spacing: -0.03em; line-height: 1.2; font-weight: 800; margin: 0 0 4px;
+    display: flex; align-items: baseline; gap: 12px; }
+  h2 .num { font-size: 11px; color: var(--mute); font-weight: 800; font-family: var(--mono); letter-spacing: 1.5px; }
+  .sub { color: var(--mute); font-size: 12.5px; margin-bottom: 18px; }
+  h3 { font-size: 15px; font-weight: 700; margin: 22px 0 10px; letter-spacing: -0.2px; color: var(--ink); }
+  h4 { font-size: 12px; font-weight: 700; margin: 16px 0 8px; letter-spacing: 1px; color: var(--mute); text-transform: uppercase; }
+  p, li { font-size: 14px; color: var(--ink2); }
+  ul, ol { padding-left: 22px; margin: 8px 0; }
+  li + li { margin-top: 4px; }
+  code, kbd { font-family: var(--mono); font-size: 12.5px; background: var(--soft);
+    padding: 1px 6px; border-radius: 4px; color: var(--ink2); }
+  a { color: var(--roseDeep); }
+  .panel { background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .panel + .panel { margin-top: 12px; }
+  .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  .grid-3 { display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; gap: 20px; padding: 20px 16px 60px; }
+    .toc { display: none; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .hero { padding: 22px 20px; }
+  }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .chip { display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid var(--border);
+    border-radius: 999px; padding: 5px 10px; font-size: 11.5px; font-weight: 600; color: var(--ink2); }
+  .chip .dot { width:6px; height:6px; border-radius:50%; background: var(--rose); }
+  .chip.ink { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .chip.ink .dot { background: var(--rose); }
+  .chip.rose { background: var(--roseTint); color: var(--roseDeep); border-color: var(--roseSoft); }
+  .chip.lav { background: var(--lavSoft); color:#5E4B82; border-color:#DCD0EE; }
+  .chip.beige { background: var(--beigeSoft); color:#7A6A4A; border-color:#ECE2D2; }
+  .chip.muted { background: var(--soft); color: var(--mute); border-color: var(--hair); text-decoration: line-through; }
+  .chip.muted .dot { background: var(--mute); }
+  .phases { display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
+  @media (max-width: 900px) { .phases { grid-template-columns: 1fr; } }
+  .phase { background: var(--paper); border:1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; position: relative; }
+  .phase .id { font-family: var(--mono); font-size: 11px; font-weight: 800;
+    color: var(--roseDeep); letter-spacing:1.5px; }
+  .phase .ttl { font-size:16px; font-weight:800; letter-spacing:-0.3px; margin: 4px 0 4px; }
+  .phase .span { font-size:11.5px; color: var(--mute); margin-bottom:10px; }
+  .phase ul { margin: 6px 0 0; padding-left: 18px; }
+  .phase li { font-size: 12.5px; color: var(--ink2); }
+  .phase .out { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--hair);
+    font-size: 11.5px; color: var(--mute); }
+  .phase .out b { color: var(--ink2); font-weight: 700; }
+  .phase.future { border-style: dashed; background: #FBFAF7; }
+  .phase.future .id { color: var(--mute); }
+  .wbs-wrap { overflow-x: auto; border:1px solid var(--border); border-radius: 12px; background: var(--paper); }
+  table.wbs { width: 100%; border-collapse: collapse; min-width: 720px; font-size: 12.5px; }
+  table.wbs thead th { text-align: left; padding: 11px 12px; background: #FBFAF7;
+    border-bottom: 1px solid var(--border); font-size: 10px; letter-spacing:1px;
+    color: var(--mute); font-weight: 700; text-transform: uppercase; }
+  table.wbs td { padding: 11px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; color: var(--ink2); }
+  table.wbs tr:last-child td { border-bottom: none; }
+  table.wbs td.id { font-family: var(--mono); font-size: 11px; color: var(--mute); white-space: nowrap; }
+  table.wbs td.task { font-weight: 600; color: var(--ink); }
+  table.wbs td.deliv { color: var(--text); }
+  table.wbs td.dep { font-family: var(--mono); font-size: 11px; color: var(--mute); white-space: nowrap; }
+  table.wbs td.est { text-align: right; white-space: nowrap; font-weight: 700; color: var(--ink2); }
+  table.wbs td.owner { font-size: 11px; }
+  table.wbs td.owner .who { display:inline-block; padding: 2px 7px; border-radius: 4px;
+    font-weight: 700; font-size: 10px; background: var(--soft); color: var(--text); }
+  table.wbs td.owner .who.fe { background: var(--roseTint); color: var(--roseDeep); }
+  table.wbs td.owner .who.be { background: #E5F4EC; color: var(--success); }
+  table.wbs td.owner .who.de { background: var(--lavSoft); color:#5E4B82; }
+  table.wbs td.owner .who.ops { background: var(--beigeSoft); color:#7A6A4A; }
+  table.wbs td.owner .who.qa  { background: #FFF5E1; color: var(--warn); }
+  table.wbs tr.phase-row td { background: var(--soft); font-weight: 800; color: var(--ink);
+    letter-spacing: -0.2px; font-size: 12.5px; }
+  table.wbs tr.phase-row .id { color: var(--roseDeep); }
+  .kvs { display: grid; grid-template-columns: 200px 1fr; gap: 6px 18px; font-size: 13px; }
+  .kvs .k { color: var(--mute); font-weight: 600; }
+  .kvs .v { color: var(--ink2); }
+  @media (max-width: 720px) { .kvs { grid-template-columns: 1fr; } .kvs .k { margin-top: 8px; } }
+  .scope-table { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .scope-table { grid-template-columns: 1fr; } }
+  .scope-card { border:1px solid var(--border); border-radius: 12px; padding: 16px 18px; background: var(--paper); }
+  .scope-card.in    { border-top: 3px solid var(--success); }
+  .scope-card.out   { border-top: 3px solid var(--mute); background: #FBFAF7; }
+  .scope-card h4    { margin-top: 0; }
+  .scope-card.in h4 { color: var(--success); }
+  .scope-card.out h4 { color: var(--mute); }
+  .scope-card ul    { padding-left: 18px; margin: 6px 0 0; }
+  .scope-card li    { font-size: 12.5px; }
+  .scope-card.out li { color: var(--mute); text-decoration: line-through; }
+  .scope-card.out li::marker { color: var(--mute); }
+  .callout { background: var(--roseTint); border: 1px solid var(--roseSoft); border-radius: 10px;
+    padding: 13px 16px; font-size: 13px; color: var(--roseDeep);
+    display: flex; gap: 10px; align-items: flex-start; }
+  .callout b { color: var(--roseDeep); }
+  .callout .ico { width: 22px; height: 22px; flex-shrink:0; border-radius: 50%; background: var(--rose);
+    color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+  .callout.muted { background: var(--soft); border-color: var(--border); color: var(--text); }
+  .callout.muted b { color: var(--ink); }
+  .callout.muted .ico { background: var(--mute); }
+  .legend { display:flex; flex-wrap: wrap; gap: 9px; font-size: 11px; color: var(--mute); margin-top: 8px; }
+  .legend span b { color: var(--ink2); }
+  .entity { background: var(--paper); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .entity .head { padding: 12px 16px; background: #FBFAF7; border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; gap: 10px; }
+  .entity .head .name { font-weight: 800; letter-spacing: -0.2px; font-size: 14px; }
+  .entity .head .desc { color: var(--mute); font-size: 11.5px; }
+  .entity .fields { display: flex; flex-direction: column; }
+  .entity .field { padding: 9px 16px; display: grid;
+    grid-template-columns: 160px 110px 1fr; gap: 12px; align-items: center;
+    border-bottom: 1px solid var(--hair); font-size: 12.5px; }
+  .entity .field:last-child { border-bottom: none; }
+  .entity .field .col1 { font-family: var(--mono); font-weight: 700; color: var(--ink2); font-size: 12px; }
+  .entity .field .col2 { color: var(--roseDeep); font-family: var(--mono); font-size: 11px; font-weight: 700; }
+  .entity .field .col3 { color: var(--text); }
+  @media (max-width: 720px) { .entity .field { grid-template-columns: 1fr; gap: 2px; } }
+  .api { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+  .ep { display: grid; grid-template-columns: 70px 1fr auto; gap: 10px; align-items: center;
+    padding: 8px 12px; border: 1px solid var(--hair); border-radius: 8px; background: var(--paper); }
+  .ep .v { font-family: var(--mono); font-weight: 800; font-size: 10.5px;
+    padding: 3px 7px; border-radius: 4px; text-align: center; }
+  .v.get   { background: var(--lavSoft); color: #5E4B82; }
+  .v.post  { background: #E5F4EC; color: var(--success); }
+  .v.patch { background: #FFF5E1; color: var(--warn); }
+  .v.del   { background: #FDE8E4; color: var(--danger); }
+  .ep .p { font-family: var(--mono); font-size: 12px; color: var(--ink2); }
+  .ep .d { color: var(--mute); font-size: 11.5px; text-align: right; }
+  @media (max-width: 720px) { .ep { grid-template-columns: 60px 1fr; } .ep .d { grid-column: span 2; text-align: left; } }
+  .check { display: flex; flex-direction: column; gap: 7px; }
+  .check li { display: flex; gap: 9px; align-items: baseline; font-size: 13px; list-style: none; }
+  .check li::before { content: ""; width: 12px; height: 12px; border: 1.5px solid var(--border);
+    border-radius: 3px; background: #fff; flex-shrink: 0; transform: translateY(2px); }
+  .check ul { padding: 0; margin: 0; }
+  hr { border: none; border-top: 1px solid var(--hair); margin: 28px 0; }
+  @media print {
+    @page { size: A4 portrait; margin: 14mm 12mm; }
+    html, body { background: #fff !important; }
+    body { font-size: 11.5px; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .toc { display: none; }
+    .layout { grid-template-columns: 1fr; gap: 0; padding: 0; max-width: none; }
+    main { min-width: 0; }
+    section { break-inside: auto; }
+    section > h2 { break-after: avoid; }
+    h3, h4 { break-after: avoid; }
+    .hero { padding: 18px 22px; break-after: avoid; }
+    .phase, .panel, .entity, .ep, .scope-card, .callout { break-inside: avoid; }
+    table.wbs { font-size: 10.5px; }
+    table.wbs thead { display: table-header-group; }
+    table.wbs tr { break-inside: avoid; }
+    table.wbs tr.phase-row { break-before: auto; }
+    .wbs-wrap { overflow: visible; }
+    .grid-2, .grid-3, .scope-table { gap: 10px; }
+    .phases { gap: 10px; }
+    h2 { font-size: 18px; margin-top: 0; }
+    /* Each major section starts on a fresh page after the first */
+    #scope, #stack, #ia, #roadmap, #wbs, #data, #api, #i18n, #nfr, #qa, #launch, #post, #open {
+      break-before: page;
+    }
+    a { color: inherit; text-decoration: none; }
+    p, li { font-size: 11.5px; }
+    .chip { font-size: 10.5px; padding: 3px 8px; }
+    .phase li, .scope-card li { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="toc">
+    <div class="crumb">KNSIS.KZ · MVP v0.3</div>
+    <div class="title">MVP Roadmap &amp; WBS</div>
+    <ol>
+      <li><a href="#summary">Executive summary</a></li>
+      <li><a href="#scope">MVP scope · in/out</a></li>
+      <li><a href="#stack">Tech stack</a></li>
+      <li><a href="#ia">Information architecture</a></li>
+      <li><a href="#roadmap">Phased roadmap (M0–M6)</a></li>
+      <li><a href="#wbs">WBS — work breakdown</a></li>
+      <li><a href="#data">Data model (MVP)</a></li>
+      <li><a href="#api">API surface (MVP)</a></li>
+      <li><a href="#i18n">i18n &amp; content</a></li>
+      <li><a href="#nfr">Non-functional reqs</a></li>
+      <li><a href="#qa">QA &amp; testing</a></li>
+      <li><a href="#launch">Launch checklist</a></li>
+      <li><a href="#post">Post-MVP roadmap</a></li>
+      <li><a href="#open">Open questions</a></li>
+    </ol>
+    <div class="meta">
+      For Claude Code · MVP scope<br/>
+      22 screens · 3 languages<br/>
+      KZ · RU · KR<br/>
+      <span style="color:var(--roseDeep);">No external integrations</span>
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="kicker">Engineering handoff · MVP scope · For Claude Code</div>
+      <h1>knsis.kz — MVP<br/>K-Beauty consultation</h1>
+      <div class="lede">
+        Launch-ready slice of the platform that ships with <b>zero external messaging or auth
+        integrations</b>. OTP login, WhatsApp / Telegram / SMS adapters, template editor, automation
+        rules and send log are deferred to the post-MVP track. Customers submit consult requests as
+        guests; managers reply through in-app chat or by phone. This document is the buildable spec
+        for a 2-person team to ship in ~8 weeks.
+      </div>
+      <div class="meta">
+        <div class="stat"><div class="n">22</div><div class="l">MVP screens</div></div>
+        <div class="stat"><div class="n">7</div><div class="l">Admin views</div></div>
+        <div class="stat"><div class="n">3</div><div class="l">Languages</div></div>
+        <div class="stat"><div class="n">6</div><div class="l">Phases (M0–M5 + QA)</div></div>
+        <div class="stat"><div class="n">~8</div><div class="l">Weeks to GA</div></div>
+        <div class="stat"><div class="n">0</div><div class="l">External integrations</div></div>
+      </div>
+    </div>
+
+    <!-- 1. SUMMARY -->
+    <section id="summary">
+      <h2><span class="num">01</span> Executive summary</h2>
+      <div class="sub">Why an MVP slice, what it ships, what it defers.</div>
+      <div class="panel">
+        <h4>Why we slice MVP this way</h4>
+        <p>
+          The full v1 design depends on five external services that each carry their own onboarding,
+          legal review, or vendor approval cycle: phone OTP provider (Mobizon / Twilio Verify),
+          WhatsApp Business Account verification with Meta, Telegram Bot deployment, SMS contracts,
+          and the automation rule engine that ties them all together. Together they add roughly 30%
+          of total engineering effort and almost all of the launch risk.
+        </p>
+        <p>
+          The MVP defers every one of them. We ship the customer-facing surface, the lead-capture
+          flow, the manager workbench, and the in-app chat — everything we need to <b>start receiving
+          and converting consult requests today</b> — and we land the external channels as a follow-up
+          milestone once contracts and vendor approvals are in hand.
+        </p>
+
+        <h4>Primary user journeys (MVP)</h4>
+        <ol>
+          <li><b>Discover &amp; request</b> — Onboarding → Home → Category → Treatment → Clinic → Consult form → Done</li>
+          <li><b>Korea visit</b> — KV landing → Plan form → Confirmation</li>
+          <li><b>In-app chat</b> — guest or returning user opens chat thread, talks to manager</li>
+          <li><b>Manager workbench</b> — Inbox → Lead detail → assign clinic → reply in-app → mark done → solicit review</li>
+        </ol>
+
+        <div class="callout" style="margin-top:14px;">
+          <div class="ico">!</div>
+          <div>
+            <b>Hard constraints (unchanged from v1).</b>
+            (1) No price input, no price display, no estimated cost preview — anywhere.
+            (2) No medical claims in UI copy — every treatment page carries a disclaimer.
+            (3) PII encrypted at rest. Photos in a private bucket served by 5-minute signed URLs.
+            (4) Audit log every admin mutation with actor / before / after.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. SCOPE IN/OUT -->
+    <section id="scope">
+      <h2><span class="num">02</span> MVP scope · what's in / what's out</h2>
+      <div class="sub">A single source of truth for the cut. Treat this as the contract.</div>
+
+      <div class="scope-table">
+        <div class="scope-card in">
+          <h4>✓ IN MVP</h4>
+          <ul>
+            <li>22 mobile/admin screens, all 3 languages</li>
+            <li>Guest sessions (cookie-based, no login wall)</li>
+            <li>Staff login (email + password, seeded)</li>
+            <li>Consult form (name, phone, email, treatments, region, photos, message)</li>
+            <li>Lead lands in admin inbox in real time</li>
+            <li>In-app chat between customer and manager (Supabase Realtime)</li>
+            <li>In-app notifications inbox (server-pushed rows)</li>
+            <li>Korea-visit landing + plan form + confirmation</li>
+            <li>Admin: Dashboard · Leads · Customers · Clinics · Reviews · Managers · B&amp;A</li>
+            <li>Review moderation with price-keyword scan</li>
+            <li>Before/After gallery with consent capture</li>
+            <li>i18n KZ default · RU · KR · sticky language pick</li>
+            <li>PWA — installable on Android Chrome</li>
+            <li>Sentry, PostHog, audit log, rate limits</li>
+          </ul>
+        </div>
+
+        <div class="scope-card out">
+          <h4>✗ OUT (deferred to post-MVP)</h4>
+          <ul>
+            <li>Phone OTP login (Mobizon / Twilio Verify)</li>
+            <li>WhatsApp Cloud API adapter (Meta verification needed)</li>
+            <li>Telegram Bot API adapter</li>
+            <li>SMS adapter (Mobizon / SMSC KZ)</li>
+            <li>Email adapter for outbound campaigns (Resend) — basic transactional only in MVP</li>
+            <li>Template editor (per-channel × per-language)</li>
+            <li>Automation rule engine (trigger → delay → channel → template)</li>
+            <li>Inngest workers for outbound queues + retries</li>
+            <li>Send log UI with delivery status</li>
+            <li>Web push notifications (VAPID)</li>
+            <li>Apple / Google social login</li>
+            <li>Doctor-side login (clinics still talk to managers only)</li>
+            <li>Native iOS / Android apps</li>
+            <li>Payments / deposits / escrow (forever out of scope)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout muted" style="margin-top:14px;">
+        <div class="ico">i</div>
+        <div>
+          <b>Schema is forward-compatible.</b> The MVP <code>Channel</code> enum keeps the
+          <code>wa · tg · sms · email</code> variants alongside <code>inapp</code>. The MVP only writes
+          <code>inapp</code> and <code>email</code> rows, but the columns are there so the post-MVP
+          rollout doesn't need a migration. Same applies to <code>Message.providerId</code>,
+          <code>Lead.channelPref</code>, and the <code>Template</code> / <code>AutomationRule</code>
+          tables — created but unused until M-Post.
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. STACK -->
+    <section id="stack">
+      <h2><span class="num">03</span> Tech stack</h2>
+      <div class="sub">Same backbone as v1 — minus everything we deferred.</div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h4>Frontend</h4>
+          <div class="chips">
+            <span class="chip ink"><span class="dot"></span>Next.js 14 (App Router)</span>
+            <span class="chip"><span class="dot"></span>TypeScript strict</span>
+            <span class="chip"><span class="dot"></span>Tailwind CSS</span>
+            <span class="chip"><span class="dot"></span>shadcn/ui</span>
+            <span class="chip"><span class="dot"></span>next-intl</span>
+            <span class="chip"><span class="dot"></span>TanStack Query</span>
+            <span class="chip"><span class="dot"></span>React Hook Form + Zod</span>
+            <span class="chip"><span class="dot"></span>Pretendard Variable</span>
+            <span class="chip"><span class="dot"></span>PWA (next-pwa)</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>Backend &amp; data</h4>
+          <div class="chips">
+            <span class="chip ink"><span class="dot"></span>Next.js Route Handlers</span>
+            <span class="chip"><span class="dot"></span>PostgreSQL 16 (Supabase EU)</span>
+            <span class="chip"><span class="dot"></span>Prisma ORM</span>
+            <span class="chip"><span class="dot"></span>Supabase Storage</span>
+            <span class="chip"><span class="dot"></span>Supabase Realtime (chat)</span>
+            <span class="chip"><span class="dot"></span>Better-Auth (email + password, staff only)</span>
+            <span class="chip"><span class="dot"></span>Resend (transactional email)</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>Infra &amp; ops</h4>
+          <div class="chips">
+            <span class="chip"><span class="dot"></span>Vercel</span>
+            <span class="chip"><span class="dot"></span>Cloudflare DNS</span>
+            <span class="chip"><span class="dot"></span>Sentry</span>
+            <span class="chip"><span class="dot"></span>PostHog</span>
+            <span class="chip"><span class="dot"></span>GitHub Actions CI</span>
+            <span class="chip"><span class="dot"></span>Playwright e2e</span>
+            <span class="chip"><span class="dot"></span>Vitest unit</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>Deferred (post-MVP)</h4>
+          <div class="chips">
+            <span class="chip muted"><span class="dot"></span>WhatsApp Cloud API</span>
+            <span class="chip muted"><span class="dot"></span>Telegram Bot API</span>
+            <span class="chip muted"><span class="dot"></span>Mobizon / SMSC SMS</span>
+            <span class="chip muted"><span class="dot"></span>Phone OTP provider</span>
+            <span class="chip muted"><span class="dot"></span>Inngest queues</span>
+            <span class="chip muted"><span class="dot"></span>Web push (VAPID)</span>
+          </div>
+          <p style="font-size:12px; color:var(--mute); margin-top:9px; margin-bottom:0;">
+            Wire stubs only. <code>lib/messaging/</code> exposes a <code>send(channel, …)</code>
+            function that writes to the in-app channel today and is the seam for real adapters later.
+          </p>
+        </div>
+      </div>
+
+      <h3>Repo layout</h3>
+      <div class="panel" style="font-family: var(--mono); font-size:12px; white-space: pre; overflow-x:auto; color:var(--ink2); line-height:1.55;">
+knsis/
+├─ app/                       # Next.js App Router
+│  ├─ (marketing)/[locale]/   # public web (mobile-first)
+│  ├─ (app)/[locale]/         # guest + authenticated app
+│  └─ admin/[locale]/         # desktop admin (staff)
+├─ components/                # shared UI (shadcn-based)
+├─ lib/                       # db, auth, msg, i18n helpers
+│  └─ messaging/              # inapp.ts (today), wa/tg/sms.ts stubs (post-MVP seam)
+├─ prisma/                    # schema + migrations + seeds
+├─ messages/                  # i18n catalogs (kz.json, ru.json, kr.json)
+├─ tests/e2e/                 # Playwright
+└─ docs/                      # runbooks, this roadmap</div>
+    </section>
+
+    <!-- 4. IA -->
+    <section id="ia">
+      <h2><span class="num">04</span> Information architecture (MVP)</h2>
+      <div class="sub">22 screens. No <code>/login/otp</code>, no <code>/consent</code> screen.</div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h4>Public (no auth)</h4>
+          <ul>
+            <li><code>/[locale]</code> — Onboarding / language</li>
+            <li><code>/[locale]/home</code> — Home</li>
+            <li><code>/[locale]/categories</code> — Categories</li>
+            <li><code>/[locale]/treatments/[slug]</code> — Treatment detail</li>
+            <li><code>/[locale]/clinics</code> — Clinic list</li>
+            <li><code>/[locale]/clinics/[slug]</code> — Clinic detail</li>
+            <li><code>/[locale]/reviews</code> — Reviews feed</li>
+            <li><code>/[locale]/before-after</code> — B/A gallery</li>
+            <li><code>/[locale]/korea-visit</code> — KV landing</li>
+            <li><code>/[locale]/search?q=</code> — Search</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>Guest + returning user</h4>
+          <ul>
+            <li><code>/[locale]/consult/new</code> — Consult form</li>
+            <li><code>/[locale]/consult/[code]</code> — Done / status</li>
+            <li><code>/[locale]/korea-visit/plan</code> — KV plan</li>
+            <li><code>/[locale]/korea-visit/[code]</code> — KV confirmation</li>
+            <li><code>/[locale]/me</code> — My page (reads guest cookie)</li>
+            <li><code>/[locale]/chat/[leadCode]</code> — Manager chat</li>
+            <li><code>/[locale]/notifications</code> — In-app inbox</li>
+            <li><code>/[locale]/settings</code> — Settings</li>
+          </ul>
+        </div>
+        <div class="panel" style="grid-column: span 2;">
+          <h4>Admin (staff, email+password)</h4>
+          <ul style="columns: 2; -webkit-columns: 2; padding-left: 22px;">
+            <li><code>/admin/[locale]/dashboard</code> — Dashboard / KPI</li>
+            <li><code>/admin/[locale]/leads</code> — Lead management</li>
+            <li><code>/admin/[locale]/customers</code> — Customers</li>
+            <li><code>/admin/[locale]/clinics</code> — Clinics</li>
+            <li><code>/admin/[locale]/reviews</code> — Review moderation</li>
+            <li><code>/admin/[locale]/managers</code> — Team &amp; roles</li>
+            <li><code>/admin/[locale]/before-after</code> — B/A management</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. ROADMAP -->
+    <section id="roadmap">
+      <h2><span class="num">05</span> Phased roadmap</h2>
+      <div class="sub">M0–M5 + QA · ~8 weeks total · two-person team (FE + BE) with Claude Code.</div>
+
+      <div class="phases">
+
+        <div class="phase">
+          <div class="id">M0 · WEEK 1</div>
+          <div class="ttl">Foundation</div>
+          <div class="span">Repo, tokens, base components, i18n shell</div>
+          <ul>
+            <li>Next.js 14 monorepo bootstrap (TS strict, Tailwind, ESLint, Husky)</li>
+            <li>Supabase project (EU region) + Prisma schema v0</li>
+            <li>Design tokens → Tailwind theme; Pretendard variable wired</li>
+            <li>Base components (CTA, Badge, Card, Input, Topbar, BottomTab, NavProvider) matching prototype API</li>
+            <li>next-intl scaffold; <code>/[locale]</code> routing; KZ default</li>
+            <li>PWA manifest + icons</li>
+            <li>CI/CD: Vercel previews on PR, main → prod</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> deployable shell at <code>knsis.kz/preview</code>. Design tokens locked.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M1 · WEEK 2</div>
+          <div class="ttl">Sessions (no OTP)</div>
+          <div class="span">Guest cookies for customers, email+password for staff</div>
+          <ul>
+            <li>Guest session: signed HTTP-only cookie issued on first visit; ties lead/chat/favourites to one device</li>
+            <li>Staff login: Better-Auth with email + password; seeded admin user</li>
+            <li>RBAC primitives: <code>guest · customer · manager · head · admin</code> + <code>requireRole()</code> server util</li>
+            <li>My page (read-only) reads from guest cookie; later attachable to a real account in post-MVP</li>
+            <li>Sign-out everywhere; session refresh rotation</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> guests can submit forms; staff can sign into <code>/admin</code>.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M2 · WEEK 2–4</div>
+          <div class="ttl">Discovery surface</div>
+          <div class="span">Public, browsable site in 3 languages</div>
+          <ul>
+            <li>Home (Hero, popular categories, Korea/local strips, review strip)</li>
+            <li>Categories grid + filters (area, concern, language) with URL-state</li>
+            <li>Treatment detail (info, expects, related clinics)</li>
+            <li>Clinic list + detail (verified badges, hours, interpreters)</li>
+            <li>Reviews feed (read-only)</li>
+            <li>Before/After gallery (mobile)</li>
+            <li>Search results screen</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> entire public site is browsable in KZ · RU · KR.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M3 · WEEK 3–5</div>
+          <div class="ttl">Lead capture</div>
+          <div class="span">Real consult flow — handoff is in-app, not external</div>
+          <ul>
+            <li>Consult form (multi-step, optional photo upload, name / phone / email / message)</li>
+            <li>Done + status screen with timeline (read by guest cookie)</li>
+            <li>Lead lands in <code>/admin/leads</code> with in-app chat link + click-to-call</li>
+            <li>Photo upload to Supabase Storage with presigned URLs + client-side resize</li>
+            <li>Spam &amp; rate limiting (Turnstile, 5 leads / IP / day)</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> e2e — submit a lead, see it in admin inbox in real time.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M4 · WEEK 4–6</div>
+          <div class="ttl">KV + Chat + In-app inbox</div>
+          <div class="span">Highest-touch path — all in-app, no external channels</div>
+          <ul>
+            <li>Korea visit landing → plan form → confirmation</li>
+            <li>In-app chat (Supabase Realtime); attaches to a lead row</li>
+            <li>In-app notifications inbox + unread badges</li>
+            <li>Transactional email via Resend (lead receipt, manager-replied) — single template, three locales</li>
+            <li>Settings screen (language, profile, in-app notif toggle, email opt-in, data download / delete)</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> customer can talk to manager from inside the app without any external service.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M5 · WEEK 5–7</div>
+          <div class="ttl">Admin core</div>
+          <div class="span">Manager workbench (desktop) — 7 screens</div>
+          <ul>
+            <li>Admin shell (sidebar + topbar + drawer; <code>requireRole('manager+')</code>)</li>
+            <li>Dashboard (KPIs · funnel · 7-day · sources Web/App/Phone/Referral · manager load)</li>
+            <li>Leads — table, filters, status pills, drawer, assignment, in-app chat link, click-to-call</li>
+            <li>Customers — segments (active/repeat/VIP/dormant), search, profile drawer</li>
+            <li>Clinics — grid + verify / suspend</li>
+            <li>Reviews moderation — approve / reject / request edit (price-keyword scan)</li>
+            <li>Managers — invite by email, role editor, permission matrix</li>
+            <li>Before/After admin — upload, consent capture, retire</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> a manager runs their whole day inside the admin without leaving for WA/TG.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M6 · WEEK 7–8</div>
+          <div class="ttl">Hardening &amp; launch</div>
+          <div class="span">Perf · a11y · i18n QA · security · soft launch · GA</div>
+          <ul>
+            <li>Perf budget: LCP &lt; 2.5 s on mid-tier Android; CLS &lt; 0.1</li>
+            <li>a11y sweep — WCAG 2.1 AA on public flow</li>
+            <li>i18n QA pass with native KZ &amp; KR reviewers</li>
+            <li>Security: OWASP top 10, rate limits, PII encryption, audit log spot-check</li>
+            <li>Playwright e2e: discover → lead → admin reply (in-app) → done</li>
+            <li>Soft launch to 50 invited users for 7 days; daily standup</li>
+            <li>DNS cutover, status page, on-call rota</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> GA. Runbooks committed under <code>docs/</code>.</div>
+        </div>
+
+        <div class="phase future">
+          <div class="id">M-POST · LATER</div>
+          <div class="ttl">External channels (deferred)</div>
+          <div class="span">Activated once vendor approvals are in hand · see §13</div>
+          <ul>
+            <li>Phone OTP login + 3-screen sign-in flow</li>
+            <li>WhatsApp Cloud API adapter (requires Meta WABA verification)</li>
+            <li>Telegram Bot API adapter</li>
+            <li>SMS adapter (Mobizon for KZ)</li>
+            <li>Template editor + automation rule engine + Inngest workers + send log</li>
+            <li>Web push (VAPID)</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> "lead received → templated WhatsApp out in 5 min" works hands-off.</div>
+        </div>
+
+      </div>
+
+      <div class="legend">
+        <span><b>Critical path:</b> M0 → M1 → M2 → M3 → M5 → M6</span>
+        <span><b>Parallelizable after M2:</b> M4 (chat) can split off to one dev</span>
+      </div>
+    </section>
+
+    <!-- 6. WBS -->
+    <section id="wbs">
+      <h2><span class="num">06</span> WBS — work breakdown (MVP)</h2>
+      <div class="sub">Task-level breakdown with dependencies, owner, estimate in person-days.</div>
+
+      <div class="legend">
+        <span>Owners: <span class="who fe" style="font-size:10px;padding:2px 6px;border-radius:3px;background:var(--roseTint);color:var(--roseDeep);font-weight:700;">FE</span> frontend ·
+        <span class="who be" style="font-size:10px;padding:2px 6px;border-radius:3px;background:#E5F4EC;color:var(--success);font-weight:700;">BE</span> backend ·
+        <span class="who ops" style="font-size:10px;padding:2px 6px;border-radius:3px;background:var(--beigeSoft);color:#7A6A4A;font-weight:700;">OPS</span> ops ·
+        <span class="who qa" style="font-size:10px;padding:2px 6px;border-radius:3px;background:#FFF5E1;color:var(--warn);font-weight:700;">QA</span> qa</span>
+      </div>
+
+      <div class="wbs-wrap" style="margin-top:14px;">
+        <table class="wbs">
+          <thead>
+            <tr>
+              <th style="width:80px;">ID</th>
+              <th>Task</th>
+              <th>Deliverable / DoD</th>
+              <th style="width:90px;">Deps</th>
+              <th style="width:60px;">Est</th>
+              <th style="width:60px;">Owner</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="phase-row"><td class="id">M0</td><td colspan="5">FOUNDATION · setup, tokens, shell</td></tr>
+            <tr><td class="id">M0-01</td><td class="task">Bootstrap monorepo</td><td class="deliv">Next.js 14, TS strict, Tailwind, ESLint, Prettier, Husky pre-commit</td><td class="dep">—</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M0-02</td><td class="task">CI/CD + Vercel previews</td><td class="deliv">PR previews auto-deploy; main → prod; preview URL in PR comment</td><td class="dep">M0-01</td><td class="est">1</td><td class="owner"><span class="who ops">OPS</span></td></tr>
+            <tr><td class="id">M0-03</td><td class="task">Supabase + Prisma schema v0</td><td class="deliv">EU region; <code>User Lead Clinic Treatment Review Message</code>; channel enum keeps wa/tg/sms columns for forward-compat</td><td class="dep">M0-02</td><td class="est">2</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M0-04</td><td class="task">Design tokens → Tailwind theme</td><td class="deliv">Rose / Lavender / Beige palette; Pretendard variable; spacing &amp; radii match design</td><td class="dep">M0-01</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M0-05</td><td class="task">Base components (shadcn variants)</td><td class="deliv">CTA, Badge, Card, Input, Select, Topbar, BottomTab, NavProvider — API matches prototype</td><td class="dep">M0-04</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M0-06</td><td class="task">i18n scaffold (next-intl)</td><td class="deliv"><code>/[locale]</code> routing; KZ default; middleware redirect; 3 catalogs stubbed</td><td class="dep">M0-04</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M0-07</td><td class="task">PWA manifest + icons</td><td class="deliv">Installable on Android Chrome; offline shell fallback</td><td class="dep">M0-01</td><td class="est">1</td><td class="owner"><span class="who fe">FE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M1</td><td colspan="5">SESSIONS (no OTP)</td></tr>
+            <tr><td class="id">M1-01</td><td class="task">Guest cookie session</td><td class="deliv">Signed HTTP-only cookie issued on first request; opaque guest id; survives reload</td><td class="dep">M0-03</td><td class="est">1</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M1-02</td><td class="task">Staff sign-in (Better-Auth)</td><td class="deliv">Email + password; seeded admin user; reset-via-email scaffold</td><td class="dep">M0-03</td><td class="est">2</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M1-03</td><td class="task">RBAC primitives</td><td class="deliv">Roles enum (guest · customer · support · manager · head · admin); <code>requireRole()</code> server util</td><td class="dep">M1-02</td><td class="est">1.5</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M1-04</td><td class="task">My page (guest-readable)</td><td class="deliv">Profile placeholders, consult-request list keyed on guest cookie, language switcher</td><td class="dep">M0-05, M1-01</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M2</td><td colspan="5">DISCOVERY SURFACE</td></tr>
+            <tr><td class="id">M2-01</td><td class="task">Home page</td><td class="deliv">Hero, search entry, popular categories, Korea+local clinic strips, review strip — 3 langs</td><td class="dep">M0-05, M0-06</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-02</td><td class="task">Categories + filters</td><td class="deliv">Grid; area/concern/language facets; URL-state filters</td><td class="dep">M2-01</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-03</td><td class="task">Treatment detail</td><td class="deliv">Info blocks, expects, recommended-for, related clinics, disclaimer</td><td class="dep">M2-02</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-04</td><td class="task">Clinics list + tabs</td><td class="deliv">All / Korea / Local; sort by reviews/popularity; verified badge</td><td class="dep">M2-01</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-05</td><td class="task">Clinic detail</td><td class="deliv">Hours, interpreters, treatments, B/A strip, certification info</td><td class="dep">M2-04</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-06</td><td class="task">Reviews feed</td><td class="deliv">Filter by treatment/region/clinic; star average; disclaimer footer</td><td class="dep">M2-03</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-07</td><td class="task">Before/After gallery</td><td class="deliv">Mobile-only; consent banner; slider compare component</td><td class="dep">M2-06</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-08</td><td class="task">Search results</td><td class="deliv">Server search across treatments + clinics + reviews; Postgres FTS per locale</td><td class="dep">M0-03, M2-03, M2-05</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M2-09</td><td class="task">Seed content pipeline</td><td class="deliv">CMS-less; treatments &amp; clinics as JSON-in-DB; admin can import CSV</td><td class="dep">M0-03</td><td class="est">2</td><td class="owner"><span class="who be">BE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M3</td><td colspan="5">LEAD CAPTURE</td></tr>
+            <tr><td class="id">M3-01</td><td class="task">Consult form (multi-step)</td><td class="deliv">Name / phone / email / interest / region / method / photos / consents / message; resumable; client+server validation</td><td class="dep">M2-03, M1-01</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M3-02</td><td class="task">Photo upload pipeline</td><td class="deliv">Presigned PUT to Supabase Storage; client-side resize; EXIF strip</td><td class="dep">M0-03</td><td class="est">2</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M3-03</td><td class="task">Lead create endpoint</td><td class="deliv"><code>POST /api/leads</code>; idempotent; emits <code>lead.created</code> event consumed by in-app inbox + email</td><td class="dep">M3-01, M3-02</td><td class="est">1.5</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M3-04</td><td class="task">Done / status screen</td><td class="deliv">Order summary, timeline, expected next steps (phone or in-app chat)</td><td class="dep">M3-03</td><td class="est">1</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M3-05</td><td class="task">Spam &amp; rate-limit</td><td class="deliv">Turnstile widget; 5 leads / IP / day; 1 lead / phone / 10 min</td><td class="dep">M3-03</td><td class="est">1</td><td class="owner"><span class="who be">BE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M4</td><td colspan="5">KV · CHAT · IN-APP INBOX</td></tr>
+            <tr><td class="id">M4-01</td><td class="task">Korea visit landing + form + confirm</td><td class="deliv">3 screens; airport/hotel/interpreter selectors; creates KV record on lead</td><td class="dep">M3-03</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M4-02</td><td class="task">In-app chat (Realtime)</td><td class="deliv">Supabase Realtime channel per lead; typing indicator; read receipts; manager-side rich cards</td><td class="dep">M1-01, M1-03</td><td class="est">4</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M4-03</td><td class="task">In-app notifications inbox</td><td class="deliv">Consult / review / promo tabs; today/earlier groups; unread tracking; server-pushed rows on <code>lead.*</code> and <code>chat.*</code> events</td><td class="dep">M4-02</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M4-04</td><td class="task">Transactional email (Resend)</td><td class="deliv">Lead receipt (customer) + lead-received (manager) + chat-reply-while-offline; one template × 3 locales</td><td class="dep">M3-03, M4-02</td><td class="est">1.5</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M4-05</td><td class="task">Settings screen</td><td class="deliv">Language, profile, in-app notif toggle, email opt-in, data export, delete account</td><td class="dep">M1-04</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M5</td><td colspan="5">ADMIN CORE</td></tr>
+            <tr><td class="id">M5-01</td><td class="task">Admin shell</td><td class="deliv">Sidebar (7 items) + topbar + drawer; route guard <code>requireRole('manager+')</code>; theme</td><td class="dep">M1-03</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M5-02</td><td class="task">Dashboard</td><td class="deliv">5 KPIs · funnel · 7-day bars · sources (Web form / App / Phone / Referral) · manager load · activity feed</td><td class="dep">M5-01, M3-03</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M5-03</td><td class="task">Leads list + drawer</td><td class="deliv">Table, status pills, owner/clinic assignment, notes, activity log; URL-state filters; in-app chat link + click-to-call</td><td class="dep">M5-01, M3-03, M4-02</td><td class="est">4</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M5-04</td><td class="task">Customers</td><td class="deliv">Segments (active/repeat/VIP/dormant), search, profile drawer, tag editor</td><td class="dep">M5-01</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M5-05</td><td class="task">Clinics admin</td><td class="deliv">Grid; verify / suspend; CRUD; CSV import</td><td class="dep">M5-01, M2-09</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M5-06</td><td class="task">Review moderation</td><td class="deliv">Approve / reject / request edit; photo consent check; price-keyword scan</td><td class="dep">M5-01, M2-06</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M5-07</td><td class="task">Managers &amp; permissions</td><td class="deliv">Invite via email; online presence; role editor; permission matrix view</td><td class="dep">M1-03</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M5-08</td><td class="task">B/A admin</td><td class="deliv">Upload, consent capture, retire; tied to a customer record</td><td class="dep">M5-01, M2-07</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M6</td><td colspan="5">QA · HARDENING · LAUNCH</td></tr>
+            <tr><td class="id">M6-01</td><td class="task">Perf budget &amp; Lighthouse</td><td class="deliv">LCP &lt; 2.5 s, CLS &lt; 0.1, TBT &lt; 200 ms on Moto G4 throttled 3G</td><td class="dep">M5</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M6-02</td><td class="task">a11y sweep (WCAG 2.1 AA)</td><td class="deliv">All public flows pass axe + manual screen-reader; focus visible; skip links</td><td class="dep">M5</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span> <span class="who qa">QA</span></td></tr>
+            <tr><td class="id">M6-03</td><td class="task">i18n QA pass</td><td class="deliv">Native KZ &amp; KR review; date/number locale; RTL not required</td><td class="dep">M5</td><td class="est">2</td><td class="owner"><span class="who qa">QA</span></td></tr>
+            <tr><td class="id">M6-04</td><td class="task">Security review</td><td class="deliv">OWASP top 10; rate limits on every mutating route; PII encryption at rest; audit log spot-check</td><td class="dep">M5</td><td class="est">3</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M6-05</td><td class="task">Playwright e2e suite</td><td class="deliv">Happy paths: discover → lead → admin reply (in-app) → done. Runs on PR.</td><td class="dep">M3, M5</td><td class="est">3</td><td class="owner"><span class="who qa">QA</span></td></tr>
+            <tr><td class="id">M6-06</td><td class="task">Soft launch</td><td class="deliv">50 invited users · 5 managers · 7-day window · daily standup</td><td class="dep">M6-01..05</td><td class="est">5</td><td class="owner"><span class="who ops">OPS</span></td></tr>
+            <tr><td class="id">M6-07</td><td class="task">GA — public launch</td><td class="deliv">DNS cutover, status page, on-call rota, marketing handoff</td><td class="dep">M6-06</td><td class="est">2</td><td class="owner"><span class="who ops">OPS</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="legend" style="margin-top:14px;">
+        <span><b>Total MVP estimate:</b> ~82 person-days across FE/BE/OPS/QA</span>
+        <span><b>2-person team:</b> ~8 weeks · <b>3-person team:</b> ~6 weeks · <b>Solo + Claude Code:</b> ~11 weeks</span>
+        <span><b>vs v1 (with OTP/WA/TG/SMS):</b> -43 PD · -4 weeks</span>
+      </div>
+    </section>
+
+    <!-- 7. DATA -->
+    <section id="data">
+      <h2><span class="num">07</span> Data model (MVP)</h2>
+      <div class="sub">Same Prisma schema as v1 — but only <code>inapp</code> and <code>email</code> channels are written. Other columns are reserved for post-MVP.</div>
+
+      <div class="grid-2">
+        <div class="entity">
+          <div class="head"><span class="name">User</span><span class="desc">customer or staff (no OTP-only path)</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">id</div><div class="col2">uuid pk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">guestId</div><div class="col2">uuid?</div><div class="col3">if account never claimed</div></div>
+            <div class="field"><div class="col1">phone</div><div class="col2">string?</div><div class="col3">collected on lead, not verified</div></div>
+            <div class="field"><div class="col1">email</div><div class="col2">string?</div><div class="col3">required for staff, optional for customer</div></div>
+            <div class="field"><div class="col1">passwordHash</div><div class="col2">string?</div><div class="col3">staff only (MVP)</div></div>
+            <div class="field"><div class="col1">name</div><div class="col2">string?</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">locale</div><div class="col2">enum</div><div class="col3">kz · ru · kr</div></div>
+            <div class="field"><div class="col1">role</div><div class="col2">enum</div><div class="col3">guest · customer · support · manager · head · admin</div></div>
+            <div class="field"><div class="col1">consentTos</div><div class="col2">bool</div><div class="col3">required</div></div>
+            <div class="field"><div class="col1">consentMkt</div><div class="col2">bool</div><div class="col3">optional</div></div>
+          </div>
+        </div>
+
+        <div class="entity">
+          <div class="head"><span class="name">Lead</span><span class="desc">consultation request</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">id</div><div class="col2">uuid pk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">code</div><div class="col2">string uniq</div><div class="col3"><code>KB-2025-####</code></div></div>
+            <div class="field"><div class="col1">userId</div><div class="col2">fk User</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">channelPref</div><div class="col2">enum</div><div class="col3">inapp · email <span style="color:var(--mute);">(wa · tg · sms reserved)</span></div></div>
+            <div class="field"><div class="col1">treatmentIds</div><div class="col2">uuid[]</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">regions</div><div class="col2">string[]</div><div class="col3">almaty · astana · seoul…</div></div>
+            <div class="field"><div class="col1">kind</div><div class="col2">enum[]</div><div class="col3">korea · local</div></div>
+            <div class="field"><div class="col1">status</div><div class="col2">enum</div><div class="col3">new · contacted · in_progress · scheduled · done · on_hold</div></div>
+            <div class="field"><div class="col1">ownerId</div><div class="col2">fk User?</div><div class="col3">assigned manager</div></div>
+            <div class="field"><div class="col1">clinicId</div><div class="col2">fk Clinic?</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">photos</div><div class="col2">string[]</div><div class="col3">storage paths</div></div>
+            <div class="field"><div class="col1">message</div><div class="col2">text?</div><div class="col3"></div></div>
+          </div>
+        </div>
+
+        <div class="entity">
+          <div class="head"><span class="name">Message</span><span class="desc">in-app + outbound log (MVP writes inapp+email only)</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">id</div><div class="col2">uuid pk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">leadId</div><div class="col2">fk Lead</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">channel</div><div class="col2">enum</div><div class="col3">inapp · email <span style="color:var(--mute);">(wa · tg · sms reserved)</span></div></div>
+            <div class="field"><div class="col1">direction</div><div class="col2">enum</div><div class="col3">in · out</div></div>
+            <div class="field"><div class="col1">body</div><div class="col2">text</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">status</div><div class="col2">enum</div><div class="col3">queued · sent · delivered · read · failed</div></div>
+            <div class="field"><div class="col1">providerId</div><div class="col2">string?</div><div class="col3">reserved (external msg id)</div></div>
+          </div>
+        </div>
+
+        <div class="entity">
+          <div class="head"><span class="name">Clinic / Treatment / Review</span><span class="desc">unchanged from v1 spec</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">Clinic</div><div class="col2">—</div><div class="col3">id · slug · name (i18n) · kind · location · interpreters · treatmentIds · verifyState · hours</div></div>
+            <div class="field"><div class="col1">Treatment</div><div class="col2">—</div><div class="col3">id · slug · category · title (i18n) · summary · durationMin · recovery · expects</div></div>
+            <div class="field"><div class="col1">Review</div><div class="col2">—</div><div class="col3">id · code · userId · clinicId/txId · rating · body · photos · photoConsent · state</div></div>
+            <div class="field"><div class="col1">KoreaVisit</div><div class="col2">—</div><div class="col3">leadId · dates · airport · hotel · interpreter · services[]</div></div>
+            <div class="field"><div class="col1">Favorite</div><div class="col2">—</div><div class="col3">userId · target (clinic/treatment)</div></div>
+            <div class="field"><div class="col1">AuditLog</div><div class="col2">—</div><div class="col3">actor · action · before · after · at</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout muted" style="margin-top:14px;">
+        <div class="ico">i</div>
+        <div>
+          <b>Reserved for post-MVP, not created in MVP migration:</b> <code>Template</code>,
+          <code>AutomationRule</code>, <code>PushSubscription</code>, <code>OtpAttempt</code>.
+          Adding them is a single additive migration when M-Post starts — no breaking changes to MVP data.
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. API -->
+    <section id="api">
+      <h2><span class="num">08</span> API surface (MVP)</h2>
+      <div class="sub">REST under <code>/api</code>. Guest cookie or staff session. All mutating routes rate-limited.</div>
+
+      <h3>Public</h3>
+      <div class="api">
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/i18n/[locale]</div><div class="d">Static catalog</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/treatments</div><div class="d">List + filters</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/treatments/[slug]</div><div class="d">Detail (3 locales)</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/clinics</div><div class="d">List · tabs · sort</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/clinics/[slug]</div><div class="d">Detail incl. hours, interpreters</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/reviews</div><div class="d">Published reviews</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/before-after</div><div class="d">Published B/A pairs</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/search?q=&amp;locale=</div><div class="d">Postgres FTS</div></div>
+      </div>
+
+      <h3>Guest / customer</h3>
+      <div class="api">
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/leads</div><div class="d">Create consult request</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/leads/[code]</div><div class="d">Read own lead by code (guest)</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/korea-visits</div><div class="d">Create KV plan</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/me</div><div class="d">My page summary (cookie)</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/notifications</div><div class="d">In-app inbox</div></div>
+        <div class="ep"><div class="v patch">PATCH</div><div class="p">/api/notifications/[id]/read</div><div class="d">Mark read</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/chat/[leadCode]</div><div class="d">Open Realtime channel</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/chat/[leadCode]/messages</div><div class="d">Send message</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/uploads</div><div class="d">Presigned PUT for photos</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/me/delete</div><div class="d">GDPR-style account deletion</div></div>
+      </div>
+
+      <h3>Staff (admin)</h3>
+      <div class="api">
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/auth/sign-in</div><div class="d">Email + password</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/auth/sign-out</div><div class="d"></div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/admin/dashboard</div><div class="d">KPIs + funnel + sources</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/admin/leads</div><div class="d">List + filters</div></div>
+        <div class="ep"><div class="v patch">PATCH</div><div class="p">/api/admin/leads/[id]</div><div class="d">Status / owner / clinic / notes</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/admin/leads/[id]/messages</div><div class="d">Manager reply (inapp)</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/admin/customers</div><div class="d">Segments + search</div></div>
+        <div class="ep"><div class="v patch">PATCH</div><div class="p">/api/admin/clinics/[id]</div><div class="d">Verify / suspend / edit</div></div>
+        <div class="ep"><div class="v patch">PATCH</div><div class="p">/api/admin/reviews/[id]</div><div class="d">Approve / reject / edit</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/admin/managers/invite</div><div class="d">Invite by email</div></div>
+        <div class="ep"><div class="v patch">PATCH</div><div class="p">/api/admin/before-after/[id]</div><div class="d">Publish / retire</div></div>
+      </div>
+
+      <p style="font-size:12px; color:var(--mute); margin-top:14px;">
+        <b>Not built in MVP:</b> <code>/api/auth/otp/*</code>, <code>/api/webhooks/whatsapp</code>,
+        <code>/api/webhooks/telegram</code>, <code>/api/admin/templates/*</code>,
+        <code>/api/admin/automation/*</code>, <code>/api/admin/send-log</code>. All land in M-Post.
+      </p>
+    </section>
+
+    <!-- 9. I18N -->
+    <section id="i18n">
+      <h2><span class="num">09</span> i18n &amp; content</h2>
+      <div class="sub">KZ default · RU · KR · catalog parity enforced in CI.</div>
+
+      <div class="kvs">
+        <div class="k">Default locale</div><div class="v">kz</div>
+        <div class="k">Locale switching</div><div class="v">Sticky cookie <code>NEXT_LOCALE</code> + path prefix <code>/kz/</code> · <code>/ru/</code> · <code>/kr/</code></div>
+        <div class="k">Catalog files</div><div class="v"><code>messages/kz.json</code> · <code>messages/ru.json</code> · <code>messages/kr.json</code> — keys must match in CI</div>
+        <div class="k">Fallback chain</div><div class="v">missing key → KZ → key literal (loud-fail in dev)</div>
+        <div class="k">Plurals &amp; dates</div><div class="v"><code>Intl.PluralRules</code> + <code>Intl.DateTimeFormat</code></div>
+        <div class="k">Content authoring</div><div class="v">Treatments / clinics / templates: i18n columns as <code>{ kz, ru, kr }</code> JSON in DB. Admin can edit each locale inline.</div>
+        <div class="k">Out of MVP</div><div class="v">RTL · in-flight machine translation · separate <code>uz</code> / <code>ky</code> locales</div>
+      </div>
+    </section>
+
+    <!-- 10. NFR -->
+    <section id="nfr">
+      <h2><span class="num">10</span> Non-functional requirements</h2>
+      <div class="sub">Perf, security, privacy. Same as v1, MVP-relevant subset.</div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h4>Performance budget</h4>
+          <div class="kvs">
+            <div class="k">LCP</div><div class="v">&lt; 2.5 s on Moto G4 throttled 3G</div>
+            <div class="k">CLS</div><div class="v">&lt; 0.1</div>
+            <div class="k">TBT</div><div class="v">&lt; 200 ms</div>
+            <div class="k">JS bundle (route)</div><div class="v">&lt; 180 KB gzipped</div>
+            <div class="k">Image strategy</div><div class="v"><code>next/image</code> · AVIF/WebP · lazy below fold</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>Security &amp; privacy</h4>
+          <div class="kvs">
+            <div class="k">Data residency</div><div class="v">Supabase EU region</div>
+            <div class="k">PII at rest</div><div class="v">Phone, email, photos encrypted</div>
+            <div class="k">Photo URLs</div><div class="v">5-minute signed URLs · private bucket</div>
+            <div class="k">Rate limits</div><div class="v">Every mutating route + Turnstile on lead form</div>
+            <div class="k">Audit log</div><div class="v">All admin mutations with actor / before / after</div>
+            <div class="k">Account deletion</div><div class="v">Soft-delete now, hard-delete after 30 days</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. QA -->
+    <section id="qa">
+      <h2><span class="num">11</span> QA &amp; testing</h2>
+      <div class="sub">Vitest for units, Playwright for end-to-end, axe for a11y.</div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h4>Unit (Vitest)</h4>
+          <ul>
+            <li>Lead validation (Zod schemas, all error paths)</li>
+            <li>RBAC: <code>requireRole()</code> matrix</li>
+            <li>i18n catalog parity check (all keys present in all 3 locales)</li>
+            <li>Price-keyword scanner (KZ · RU · KR variants)</li>
+            <li>Photo upload helpers (resize, EXIF strip)</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>End-to-end (Playwright)</h4>
+          <ul>
+            <li>J1 · onboarding → home → treatment → form → done</li>
+            <li>J2 · browse → consult form → done</li>
+            <li>J3 · KV plan submission</li>
+            <li>J4 · admin sign-in → inbox triage → in-app reply</li>
+            <li>J5 · review moderation</li>
+            <li>All on PR · all under 4 minutes</li>
+          </ul>
+        </div>
+        <div class="panel" style="grid-column: span 2;">
+          <h4>a11y &amp; i18n</h4>
+          <ul>
+            <li>axe-core CI gate on every public route (0 violations)</li>
+            <li>Focus visible everywhere; skip links on long pages</li>
+            <li>Native KZ &amp; KR reviewer walks every screen pre-launch</li>
+            <li>RU validated against KZ master string set</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. LAUNCH -->
+    <section id="launch">
+      <h2><span class="num">12</span> Launch checklist</h2>
+      <div class="sub">Run top-to-bottom in M6 before flipping DNS.</div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h4>Pre-soft-launch</h4>
+          <ul class="check">
+            <li>All M0–M5 tickets closed</li>
+            <li>Perf budget met on staging</li>
+            <li>a11y axe 0-violation green</li>
+            <li>Playwright happy paths green on PR</li>
+            <li>KZ &amp; KR native review done</li>
+            <li>Sentry &amp; PostHog wired with sample data</li>
+            <li>Rate limits tested with synthetic load</li>
+            <li>Audit log spot-check on 5 admin actions</li>
+            <li>Photo bucket signed URL expiry verified</li>
+            <li>Backup &amp; restore drill on staging</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>Soft launch (50 users · 7 days)</h4>
+          <ul class="check">
+            <li>Status page live</li>
+            <li>On-call rota for 7 days · 12h windows</li>
+            <li>Daily standup, fix-forward triage</li>
+            <li>Crash-free sessions &gt; 99.5% in PostHog</li>
+            <li>0 P0 / 0 P1 bugs open</li>
+            <li>Time-to-first-reply &lt; 2 hours during business hours</li>
+            <li>Manager NPS ≥ 8 in week-end survey</li>
+            <li>Customer NPS ≥ 7 in week-end survey</li>
+          </ul>
+        </div>
+        <div class="panel" style="grid-column: span 2;">
+          <h4>GA</h4>
+          <ul class="check">
+            <li>DNS cutover to <code>knsis.kz</code></li>
+            <li>Marketing handoff: launch page, social copy, screenshots</li>
+            <li>Customer support runbook published in <code>docs/</code></li>
+            <li>Backups verified · weekly restore drill scheduled</li>
+            <li>Post-MVP roadmap published — start M-Post planning the next Monday</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13. POST-MVP -->
+    <section id="post">
+      <h2><span class="num">13</span> Post-MVP roadmap</h2>
+      <div class="sub">What we cut, what unblocks it, and roughly when each lands after GA.</div>
+
+      <div class="phases">
+        <div class="phase future">
+          <div class="id">M-POST-A · WEEK 9–11</div>
+          <div class="ttl">Phone OTP login</div>
+          <div class="span">Unblocks: customer history without cookie</div>
+          <ul>
+            <li>Pick provider (Mobizon KZ vs Twilio Verify) — decision in W8</li>
+            <li>3 screens: phone → 4-digit code → permissions</li>
+            <li>Migrate guest sessions to real accounts on first sign-in</li>
+            <li>Per-IP rate limits + abuse detection</li>
+          </ul>
+          <div class="out"><b>Est:</b> 7 PD (BE-heavy)</div>
+        </div>
+
+        <div class="phase future">
+          <div class="id">M-POST-B · WEEK 10–13</div>
+          <div class="ttl">WhatsApp Cloud API</div>
+          <div class="span">Unblocks: outbound to customers' preferred channel</div>
+          <ul>
+            <li>Meta WABA verification (legal entity) — start in W6 in parallel with MVP</li>
+            <li>Template registration · approved set of 6 templates</li>
+            <li>Send adapter + webhook receive · status callbacks</li>
+            <li>Inbox: WA-inbound messages appear next to in-app chat</li>
+          </ul>
+          <div class="out"><b>Est:</b> 10 PD · vendor-blocked by Meta verification</div>
+        </div>
+
+        <div class="phase future">
+          <div class="id">M-POST-C · WEEK 12–14</div>
+          <div class="ttl">Telegram + SMS</div>
+          <div class="span">Easier vendors, ship right after WA</div>
+          <ul>
+            <li>Telegram bot token + deep-link handover</li>
+            <li>Mobizon SMS adapter for KZ fallback</li>
+            <li>Per-template channel routing</li>
+          </ul>
+          <div class="out"><b>Est:</b> 6 PD</div>
+        </div>
+
+        <div class="phase future">
+          <div class="id">M-POST-D · WEEK 13–16</div>
+          <div class="ttl">Templates · automation · send log</div>
+          <div class="span">Activates the cut M6 from v1 spec</div>
+          <ul>
+            <li>Template editor (per-channel × per-language, variables, preview)</li>
+            <li>Automation rules (trigger · delay · channel · template)</li>
+            <li>Inngest workers + retry/backoff</li>
+            <li>Send log UI · queued / sent / read / failed · filter · retry</li>
+          </ul>
+          <div class="out"><b>Est:</b> 14 PD</div>
+        </div>
+
+        <div class="phase future">
+          <div class="id">M-POST-E · WEEK 15+</div>
+          <div class="ttl">Push, social login, doctor portal</div>
+          <div class="span">Whenever we have signal</div>
+          <ul>
+            <li>Web push (VAPID) for in-app notif inbox</li>
+            <li>Apple / Google social login</li>
+            <li>Read-only doctor portal · per-clinic auth</li>
+            <li>Native shell (Expo wrapper) if PWA install rate &lt; 25%</li>
+          </ul>
+          <div class="out"><b>Est:</b> 18+ PD</div>
+        </div>
+      </div>
+
+      <p style="font-size:12px; color:var(--mute); margin-top:14px;">
+        Total post-MVP estimate: ~55 PD across A–E. Cumulative GA-to-feature-parity
+        with the original v1 spec: ~14–18 weeks from MVP GA.
+      </p>
+    </section>
+
+    <!-- 14. OPEN -->
+    <section id="open">
+      <h2><span class="num">14</span> Open questions (MVP)</h2>
+      <div class="sub">Decisions to make before or during M0. Mark each as RESOLVED when answered.</div>
+
+      <div class="panel">
+        <ol>
+          <li><b>Hosting region.</b> Supabase EU (Stockholm) vs AWS Seoul — KZ data-residency implications. <i>Blocking M0-03.</i></li>
+          <li><b>Staff sign-in policy.</b> Email + password (MVP) vs magic link vs SAML day-one. Default: password with mandatory rotation every 90 days.</li>
+          <li><b>Email provider.</b> Resend vs Postmark vs Amazon SES — pick on cost + KR deliverability.</li>
+          <li><b>Photo retention.</b> Default 12 months after lead is closed; user deletion removes immediately. Legal confirm.</li>
+          <li><b>Soft launch cohort source.</b> Existing beta-list (n=120) vs paid acquisition. Pick before W6.</li>
+          <li><b>Post-MVP order.</b> Lock M-POST-A→B→C→D or do B (WA) and A (OTP) in parallel? Depends on Meta WABA progress.</li>
+        </ol>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  (async () => {
+    try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+    await new Promise(r => setTimeout(r, 500));
+    window.print();
+  })();
+</script>
+
+</body>
+</html>

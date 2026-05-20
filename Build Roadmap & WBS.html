@@ -1,0 +1,1233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<title>knsis.kz — Build Roadmap &amp; WBS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+<style>
+  :root {
+    --ink:#1A1A1A; --ink2:#3A3A3A; --text:#5A5A5A; --mute:#8A8A8A;
+    --bg:#FBF8F5; --paper:#FFFFFF; --soft:#F5F2EC; --border:#ECE6DC; --hair:#F2EEE6;
+    --rose:#E8607A; --roseDeep:#C84365; --roseTint:#FDF1F4; --roseSoft:#FCE7EC;
+    --lav:#B8A4D4; --lavSoft:#EFE8F8; --beige:#D4B896; --beigeSoft:#F5EFE6;
+    --success:#1F7A4D; --warn:#A07012; --danger:#A04432;
+    --mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+    --font: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
+            "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+  }
+  .layout {
+    display:grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+    gap: 40px;
+    padding: 32px 28px 80px;
+  }
+  /* Sticky TOC */
+  .toc {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding-right: 8px;
+    font-size: 12.5px;
+  }
+  .toc .crumb { font-size:10px; letter-spacing:1px; color:var(--mute); font-weight:700; }
+  .toc .title { font-size:14px; font-weight:700; margin: 4px 0 16px; letter-spacing:-0.3px; }
+  .toc ol { list-style:none; padding:0; margin:0; counter-reset: t; }
+  .toc li { counter-increment: t; }
+  .toc a {
+    display:block; padding: 6px 10px 6px 30px;
+    color: var(--text); text-decoration: none;
+    border-left: 1px solid var(--hair);
+    position: relative;
+    transition: color .15s, background .15s, border-color .15s;
+  }
+  .toc a::before {
+    content: counter(t, decimal-leading-zero);
+    position:absolute; left:8px; top:6px;
+    font-size:10px; color:var(--mute); font-weight:700;
+    font-family: var(--mono);
+  }
+  .toc a:hover { color: var(--roseDeep); background: var(--roseTint); border-left-color: var(--rose); }
+  .toc .meta { font-size:11px; color: var(--mute); margin-top:18px; line-height:1.6; padding: 0 6px; }
+
+  main { min-width: 0; }
+
+  /* Hero */
+  .hero {
+    padding: 28px 32px 32px;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: ""; position:absolute; top:-60px; right:-60px;
+    width:200px; height:200px; border-radius:50%;
+    background: radial-gradient(circle, var(--roseSoft) 0%, transparent 70%);
+  }
+  .kicker {
+    font-size:10.5px; font-weight:700; color: var(--roseDeep);
+    letter-spacing: 1.8px; text-transform: uppercase;
+  }
+  h1 {
+    font-size: clamp(28px, 4vw, 42px);
+    line-height: 1.1; letter-spacing: -0.035em;
+    font-weight: 800; margin: 10px 0 8px;
+  }
+  .hero .lede { font-size: 15px; color: var(--text); max-width: 720px; line-height:1.6; }
+  .hero .meta {
+    margin-top: 22px;
+    display: flex; flex-wrap: wrap; gap: 18px 28px; position:relative; z-index:1;
+  }
+  .hero .meta .stat .n { font-size:22px; font-weight:800; letter-spacing:-0.04em; }
+  .hero .meta .stat .l { font-size:11px; color: var(--mute); margin-top:2px; }
+
+  /* Section */
+  section { margin-top: 36px; scroll-margin-top: 18px; }
+  h2 {
+    font-size: 22px; letter-spacing: -0.03em; line-height: 1.2;
+    font-weight: 800; margin: 0 0 4px;
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  h2 .num {
+    font-size: 11px; color: var(--mute); font-weight: 800;
+    font-family: var(--mono); letter-spacing: 1.5px;
+  }
+  h2 .num.rose { color: var(--roseDeep); }
+  .sub { color: var(--mute); font-size: 12.5px; margin-bottom: 18px; }
+  h3 {
+    font-size: 15px; font-weight: 700; margin: 22px 0 10px;
+    letter-spacing: -0.2px; color: var(--ink);
+  }
+  h4 {
+    font-size: 12px; font-weight: 700; margin: 16px 0 8px;
+    letter-spacing: 1px; color: var(--mute); text-transform: uppercase;
+  }
+  p, li { font-size: 14px; color: var(--ink2); }
+  ul, ol { padding-left: 22px; margin: 8px 0; }
+  li + li { margin-top: 4px; }
+  code, kbd {
+    font-family: var(--mono); font-size: 12.5px;
+    background: var(--soft); padding: 1px 6px; border-radius: 4px;
+    color: var(--ink2);
+  }
+  a { color: var(--roseDeep); }
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .panel + .panel { margin-top: 12px; }
+  .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  .grid-3 { display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; }
+  .grid-4 { display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; gap: 20px; padding: 20px 16px 60px; }
+    .toc { display: none; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .hero { padding: 22px 20px; }
+  }
+
+  /* Stack chips */
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .chip {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#fff; border:1px solid var(--border);
+    border-radius: 999px; padding: 5px 10px;
+    font-size: 11.5px; font-weight: 600; color: var(--ink2);
+  }
+  .chip .dot { width:6px; height:6px; border-radius:50%; background: var(--rose); }
+  .chip.ink { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .chip.ink .dot { background: var(--rose); }
+  .chip.rose { background: var(--roseTint); color: var(--roseDeep); border-color: var(--roseSoft); }
+  .chip.rose .dot { background: var(--rose); }
+  .chip.lav { background: var(--lavSoft); color:#5E4B82; border-color:#DCD0EE; }
+  .chip.lav .dot { background: var(--lav); }
+  .chip.beige { background: var(--beigeSoft); color:#7A6A4A; border-color:#ECE2D2; }
+  .chip.beige .dot { background: var(--beige); }
+
+  /* Phase cards */
+  .phases { display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
+  @media (max-width: 900px) { .phases { grid-template-columns: 1fr; } }
+  .phase {
+    background: var(--paper); border:1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; position: relative;
+  }
+  .phase .id {
+    font-family: var(--mono); font-size: 11px; font-weight: 800;
+    color: var(--roseDeep); letter-spacing:1.5px;
+  }
+  .phase .ttl { font-size:16px; font-weight:800; letter-spacing:-0.3px; margin: 4px 0 4px; }
+  .phase .span { font-size:11.5px; color: var(--mute); margin-bottom:10px; }
+  .phase ul { margin: 6px 0 0; padding-left: 18px; }
+  .phase li { font-size: 12.5px; color: var(--ink2); }
+  .phase .out {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--hair);
+    font-size: 11.5px; color: var(--mute);
+  }
+  .phase .out b { color: var(--ink2); font-weight: 700; }
+
+  /* WBS table */
+  .wbs-wrap { overflow-x: auto; border:1px solid var(--border); border-radius: 12px; background: var(--paper); }
+  table.wbs { width: 100%; border-collapse: collapse; min-width: 720px; font-size: 12.5px; }
+  table.wbs thead th {
+    text-align: left; padding: 11px 12px;
+    background: #FBFAF7;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px; letter-spacing:1px; color: var(--mute); font-weight: 700;
+    text-transform: uppercase;
+  }
+  table.wbs td {
+    padding: 11px 12px; border-bottom: 1px solid var(--hair); vertical-align: top;
+    color: var(--ink2);
+  }
+  table.wbs tr:last-child td { border-bottom: none; }
+  table.wbs td.id { font-family: var(--mono); font-size: 11px; color: var(--mute); white-space: nowrap; }
+  table.wbs td.task { font-weight: 600; color: var(--ink); }
+  table.wbs td.deliv { color: var(--text); }
+  table.wbs td.dep { font-family: var(--mono); font-size: 11px; color: var(--mute); white-space: nowrap; }
+  table.wbs td.est { text-align: right; white-space: nowrap; font-weight: 700; color: var(--ink2); }
+  table.wbs td.owner { font-size: 11px; }
+  table.wbs td.owner .who {
+    display:inline-block; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 10px;
+    background: var(--soft); color: var(--text);
+  }
+  table.wbs td.owner .who.fe { background: var(--roseTint); color: var(--roseDeep); }
+  table.wbs td.owner .who.be { background: #E5F4EC; color: var(--success); }
+  table.wbs td.owner .who.de { background: var(--lavSoft); color:#5E4B82; }
+  table.wbs td.owner .who.ops { background: var(--beigeSoft); color:#7A6A4A; }
+  table.wbs td.owner .who.qa  { background: #FFF5E1; color: var(--warn); }
+  table.wbs tr.phase-row td {
+    background: var(--soft); font-weight: 800; color: var(--ink);
+    letter-spacing: -0.2px; font-size: 12.5px;
+  }
+  table.wbs tr.phase-row .id { color: var(--roseDeep); }
+
+  /* simple data list */
+  .kvs { display: grid; grid-template-columns: 180px 1fr; gap: 6px 18px; font-size: 13px; }
+  .kvs .k { color: var(--mute); font-weight: 600; }
+  .kvs .v { color: var(--ink2); }
+  @media (max-width: 720px) { .kvs { grid-template-columns: 1fr; } .kvs .k { margin-top: 8px; } }
+
+  /* Entity table */
+  .entity { background: var(--paper); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .entity .head {
+    padding: 12px 16px; background: #FBFAF7;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .entity .head .name { font-weight: 800; letter-spacing: -0.2px; font-size: 14px; }
+  .entity .head .desc { color: var(--mute); font-size: 11.5px; }
+  .entity .fields { display: flex; flex-direction: column; }
+  .entity .field {
+    padding: 9px 16px; display: grid;
+    grid-template-columns: 160px 110px 1fr;
+    gap: 12px; align-items: center;
+    border-bottom: 1px solid var(--hair); font-size: 12.5px;
+  }
+  .entity .field:last-child { border-bottom: none; }
+  .entity .field .col1 { font-family: var(--mono); font-weight: 700; color: var(--ink2); font-size: 12px; }
+  .entity .field .col2 { color: var(--roseDeep); font-family: var(--mono); font-size: 11px; font-weight: 700; }
+  .entity .field .col3 { color: var(--text); }
+  @media (max-width: 720px) { .entity .field { grid-template-columns: 1fr; gap: 2px; } }
+
+  /* API endpoints */
+  .api { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+  .ep {
+    display: grid; grid-template-columns: 70px 1fr auto;
+    gap: 10px; align-items: center; padding: 8px 12px;
+    border: 1px solid var(--hair); border-radius: 8px; background: var(--paper);
+  }
+  .ep .v {
+    font-family: var(--mono); font-weight: 800; font-size: 10.5px;
+    padding: 3px 7px; border-radius: 4px; text-align: center;
+  }
+  .v.get   { background: var(--lavSoft); color: #5E4B82; }
+  .v.post  { background: #E5F4EC; color: var(--success); }
+  .v.patch { background: #FFF5E1; color: var(--warn); }
+  .v.del   { background: #FDE8E4; color: var(--danger); }
+  .ep .p { font-family: var(--mono); font-size: 12px; color: var(--ink2); }
+  .ep .d { color: var(--mute); font-size: 11.5px; text-align: right; }
+  @media (max-width: 720px) { .ep { grid-template-columns: 60px 1fr; } .ep .d { grid-column: span 2; text-align: left; } }
+
+  /* checklist */
+  .check { display: flex; flex-direction: column; gap: 7px; }
+  .check li { display: flex; gap: 9px; align-items: baseline; font-size: 13px; list-style: none; }
+  .check li::before {
+    content: ""; width: 12px; height: 12px; border: 1.5px solid var(--border);
+    border-radius: 3px; background: #fff; flex-shrink: 0;
+    transform: translateY(2px);
+  }
+  .check ul { padding: 0; margin: 0; }
+
+  /* Print */
+  @media print {
+    body { background: #fff; }
+    .toc { display: none; }
+    .layout { grid-template-columns: 1fr; gap: 0; padding: 0; max-width: none; }
+    section { break-inside: avoid; }
+    .phase, .panel, .entity, .ep, .wbs-wrap { break-inside: avoid; }
+    a { color: inherit; }
+  }
+  hr { border: none; border-top: 1px solid var(--hair); margin: 28px 0; }
+  .callout {
+    background: var(--roseTint); border: 1px solid var(--roseSoft); border-radius: 10px;
+    padding: 13px 16px; font-size: 13px; color: var(--roseDeep);
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .callout b { color: var(--roseDeep); }
+  .callout .ico {
+    width: 22px; height: 22px; flex-shrink:0; border-radius: 50%; background: var(--rose);
+    color: #fff; font-weight: 800; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .legend { display:flex; flex-wrap: wrap; gap: 9px; font-size: 11px; color: var(--mute); margin-top: 8px; }
+  .legend span b { color: var(--ink2); }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- TOC -->
+  <aside class="toc">
+    <div class="crumb">KNSIS.KZ</div>
+    <div class="title">Build Roadmap &amp; WBS</div>
+    <ol>
+      <li><a href="#summary">Executive summary</a></li>
+      <li><a href="#stack">Tech stack</a></li>
+      <li><a href="#responsive">Responsive strategy</a></li>
+      <li><a href="#ia">Information architecture</a></li>
+      <li><a href="#roadmap">Phased roadmap (M0–M7)</a></li>
+      <li><a href="#wbs">WBS — work breakdown</a></li>
+      <li><a href="#data">Data model</a></li>
+      <li><a href="#api">API surface</a></li>
+      <li><a href="#integrations">Integrations</a></li>
+      <li><a href="#i18n">i18n &amp; content</a></li>
+      <li><a href="#perms">Admin permissions</a></li>
+      <li><a href="#nfr">Non-functional reqs</a></li>
+      <li><a href="#qa">QA &amp; testing</a></li>
+      <li><a href="#launch">Launch checklist</a></li>
+      <li><a href="#open">Open questions</a></li>
+    </ol>
+    <div class="meta">
+      For Claude Code &middot; v0.3 spec<br/>
+      28 screens · 3 languages<br/>
+      KZ &middot; RU &middot; KR
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="kicker">Engineering handoff · For Claude Code</div>
+      <h1>knsis.kz — K-Beauty<br/>Consultation Platform</h1>
+      <div class="lede">
+        Responsive web application connecting Kazakhstan customers with verified K-Beauty clinics in Korea
+        and certified local partners. Mobile-first PWA, three languages, no pricing fields, WhatsApp /
+        Telegram lead management. This document is the buildable spec — IA, stack choice, phases, WBS,
+        data model, APIs, integrations, and launch criteria. Hand directly to Claude Code or your engineering team.
+      </div>
+      <div class="meta">
+        <div class="stat"><div class="n">28</div><div class="l">Designed screens</div></div>
+        <div class="stat"><div class="n">10</div><div class="l">Admin views</div></div>
+        <div class="stat"><div class="n">3</div><div class="l">Languages (KZ·RU·KR)</div></div>
+        <div class="stat"><div class="n">7</div><div class="l">Phases (M0–M6 + QA)</div></div>
+        <div class="stat"><div class="n">~12</div><div class="l">Weeks to GA</div></div>
+        <div class="stat"><div class="n">0</div><div class="l">Pricing fields shown</div></div>
+      </div>
+    </div>
+
+    <!-- 1. SUMMARY -->
+    <section id="summary">
+      <h2><span class="num">01</span> Executive summary</h2>
+      <div class="sub">What we are building, who it is for, what success looks like.</div>
+      <div class="panel">
+        <h4>Product</h4>
+        <p>
+          A Kazakhstan-facing K-Beauty <b>consultation platform</b> (not a marketplace, not a booking
+          engine). End users browse curated treatments and verified clinics, request a free consultation,
+          and are handed off to a human manager via WhatsApp or Telegram. Managers convert leads,
+          coordinate Korea-visit logistics (airport pickup, hotel, interpreter), and follow up with
+          aftercare. <b>No prices are displayed, ever.</b>
+        </p>
+
+        <h4>Primary user journeys</h4>
+        <ol>
+          <li><b>Discover &amp; request</b> — Onboarding → Home → Category → Treatment → Clinic → Consult form → Done</li>
+          <li><b>Korea visit</b> — KV landing → Plan form → Confirmation (visa info, pickup, hotel)</li>
+          <li><b>Authenticated session</b> — Phone OTP → permissions → My page → in-app chat with manager</li>
+          <li><b>Manager workbench</b> — Inbox → Lead detail → assign clinic → send templated message → log activity → mark done → solicit review</li>
+        </ol>
+
+        <h4>Out of scope for v1</h4>
+        <ul>
+          <li>Payments, deposits, escrow, refunds</li>
+          <li>Public price lists or any visible pricing field</li>
+          <li>Doctor-side login (clinics communicate via manager only in v1)</li>
+          <li>Native iOS / Android apps — we ship a PWA that <i>feels</i> native</li>
+        </ul>
+
+        <div class="callout" style="margin-top:14px;">
+          <div class="ico">!</div>
+          <div>
+            <b>Hard constraint.</b> No price input, no price display, no estimated cost preview — anywhere.
+            All quotes are delivered 1-on-1 via WhatsApp/Telegram by a licensed manager after triage.
+            Audit this in code review and in the moderation pipeline (reviews are scanned for price mentions).
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. STACK -->
+    <section id="stack">
+      <h2><span class="num">02</span> Tech stack</h2>
+      <div class="sub">Boring, fast, and runnable by one mid-level full-stack engineer with Claude Code.</div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h4>Frontend</h4>
+          <div class="chips">
+            <span class="chip ink"><span class="dot"></span>Next.js 14 (App Router)</span>
+            <span class="chip"><span class="dot"></span>TypeScript strict</span>
+            <span class="chip"><span class="dot"></span>Tailwind CSS</span>
+            <span class="chip"><span class="dot"></span>shadcn/ui</span>
+            <span class="chip"><span class="dot"></span>next-intl</span>
+            <span class="chip"><span class="dot"></span>TanStack Query</span>
+            <span class="chip"><span class="dot"></span>Zod (forms + DTOs)</span>
+            <span class="chip"><span class="dot"></span>React Hook Form</span>
+            <span class="chip"><span class="dot"></span>Pretendard Variable</span>
+            <span class="chip"><span class="dot"></span>PWA (next-pwa)</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>Backend &amp; data</h4>
+          <div class="chips">
+            <span class="chip ink"><span class="dot"></span>Next.js Route Handlers</span>
+            <span class="chip"><span class="dot"></span>PostgreSQL 16 (Supabase)</span>
+            <span class="chip"><span class="dot"></span>Prisma ORM</span>
+            <span class="chip"><span class="dot"></span>Supabase Storage (S3)</span>
+            <span class="chip"><span class="dot"></span>Supabase Realtime (chat)</span>
+            <span class="chip"><span class="dot"></span>Inngest (queues + cron)</span>
+            <span class="chip"><span class="dot"></span>Better-Auth (phone OTP)</span>
+            <span class="chip"><span class="dot"></span>Resend (email)</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h4>Messaging integrations</h4>
+          <div class="chips">
+            <span class="chip rose"><span class="dot"></span>WhatsApp Cloud API (Meta)</span>
+            <span class="chip rose"><span class="dot"></span>Telegram Bot API</span>
+            <span class="chip rose"><span class="dot"></span>Mobizon / SMSC for SMS (KZ)</span>
+          </div>
+          <p style="font-size:12px; color:var(--mute); margin-top:9px;">
+            One outbound abstraction <code>MessageProvider</code>. Per-template channel routing.
+            Webhook ingestion on a dedicated edge route, signed payloads only.
+          </p>
+        </div>
+        <div class="panel">
+          <h4>Infra &amp; ops</h4>
+          <div class="chips">
+            <span class="chip"><span class="dot"></span>Vercel (web + serverless)</span>
+            <span class="chip"><span class="dot"></span>Supabase EU region (data residency)</span>
+            <span class="chip"><span class="dot"></span>Cloudflare DNS</span>
+            <span class="chip"><span class="dot"></span>Sentry (errors)</span>
+            <span class="chip"><span class="dot"></span>PostHog (product analytics)</span>
+            <span class="chip"><span class="dot"></span>GitHub Actions CI</span>
+            <span class="chip"><span class="dot"></span>Playwright e2e</span>
+            <span class="chip"><span class="dot"></span>Vitest unit</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Repo layout (monorepo, single deploy target)</h3>
+      <div class="panel" style="font-family: var(--mono); font-size:12px; white-space: pre; overflow-x:auto; color:var(--ink2); line-height:1.55;">
+knsis/
+├─ app/                       # Next.js App Router
+│  ├─ (marketing)/[locale]/   # public web (mobile-first)
+│  ├─ (auth)/[locale]/        # login flow
+│  ├─ (app)/[locale]/         # authenticated mobile UI
+│  └─ admin/[locale]/         # desktop admin
+├─ components/                # shared UI (shadcn-based)
+├─ lib/                       # db, auth, msg, i18n helpers
+│  └─ messaging/              # whatsapp.ts, telegram.ts, sms.ts
+├─ prisma/                    # schema + migrations + seeds
+├─ inngest/                   # queue handlers (notifications, automation)
+├─ messages/                  # i18n catalogs (kz.json, ru.json, kr.json)
+├─ tests/e2e/                 # Playwright
+└─ docs/                      # ops runbooks, this roadmap</div>
+    </section>
+
+    <!-- 3. RESPONSIVE -->
+    <section id="responsive">
+      <h2><span class="num">03</span> Responsive strategy</h2>
+      <div class="sub">Mobile-first end-user, desktop-first admin. Tablet is a real breakpoint.</div>
+
+      <div class="grid-3">
+        <div class="panel">
+          <h4>Mobile · &lt; 768 px</h4>
+          <p style="font-size:13px;">
+            <b>Primary surface.</b> Designs are pixel-anchored to 390 px. Centered on tablet/desktop
+            inside a 440 px max-width column for the public app. Bottom tab bar, sticky header,
+            full-bleed media, 44 px hit targets, safe-area padding.
+          </p>
+        </div>
+        <div class="panel">
+          <h4>Tablet · 768–1279 px</h4>
+          <p style="font-size:13px;">
+            Public app: stays in mobile column with side decoration (gradient or muted artwork).
+            Admin: hidden behind a "best on desktop" notice with a read-only inbox fallback so a
+            manager can still triage a lead from an iPad.
+          </p>
+        </div>
+        <div class="panel">
+          <h4>Desktop · ≥ 1280 px</h4>
+          <p style="font-size:13px;">
+            Admin is its own canvas — 220 px sidebar, fluid main, 300 px detail drawer.
+            Public app remains a centered mobile column with a marketing aside on Home/KV
+            (clinic spotlight, latest reviews, language switcher).
+          </p>
+        </div>
+      </div>
+
+      <h3>Breakpoint contract (Tailwind tokens)</h3>
+      <div class="kvs">
+        <div class="k">sm</div><div class="v">≥ 640 px — large mobile / small tablet portrait</div>
+        <div class="k">md</div><div class="v">≥ 768 px — tablet portrait threshold (public app gets aside decoration)</div>
+        <div class="k">lg</div><div class="v">≥ 1024 px — tablet landscape (admin shows full sidebar)</div>
+        <div class="k">xl</div><div class="v">≥ 1280 px — desktop admin layout (sidebar + table + drawer)</div>
+        <div class="k">2xl</div><div class="v">≥ 1536 px — admin gets extra column for activity feed</div>
+      </div>
+
+      <h3>Per-screen targets</h3>
+      <ul>
+        <li><b>Mobile suite</b> (20 screens incl. Onboarding, Home, Categories, Treatment, Clinics, Reviews, Form, Done, MyPage, Korea Visit, Login, Before/After, Notifications, Chat, Search, Settings): mobile-first, centered ≤ 440 px column on larger screens.</li>
+        <li><b>Admin suite</b> (10 screens incl. Dashboard, Leads, Customers, Clinics, Reviews mod, Managers, Notif templates, Automation, Send log, B/A mgmt): desktop-first at <code>≥ 1280 px</code>. Below <code>lg</code> serve a degraded "go to desktop" or read-only view.</li>
+      </ul>
+    </section>
+
+    <!-- 4. IA -->
+    <section id="ia">
+      <h2><span class="num">04</span> Information architecture</h2>
+      <div class="sub">28 designed screens grouped by surface. Routes are i18n-prefixed.</div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h4>Public (unauthenticated)</h4>
+          <ul>
+            <li><code>/[locale]</code> — Onboarding / language pick</li>
+            <li><code>/[locale]/home</code> — Home</li>
+            <li><code>/[locale]/categories</code> — Treatment categories</li>
+            <li><code>/[locale]/treatments/[slug]</code> — Treatment detail</li>
+            <li><code>/[locale]/clinics</code> — Clinic list</li>
+            <li><code>/[locale]/clinics/[slug]</code> — Clinic detail</li>
+            <li><code>/[locale]/reviews</code> — Review feed</li>
+            <li><code>/[locale]/before-after</code> — B/A gallery</li>
+            <li><code>/[locale]/korea-visit</code> — Korea visit landing</li>
+            <li><code>/[locale]/search?q=</code> — Search results</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>Authenticated user</h4>
+          <ul>
+            <li><code>/[locale]/login</code> · <code>/otp</code> · <code>/consent</code></li>
+            <li><code>/[locale]/consult/new</code> — Consult form</li>
+            <li><code>/[locale]/consult/[id]</code> — Done / status</li>
+            <li><code>/[locale]/korea-visit/plan</code> · <code>/confirmed</code></li>
+            <li><code>/[locale]/me</code> — My page</li>
+            <li><code>/[locale]/me/settings</code> — Settings</li>
+            <li><code>/[locale]/me/notifications</code> — Inbox</li>
+            <li><code>/[locale]/me/chat</code> — Manager chat</li>
+          </ul>
+        </div>
+        <div class="panel" style="grid-column: 1 / -1;">
+          <h4>Admin (desktop)</h4>
+          <div class="grid-3" style="margin-top:6px; gap:8px;">
+            <ul style="margin:0;">
+              <li><code>/admin/dashboard</code></li>
+              <li><code>/admin/leads</code></li>
+              <li><code>/admin/leads/[id]</code></li>
+              <li><code>/admin/customers</code></li>
+            </ul>
+            <ul style="margin:0;">
+              <li><code>/admin/clinics</code></li>
+              <li><code>/admin/clinics/[id]</code></li>
+              <li><code>/admin/reviews</code> (moderation)</li>
+              <li><code>/admin/before-after</code></li>
+            </ul>
+            <ul style="margin:0;">
+              <li><code>/admin/managers</code></li>
+              <li><code>/admin/notifications/templates</code></li>
+              <li><code>/admin/notifications/automation</code></li>
+              <li><code>/admin/notifications/log</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. ROADMAP -->
+    <section id="roadmap">
+      <h2><span class="num">05</span> Phased roadmap</h2>
+      <div class="sub">7 phases, ~12 weeks to general availability. Each phase ships a thin vertical slice.</div>
+
+      <div class="phases">
+        <div class="phase">
+          <div class="id">M0 · WEEK 1–2</div>
+          <div class="ttl">Foundation</div>
+          <div class="span">Setup, design tokens, base UI, auth scaffold</div>
+          <ul>
+            <li>Repo, CI/CD, preview deploys</li>
+            <li>Tailwind config + design tokens (rose / lavender / beige palette)</li>
+            <li>Pretendard load, i18n routing (KZ default)</li>
+            <li>Database, Prisma, seed users + clinics</li>
+            <li>App shell: header, bottom tab, top app bar, CTA, badges, cards</li>
+            <li>Phone OTP scaffold (mock provider)</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> deployable shell at <code>knsis.kz/preview</code>; design tokens locked.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M1 · WEEK 2–3</div>
+          <div class="ttl">Auth &amp; profile</div>
+          <div class="span">Real OTP, consent, basic profile</div>
+          <ul>
+            <li>Wire OTP to Mobizon / Twilio Verify (KZ + KR numbers)</li>
+            <li>Login → OTP → consent permissions flow (3 screens)</li>
+            <li>Session, refresh, sign-out</li>
+            <li>My page (read-only) + Settings stub</li>
+            <li>RBAC primitives (customer / manager / head / admin / support)</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> users can sign in, see empty My page, sign out.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M2 · WEEK 3–5</div>
+          <div class="ttl">Discovery surface</div>
+          <div class="span">Public, browsable site without lead capture</div>
+          <ul>
+            <li>Home (Hero, popular categories, Korea/local sections, review strip)</li>
+            <li>Categories grid + filters (area, concern, language)</li>
+            <li>Treatment detail (info, expects, related clinics)</li>
+            <li>Clinic list + detail (verified badges, hours, interpreters)</li>
+            <li>Reviews feed (read-only)</li>
+            <li>Before/After gallery (mobile)</li>
+            <li>Search results screen (treatment + clinic + review)</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> entire public site is browsable in 3 languages.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M3 · WEEK 4–6</div>
+          <div class="ttl">Lead capture</div>
+          <div class="span">Real consult flow + handoff to managers</div>
+          <ul>
+            <li>Consult form (multi-step, optional photo upload)</li>
+            <li>Done / status screen with timeline</li>
+            <li>Lead lands in <code>/admin/leads</code> with WA/TG deep-link</li>
+            <li>Photo upload to Supabase Storage with presigned URLs</li>
+            <li>Spam &amp; rate limiting (Turnstile, 5 leads / IP / day)</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> e2e — submit a lead, see it in admin inbox.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M4 · WEEK 5–7</div>
+          <div class="ttl">Korea visit + Chat + Notifications</div>
+          <div class="span">Highest-touch user surface</div>
+          <ul>
+            <li>KV landing → plan form → confirmation</li>
+            <li>In-app chat with manager (Supabase Realtime)</li>
+            <li>Notifications inbox + push (web push) opt-in</li>
+            <li>Outbound message log linkage (WhatsApp / Telegram)</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> end-to-end VIP path: discover → consult → chat → KV plan.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M5 · WEEK 6–9</div>
+          <div class="ttl">Admin core</div>
+          <div class="span">Manager workbench (desktop)</div>
+          <ul>
+            <li>Admin shell (sidebar + topbar + drawer pattern)</li>
+            <li>Dashboard (KPI · funnel · 7-day · channel · sources · manager load)</li>
+            <li>Leads — table, filters, status pills, detail drawer, assignment</li>
+            <li>Customers — segments, search, profile</li>
+            <li>Clinics — grid + verification states</li>
+            <li>Reviews moderation — approve / reject / request edit</li>
+            <li>Managers — roles &amp; permission matrix</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> a manager can run their whole day inside the admin.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M6 · WEEK 8–10</div>
+          <div class="ttl">Notifications workflow</div>
+          <div class="span">Templates · automation · send log · B/A mgmt</div>
+          <ul>
+            <li>Template editor (WA / TG / SMS / Email, 3 languages, variables)</li>
+            <li>Automation rules (trigger → delay → channel → template)</li>
+            <li>Inngest workers + retry semantics</li>
+            <li>Send log with delivery status (queued / sent / read / failed)</li>
+            <li>B/A admin (upload, consent capture, retire)</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> "lead received → templated WhatsApp out in 5 min" works hands-off.</div>
+        </div>
+
+        <div class="phase">
+          <div class="id">M7 · WEEK 10–12</div>
+          <div class="ttl">Hardening &amp; launch</div>
+          <div class="span">Perf · a11y · i18n QA · security · soft launch</div>
+          <ul>
+            <li>Perf budget (LCP &lt; 2.5 s on mid-tier Android)</li>
+            <li>a11y sweep (WCAG 2.1 AA on public flow)</li>
+            <li>i18n QA pass with native KZ &amp; KR speakers</li>
+            <li>Pen test, OWASP top 10, rate limits, audit logs</li>
+            <li>Soft launch to 50 users → fixes → public launch</li>
+          </ul>
+          <div class="out"><b>Deliverable:</b> GA. Runbooks committed under <code>docs/</code>.</div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><b>Critical path:</b> M0 → M1 → M2 → M3 → M5 → M7</span>
+        <span><b>Parallelizable after M2:</b> M4 (chat) and M6 (notifications) split across 2 devs</span>
+      </div>
+    </section>
+
+    <!-- 6. WBS -->
+    <section id="wbs">
+      <h2><span class="num">06</span> WBS — work breakdown</h2>
+      <div class="sub">Task-level breakdown with dependencies, owner, estimate in person-days.</div>
+
+      <div class="legend">
+        <span>Owners: <span class="who fe" style="font-size:10px;padding:2px 6px;border-radius:3px;background:var(--roseTint);color:var(--roseDeep);font-weight:700;">FE</span> frontend ·
+        <span class="who be" style="font-size:10px;padding:2px 6px;border-radius:3px;background:#E5F4EC;color:var(--success);font-weight:700;">BE</span> backend ·
+        <span class="who de" style="font-size:10px;padding:2px 6px;border-radius:3px;background:var(--lavSoft);color:#5E4B82;font-weight:700;">DE</span> designer ·
+        <span class="who ops" style="font-size:10px;padding:2px 6px;border-radius:3px;background:var(--beigeSoft);color:#7A6A4A;font-weight:700;">OPS</span> ops ·
+        <span class="who qa" style="font-size:10px;padding:2px 6px;border-radius:3px;background:#FFF5E1;color:var(--warn);font-weight:700;">QA</span> qa</span>
+      </div>
+
+      <div class="wbs-wrap" style="margin-top:14px;">
+        <table class="wbs">
+          <thead>
+            <tr>
+              <th style="width:80px;">ID</th>
+              <th>Task</th>
+              <th>Deliverable / DoD</th>
+              <th style="width:90px;">Deps</th>
+              <th style="width:60px;">Est</th>
+              <th style="width:60px;">Owner</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="phase-row"><td class="id">M0</td><td colspan="5">FOUNDATION · setup, tokens, shell</td></tr>
+            <tr><td class="id">M0-01</td><td class="task">Bootstrap monorepo</td><td class="deliv">Next.js 14, TS strict, Tailwind, ESLint, Prettier, Husky pre-commit</td><td class="dep">—</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M0-02</td><td class="task">CI/CD + Vercel previews</td><td class="deliv">PR previews auto-deploy; main → prod; preview URL in PR comment</td><td class="dep">M0-01</td><td class="est">1</td><td class="owner"><span class="who ops">OPS</span></td></tr>
+            <tr><td class="id">M0-03</td><td class="task">Supabase project + Prisma schema v0</td><td class="deliv">EU region; <code>User Lead Clinic Treatment Review</code> tables; first migration</td><td class="dep">M0-02</td><td class="est">2</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M0-04</td><td class="task">Design tokens → Tailwind theme</td><td class="deliv">Rose / Lavender / Beige palette; Pretendard variable; spacing &amp; radii match design</td><td class="dep">M0-01</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M0-05</td><td class="task">Base components (shadcn variants)</td><td class="deliv">CTA, Badge, Card, Input, Select, Topbar, BottomTab, NavProvider — match prototype API</td><td class="dep">M0-04</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M0-06</td><td class="task">i18n scaffold (next-intl)</td><td class="deliv"><code>/[locale]</code> routing; KZ default; middleware redirect; 3 catalogs stubbed</td><td class="dep">M0-04</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M0-07</td><td class="task">PWA manifest + icons</td><td class="deliv">Installable on Android Chrome; offline shell fallback</td><td class="dep">M0-01</td><td class="est">1</td><td class="owner"><span class="who fe">FE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M1</td><td colspan="5">AUTH &amp; PROFILE</td></tr>
+            <tr><td class="id">M1-01</td><td class="task">Phone OTP integration</td><td class="deliv">Mobizon (KZ) + Twilio (intl) provider; rate-limited; 4-digit codes; 5-min TTL</td><td class="dep">M0-03</td><td class="est">3</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M1-02</td><td class="task">Login → OTP → Consent UI</td><td class="deliv">3 screens; auto-detect country code; resend after 30 s</td><td class="dep">M0-05, M1-01</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M1-03</td><td class="task">Session + middleware</td><td class="deliv">HTTP-only cookies, refresh rotation, sign-out everywhere</td><td class="dep">M1-01</td><td class="est">1.5</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M1-04</td><td class="task">My page (read-only)</td><td class="deliv">Profile, consult count, favorites placeholders, language switcher</td><td class="dep">M0-05, M1-03</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M1-05</td><td class="task">RBAC primitives</td><td class="deliv">Roles enum; <code>requireRole()</code> server util; permissions matrix in code matches spec</td><td class="dep">M1-03</td><td class="est">2</td><td class="owner"><span class="who be">BE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M2</td><td colspan="5">DISCOVERY SURFACE</td></tr>
+            <tr><td class="id">M2-01</td><td class="task">Home page</td><td class="deliv">Hero, search entry, popular categories, Korea+local clinic strips, review strip — 3 langs</td><td class="dep">M0-05, M0-06</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-02</td><td class="task">Categories + filters</td><td class="deliv">Grid; area/concern/language facets; URL-state filters</td><td class="dep">M2-01</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-03</td><td class="task">Treatment detail</td><td class="deliv">Info blocks, expects, recommended-for, related clinics, disclaimer</td><td class="dep">M2-02</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-04</td><td class="task">Clinics list + tabs</td><td class="deliv">All / Korea / Local; sort by reviews/popularity; verified badge</td><td class="dep">M2-01</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-05</td><td class="task">Clinic detail</td><td class="deliv">Hours, interpreters, treatments, B/A strip, certification info</td><td class="dep">M2-04</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-06</td><td class="task">Reviews feed</td><td class="deliv">Filter by treatment/region/clinic; star average; disclaimer footer</td><td class="dep">M2-03</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-07</td><td class="task">Before/After gallery</td><td class="deliv">Mobile-only; consent banner; slider compare component</td><td class="dep">M2-06</td><td class="est">1.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-08</td><td class="task">Search results</td><td class="deliv">Server search across treatments + clinics + reviews; recent + trending; highlighting</td><td class="dep">M0-03, M2-03, M2-05</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M2-09</td><td class="task">Seed content pipeline</td><td class="deliv">CMS-less; treatments &amp; clinics as JSON-in-DB; admin can import CSV</td><td class="dep">M0-03</td><td class="est">2</td><td class="owner"><span class="who be">BE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M3</td><td colspan="5">LEAD CAPTURE</td></tr>
+            <tr><td class="id">M3-01</td><td class="task">Consult form (multi-step)</td><td class="deliv">Basic info, interest, region, method, photos, consents, message; resumable; validates client+server</td><td class="dep">M2-03, M1-03</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M3-02</td><td class="task">Photo upload pipeline</td><td class="deliv">Presigned PUT to Supabase Storage; client-side resize; EXIF strip</td><td class="dep">M0-03</td><td class="est">2</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M3-03</td><td class="task">Lead create endpoint</td><td class="deliv"><code>POST /api/leads</code>; idempotent; emits <code>lead.created</code> event for Inngest</td><td class="dep">M3-01, M3-02</td><td class="est">1.5</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M3-04</td><td class="task">Done / status screen</td><td class="deliv">Order summary, timeline, expected next steps</td><td class="dep">M3-03</td><td class="est">1</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M3-05</td><td class="task">Spam &amp; rate-limit</td><td class="deliv">Turnstile widget; 5 leads / IP / day; 1 lead / phone / 10 min</td><td class="dep">M3-03</td><td class="est">1</td><td class="owner"><span class="who be">BE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M4</td><td colspan="5">KV · CHAT · NOTIFICATIONS</td></tr>
+            <tr><td class="id">M4-01</td><td class="task">Korea visit landing + form + confirm</td><td class="deliv">3 screens; airport/hotel/interpreter selectors; creates KV record on lead</td><td class="dep">M3-03</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M4-02</td><td class="task">In-app chat (Realtime)</td><td class="deliv">Supabase Realtime channel per lead; typing indicator; read receipts; manager rich cards</td><td class="dep">M1-03</td><td class="est">4</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M4-03</td><td class="task">Notifications inbox</td><td class="deliv">Consult / review / promo tabs; today/earlier groups; unread tracking</td><td class="dep">M4-02</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M4-04</td><td class="task">Web push opt-in</td><td class="deliv">Permission prompt; VAPID; per-channel toggles in Settings</td><td class="dep">M4-03</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M4-05</td><td class="task">Settings screen</td><td class="deliv">Language, profile, notif channel toggles, privacy, data download, delete account</td><td class="dep">M1-04</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M5</td><td colspan="5">ADMIN CORE</td></tr>
+            <tr><td class="id">M5-01</td><td class="task">Admin shell</td><td class="deliv">Sidebar + topbar + drawer; route guard <code>requireRole('manager+')</code>; theme</td><td class="dep">M1-05</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M5-02</td><td class="task">Dashboard</td><td class="deliv">5 KPIs · funnel · 7-day bars · channels · sources · manager load · activity feed</td><td class="dep">M5-01, M3-03</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M5-03</td><td class="task">Leads list + drawer</td><td class="deliv">Table, status pills, owner/clinic assignment, notes, activity log; URL-state filters</td><td class="dep">M5-01, M3-03</td><td class="est">4</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M5-04</td><td class="task">Customers</td><td class="deliv">Segments (active/repeat/VIP/dormant), search, profile drawer, tag editor</td><td class="dep">M5-01</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M5-05</td><td class="task">Clinics admin</td><td class="deliv">Grid; verify / suspend; CRUD; CSV import</td><td class="dep">M5-01, M2-09</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M5-06</td><td class="task">Review moderation</td><td class="deliv">Approve / reject / request edit; photo consent check; price-keyword scan</td><td class="dep">M5-01, M2-06</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M5-07</td><td class="task">Managers &amp; permissions</td><td class="deliv">Invite via email; online presence; role editor; permission matrix view</td><td class="dep">M1-05</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M6</td><td colspan="5">NOTIFICATIONS WORKFLOW</td></tr>
+            <tr><td class="id">M6-01</td><td class="task">Template store + editor</td><td class="deliv">Per-channel + per-language bodies; variables; preview; price-mention guard</td><td class="dep">M5-01</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M6-02</td><td class="task">Automation rules</td><td class="deliv">Trigger × delay × channel × template; visual rule list; pause / resume</td><td class="dep">M6-01</td><td class="est">2.5</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+            <tr><td class="id">M6-03</td><td class="task">Inngest workers</td><td class="deliv"><code>lead.created → welcome</code>; <code>visit.confirmed → reminder@-24h</code>; <code>review@+14d</code>; retries with backoff</td><td class="dep">M6-02</td><td class="est">2.5</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M6-04</td><td class="task">WhatsApp Cloud API adapter</td><td class="deliv">Send + webhook receive; template registration; status callbacks</td><td class="dep">M6-03</td><td class="est">4</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M6-05</td><td class="task">Telegram bot adapter</td><td class="deliv">Send via bot token; deep-link handover; webhook; status callbacks</td><td class="dep">M6-03</td><td class="est">2</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M6-06</td><td class="task">SMS adapter (Mobizon)</td><td class="deliv">Fallback for non-WA users; per-country routing</td><td class="dep">M6-03</td><td class="est">1.5</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M6-07</td><td class="task">Send log UI</td><td class="deliv">Queued/sent/read/failed; filter by channel/template/manager; retry button</td><td class="dep">M6-04, M6-05, M6-06</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M6-08</td><td class="task">B/A admin</td><td class="deliv">Upload, consent capture, retire; tied to a customer record</td><td class="dep">M5-01, M2-07</td><td class="est">2</td><td class="owner"><span class="who fe">FE</span> <span class="who be">BE</span></td></tr>
+
+            <tr class="phase-row"><td class="id">M7</td><td colspan="5">QA · HARDENING · LAUNCH</td></tr>
+            <tr><td class="id">M7-01</td><td class="task">Perf budget &amp; Lighthouse</td><td class="deliv">LCP &lt; 2.5 s, CLS &lt; 0.1, TBT &lt; 200 ms on Moto G4 throttled 3G</td><td class="dep">M5, M6</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span></td></tr>
+            <tr><td class="id">M7-02</td><td class="task">a11y sweep (WCAG 2.1 AA)</td><td class="deliv">All public flows pass axe + manual screen-reader; focus visible; skip links</td><td class="dep">M5</td><td class="est">3</td><td class="owner"><span class="who fe">FE</span> <span class="who qa">QA</span></td></tr>
+            <tr><td class="id">M7-03</td><td class="task">i18n QA pass</td><td class="deliv">Native KZ &amp; KR review; date/number locale; RTL not required</td><td class="dep">M5, M6</td><td class="est">2</td><td class="owner"><span class="who qa">QA</span></td></tr>
+            <tr><td class="id">M7-04</td><td class="task">Security review</td><td class="deliv">OWASP top 10; rate limits on every mutating route; PII encryption at rest; audit log</td><td class="dep">M5, M6</td><td class="est">3</td><td class="owner"><span class="who be">BE</span></td></tr>
+            <tr><td class="id">M7-05</td><td class="task">Playwright e2e suite</td><td class="deliv">Happy paths: discover→lead→admin assign→send WA→done. Runs on PR.</td><td class="dep">M3, M5</td><td class="est">3</td><td class="owner"><span class="who qa">QA</span></td></tr>
+            <tr><td class="id">M7-06</td><td class="task">Soft launch</td><td class="deliv">50 invited users · 5 managers · 7-day window · daily standup</td><td class="dep">M7-01..05</td><td class="est">5</td><td class="owner"><span class="who ops">OPS</span></td></tr>
+            <tr><td class="id">M7-07</td><td class="task">GA — public launch</td><td class="deliv">DNS cutover, status page, on-call rota, marketing handoff</td><td class="dep">M7-06</td><td class="est">2</td><td class="owner"><span class="who ops">OPS</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="legend" style="margin-top:14px;">
+        <span><b>Total estimate:</b> ~125 person-days across FE/BE/DE/OPS/QA</span>
+        <span><b>2-person team:</b> ~12 weeks · <b>3-person team:</b> ~9 weeks · <b>Solo + Claude Code:</b> ~16 weeks</span>
+      </div>
+    </section>
+
+    <!-- 7. DATA -->
+    <section id="data">
+      <h2><span class="num">07</span> Data model</h2>
+      <div class="sub">Prisma-ish. Soft-delete where reasonable. UUIDs. Timestamps on everything.</div>
+
+      <div class="grid-2">
+        <div class="entity">
+          <div class="head"><span class="name">User</span><span class="desc">end customer or staff</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">id</div><div class="col2">uuid pk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">phone</div><div class="col2">string uniq</div><div class="col3">E.164</div></div>
+            <div class="field"><div class="col1">name</div><div class="col2">string?</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">email</div><div class="col2">string?</div><div class="col3">optional</div></div>
+            <div class="field"><div class="col1">locale</div><div class="col2">enum</div><div class="col3">kz · ru · kr</div></div>
+            <div class="field"><div class="col1">role</div><div class="col2">enum</div><div class="col3">customer · support · manager · head · admin</div></div>
+            <div class="field"><div class="col1">consentTos</div><div class="col2">bool</div><div class="col3">required</div></div>
+            <div class="field"><div class="col1">consentMkt</div><div class="col2">bool</div><div class="col3">optional</div></div>
+          </div>
+        </div>
+
+        <div class="entity">
+          <div class="head"><span class="name">Lead</span><span class="desc">consultation request</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">id</div><div class="col2">uuid pk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">code</div><div class="col2">string uniq</div><div class="col3"><code>KB-2025-####</code></div></div>
+            <div class="field"><div class="col1">userId</div><div class="col2">fk User</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">channelPref</div><div class="col2">enum</div><div class="col3">wa · tg · sms · email</div></div>
+            <div class="field"><div class="col1">treatmentIds</div><div class="col2">uuid[]</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">regions</div><div class="col2">string[]</div><div class="col3">almaty · astana · seoul…</div></div>
+            <div class="field"><div class="col1">kind</div><div class="col2">enum[]</div><div class="col3">korea · local</div></div>
+            <div class="field"><div class="col1">status</div><div class="col2">enum</div><div class="col3">new · contacted · in_progress · scheduled · done · on_hold</div></div>
+            <div class="field"><div class="col1">ownerId</div><div class="col2">fk User?</div><div class="col3">assigned manager</div></div>
+            <div class="field"><div class="col1">clinicId</div><div class="col2">fk Clinic?</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">photos</div><div class="col2">string[]</div><div class="col3">storage paths</div></div>
+            <div class="field"><div class="col1">message</div><div class="col2">text?</div><div class="col3"></div></div>
+          </div>
+        </div>
+
+        <div class="entity">
+          <div class="head"><span class="name">Clinic</span><span class="desc">partner clinic</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">id</div><div class="col2">uuid pk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">slug</div><div class="col2">string uniq</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">name</div><div class="col2">i18n</div><div class="col3">{ kz · ru · kr }</div></div>
+            <div class="field"><div class="col1">kind</div><div class="col2">enum</div><div class="col3">korea · local</div></div>
+            <div class="field"><div class="col1">location</div><div class="col2">json</div><div class="col3">{ country, city, area, geo }</div></div>
+            <div class="field"><div class="col1">interpreters</div><div class="col2">string[]</div><div class="col3">kz · ru · kr · en</div></div>
+            <div class="field"><div class="col1">treatmentIds</div><div class="col2">uuid[]</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">verifyState</div><div class="col2">enum</div><div class="col3">verified · pending · suspended</div></div>
+            <div class="field"><div class="col1">hours</div><div class="col2">json</div><div class="col3">weekday + holidays</div></div>
+          </div>
+        </div>
+
+        <div class="entity">
+          <div class="head"><span class="name">Treatment</span><span class="desc">catalog item, no price field</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">id</div><div class="col2">uuid pk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">slug</div><div class="col2">string uniq</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">category</div><div class="col2">enum</div><div class="col3">skin · botox · filler · lift · acne · pigment · hair · cosmetic · scalp</div></div>
+            <div class="field"><div class="col1">title</div><div class="col2">i18n</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">summary</div><div class="col2">i18n</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">durationMin</div><div class="col2">int</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">recovery</div><div class="col2">i18n</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">expects</div><div class="col2">i18n[]</div><div class="col3">bullet list</div></div>
+          </div>
+        </div>
+
+        <div class="entity">
+          <div class="head"><span class="name">Review</span><span class="desc">moderated user review</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">id</div><div class="col2">uuid pk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">code</div><div class="col2">string uniq</div><div class="col3"><code>RV-2025-###</code></div></div>
+            <div class="field"><div class="col1">userId</div><div class="col2">fk User</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">clinicId / txId</div><div class="col2">fk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">rating</div><div class="col2">int 1..5</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">body</div><div class="col2">text</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">photos</div><div class="col2">string[]</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">photoConsent</div><div class="col2">bool</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">state</div><div class="col2">enum</div><div class="col3">pending · flagged · published · rejected</div></div>
+          </div>
+        </div>
+
+        <div class="entity">
+          <div class="head"><span class="name">Message</span><span class="desc">in-app + outbound log</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">id</div><div class="col2">uuid pk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">leadId</div><div class="col2">fk Lead</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">channel</div><div class="col2">enum</div><div class="col3">inapp · wa · tg · sms · email</div></div>
+            <div class="field"><div class="col1">direction</div><div class="col2">enum</div><div class="col3">in · out</div></div>
+            <div class="field"><div class="col1">body</div><div class="col2">text</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">templateId</div><div class="col2">fk?</div><div class="col3">if templated</div></div>
+            <div class="field"><div class="col1">status</div><div class="col2">enum</div><div class="col3">queued · sent · delivered · read · failed</div></div>
+            <div class="field"><div class="col1">providerId</div><div class="col2">string?</div><div class="col3">external message id</div></div>
+          </div>
+        </div>
+
+        <div class="entity">
+          <div class="head"><span class="name">Template</span><span class="desc">message template, per-channel + i18n</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">id</div><div class="col2">uuid pk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">key</div><div class="col2">string uniq</div><div class="col3">welcome · reminder · review …</div></div>
+            <div class="field"><div class="col1">channels</div><div class="col2">enum[]</div><div class="col3">wa · tg · sms · email</div></div>
+            <div class="field"><div class="col1">bodies</div><div class="col2">json</div><div class="col3">{ channel × locale → string }</div></div>
+            <div class="field"><div class="col1">vars</div><div class="col2">string[]</div><div class="col3">{{name}} {{date}}…</div></div>
+            <div class="field"><div class="col1">auto</div><div class="col2">bool</div><div class="col3">enrolled in automation</div></div>
+          </div>
+        </div>
+
+        <div class="entity">
+          <div class="head"><span class="name">AutomationRule</span><span class="desc">trigger → delay → template</span></div>
+          <div class="fields">
+            <div class="field"><div class="col1">id</div><div class="col2">uuid pk</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">trigger</div><div class="col2">enum</div><div class="col3">lead.created · status.changed · visit.confirmed · review.due</div></div>
+            <div class="field"><div class="col1">delayMin</div><div class="col2">int</div><div class="col3">minutes after trigger</div></div>
+            <div class="field"><div class="col1">templateId</div><div class="col2">fk Template</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">channel</div><div class="col2">enum</div><div class="col3"></div></div>
+            <div class="field"><div class="col1">paused</div><div class="col2">bool</div><div class="col3"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <p style="font-size:12px; color:var(--mute); margin-top:14px;">
+        Also: <code>KoreaVisit</code> (flights, hotel, pickup, dates), <code>Favorite</code>,
+        <code>Notification</code> (in-app inbox row), <code>AuditLog</code>, <code>Session</code>.
+        Full Prisma file should land in <code>prisma/schema.prisma</code> in M0-03.
+      </p>
+    </section>
+
+    <!-- 8. API -->
+    <section id="api">
+      <h2><span class="num">08</span> API surface</h2>
+      <div class="sub">REST under <code>/api</code>. Auth via cookie. All mutating routes rate-limited.</div>
+
+      <h3>Public &amp; user</h3>
+      <div class="api">
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/auth/otp/send</div><div class="d">Send OTP to a phone</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/auth/otp/verify</div><div class="d">Verify code, start session</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/auth/signout</div><div class="d">Kill all sessions</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/treatments?category=lift&amp;locale=kz</div><div class="d">List + filters</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/treatments/[slug]</div><div class="d">Detail</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/clinics?kind=korea</div><div class="d">List</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/clinics/[slug]</div><div class="d">Detail</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/reviews?txId=…</div><div class="d">Filtered feed</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/search?q=…</div><div class="d">Treatments + clinics + reviews</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/leads</div><div class="d">Create consultation (auth)</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/leads/me</div><div class="d">My consultations</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/uploads/sign</div><div class="d">Presigned URL for photo</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/me/notifications</div><div class="d">Inbox</div></div>
+        <div class="ep"><div class="v patch">PATCH</div><div class="p">/api/me/settings</div><div class="d">Notif channels, language, privacy</div></div>
+        <div class="ep"><div class="v del">DEL</div><div class="p">/api/me</div><div class="d">Delete account (PII purge + audit)</div></div>
+      </div>
+
+      <h3>Admin</h3>
+      <div class="api">
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/admin/leads?status=new&amp;owner=me</div><div class="d">Inbox</div></div>
+        <div class="ep"><div class="v patch">PATCH</div><div class="p">/api/admin/leads/[id]</div><div class="d">Update status / owner / clinic / notes</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/admin/leads/[id]/messages</div><div class="d">Send templated message via channel</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/admin/customers?seg=vip</div><div class="d">List + segments</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/admin/clinics</div><div class="d">List</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/admin/clinics</div><div class="d">Create</div></div>
+        <div class="ep"><div class="v patch">PATCH</div><div class="p">/api/admin/clinics/[id]</div><div class="d">Verify / suspend</div></div>
+        <div class="ep"><div class="v patch">PATCH</div><div class="p">/api/admin/reviews/[id]</div><div class="d">Approve / reject / request edit</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/admin/templates</div><div class="d">List</div></div>
+        <div class="ep"><div class="v patch">PATCH</div><div class="p">/api/admin/templates/[id]</div><div class="d">Save body / vars / channels</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/admin/templates/[id]/test</div><div class="d">Send test to manager</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/admin/automation</div><div class="d">Rules list</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/admin/automation</div><div class="d">Create rule</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/admin/messages?status=failed</div><div class="d">Send log</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/admin/messages/[id]/retry</div><div class="d">Resend</div></div>
+        <div class="ep"><div class="v get">GET</div><div class="p">/api/admin/managers</div><div class="d">Team</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/admin/managers/invite</div><div class="d">Invite by email</div></div>
+      </div>
+
+      <h3>Webhooks (signed)</h3>
+      <div class="api">
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/webhooks/whatsapp</div><div class="d">Inbound + delivery / read</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/webhooks/telegram</div><div class="d">Inbound + delivery</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/webhooks/sms</div><div class="d">Delivery</div></div>
+        <div class="ep"><div class="v post">POST</div><div class="p">/api/webhooks/inngest</div><div class="d">Queue runner callback</div></div>
+      </div>
+    </section>
+
+    <!-- 9. INTEGRATIONS -->
+    <section id="integrations">
+      <h2><span class="num">09</span> Integrations</h2>
+      <div class="sub">Three messaging providers behind one abstraction. Phone OTP. Storage. Analytics.</div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h4>WhatsApp Business (Meta Cloud API)</h4>
+          <ul>
+            <li>Pre-approved <b>message templates</b> for outbound; freeform allowed within 24-h window after a customer reply.</li>
+            <li>Webhook ingestion at <code>/api/webhooks/whatsapp</code>; signature verification mandatory.</li>
+            <li>Per-template registration in Meta Business Manager — automated via API where possible.</li>
+            <li>Owner: <span class="who be" style="font-size:10px;padding:2px 6px;border-radius:3px;background:#E5F4EC;color:var(--success);font-weight:700;">BE</span> WBS M6-04 · ~4 days incl. Meta verification.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>Telegram Bot API</h4>
+          <ul>
+            <li>One bot per region; users initiate by deep-link from Done screen.</li>
+            <li>No template approval — much faster to ship and freer copy.</li>
+            <li>Owner: <span class="who be" style="font-size:10px;padding:2px 6px;border-radius:3px;background:#E5F4EC;color:var(--success);font-weight:700;">BE</span> WBS M6-05 · ~2 days.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>SMS (Mobizon for KZ, fallback)</h4>
+          <ul>
+            <li>Used only when user has no WA / TG identity, and for OTP.</li>
+            <li>Sender ID needs operator approval per country.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>Other</h4>
+          <ul>
+            <li><b>Phone OTP:</b> Mobizon for KZ +7; Twilio Verify for other origins.</li>
+            <li><b>Storage:</b> Supabase Storage; private bucket; presigned PUT/GET.</li>
+            <li><b>Email:</b> Resend; transactional only (no marketing in v1).</li>
+            <li><b>Analytics:</b> PostHog; product events + funnels + session replay (with PII masking).</li>
+            <li><b>Errors:</b> Sentry; source maps; release health.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. i18n -->
+    <section id="i18n">
+      <h2><span class="num">10</span> i18n &amp; content</h2>
+      <div class="sub">Three first-class languages. KZ default. Catalogs are source-of-truth, DB rows hold per-locale JSON.</div>
+
+      <ul>
+        <li><b>Static copy</b> lives in <code>/messages/{kz,ru,kr}.json</code> under <code>next-intl</code>. Mirror the existing <code>i18n.jsx</code> tree.</li>
+        <li><b>Dynamic content</b> (treatments, clinics, templates) stores localized fields as JSON columns: <code>{ kz: "...", ru: "...", kr: "..." }</code>. Helper <code>t(field, locale)</code> with fallback chain <code>kz → ru → kr</code>.</li>
+        <li><b>URL strategy:</b> <code>/[locale]</code> prefix; default <code>kz</code>; <code>Accept-Language</code> sniff on first visit only.</li>
+        <li><b>Pluralization:</b> next-intl ICU plural rules; KZ uses Russian plural form set.</li>
+        <li><b>Fonts:</b> Pretendard Variable covers Latin, Cyrillic, Hangul; system fallback for rare Kazakh extended glyphs (<code>ә ң ғ қ ұ ү һ і</code>) is a no-op on modern devices.</li>
+        <li><b>Translation workflow:</b> KZ master written by product; RU + KR done by native reviewers each sprint. PR-blocking lint: no untranslated keys before merge.</li>
+      </ul>
+    </section>
+
+    <!-- 11. PERMISSIONS -->
+    <section id="perms">
+      <h2><span class="num">11</span> Admin permissions matrix</h2>
+      <div class="sub">Lifted directly from the Managers screen — encode in <code>lib/auth/rbac.ts</code>.</div>
+
+      <div class="wbs-wrap">
+        <table class="wbs">
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>Head</th>
+              <th>Manager</th>
+              <th>Support</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="task">Leads</td><td>Admin</td><td>Edit</td><td>View</td></tr>
+            <tr><td class="task">Customers</td><td>Admin</td><td>Edit</td><td>View</td></tr>
+            <tr><td class="task">Clinics</td><td>Admin</td><td>View</td><td>View</td></tr>
+            <tr><td class="task">Templates</td><td>Admin</td><td>Edit</td><td>—</td></tr>
+            <tr><td class="task">Automation</td><td>Admin</td><td>View</td><td>—</td></tr>
+            <tr><td class="task">Review moderation</td><td>Admin</td><td>Edit</td><td>Edit</td></tr>
+            <tr><td class="task">Managers (team)</td><td>Admin</td><td>—</td><td>—</td></tr>
+            <tr><td class="task">Send log</td><td>Admin</td><td>View</td><td>View</td></tr>
+            <tr><td class="task">B/A admin</td><td>Admin</td><td>Edit</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:12.5px; color:var(--text); margin-top:10px;">
+        <b>Customer</b> role has no admin surface, only self-service routes under <code>/me</code>.
+        <b>Head</b> seat is a superset of Manager. Audit-log every mutation with actor, before, after.
+      </p>
+    </section>
+
+    <!-- 12. NFR -->
+    <section id="nfr">
+      <h2><span class="num">12</span> Non-functional requirements</h2>
+      <div class="sub">Performance, accessibility, security, observability — budgets the team will be held to.</div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h4>Performance budgets (Moto G4, 3G Slow)</h4>
+          <ul>
+            <li>LCP &lt; 2.5 s on Home</li>
+            <li>CLS &lt; 0.1 page-wide</li>
+            <li>TBT &lt; 200 ms</li>
+            <li>JS bundle per route ≤ 130 KB gzipped</li>
+            <li>Images via <code>next/image</code>, AVIF/WebP, lazy below the fold</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>Accessibility</h4>
+          <ul>
+            <li>WCAG 2.1 AA on the entire public flow</li>
+            <li>Color contrast ≥ 4.5:1 on body text (audit our rose-on-tint chips!)</li>
+            <li>Keyboard reachable everywhere including the bottom tab bar</li>
+            <li>Form fields use real <code>&lt;label&gt;</code>, error text wired with <code>aria-describedby</code></li>
+            <li>Focus visible ring (don't kill outlines)</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>Security &amp; privacy</h4>
+          <ul>
+            <li>PII (phone, email, photos) encrypted at rest (Supabase column encryption)</li>
+            <li>Photos in a private bucket, signed GET with 5-min TTL</li>
+            <li>Rate limit every mutating route; Turnstile on unauthenticated forms</li>
+            <li>Audit log for all admin mutations</li>
+            <li>Data-residency: Supabase EU region by default; OK to expand</li>
+            <li>"Delete account" actually deletes / tombstones with 30-day reversal</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>Observability</h4>
+          <ul>
+            <li>Sentry for FE + BE errors, release tagging</li>
+            <li>PostHog for funnels: Onboard → Home → Tx → Lead, Korea Visit conversion</li>
+            <li>Provider webhook delivery dashboards (admin-only)</li>
+            <li>Inngest run history per automation rule</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13. QA -->
+    <section id="qa">
+      <h2><span class="num">13</span> QA &amp; testing strategy</h2>
+      <div class="sub">Light unit, heavy integration, narrow e2e. Don't test the framework.</div>
+
+      <ul>
+        <li><b>Unit (Vitest):</b> pure utilities, RBAC, plural rules, template renderer, phone normalization.</li>
+        <li><b>Integration:</b> API route handlers behind a real Postgres (testcontainers). The bulk of confidence lives here.</li>
+        <li><b>E2E (Playwright):</b> 5 critical journeys — sign in, browse + lead, KV plan, admin assign + send, review moderation. Runs on every PR.</li>
+        <li><b>Visual regression:</b> Chromatic / Playwright screenshots on the 28 designed screens at 390/768/1280 px. Block deploy on diffs.</li>
+        <li><b>Manual:</b> i18n sweep by native speakers each sprint; a11y manual once per phase.</li>
+      </ul>
+    </section>
+
+    <!-- 14. LAUNCH -->
+    <section id="launch">
+      <h2><span class="num">14</span> Launch checklist</h2>
+      <div class="sub">Before flipping DNS at <code>knsis.kz</code>.</div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h4>Product</h4>
+          <ul class="check">
+            <li>All 28 screens responsive at 390 / 768 / 1280</li>
+            <li>3 languages 100% translated; no fallback in production</li>
+            <li>No price field anywhere; automated grep blocks the regex</li>
+            <li>WhatsApp templates approved in Meta Business Manager</li>
+            <li>Telegram bot live, deep link tested from Done screen</li>
+            <li>5 seed managers can sign in and reach inbox</li>
+            <li>10 seed clinics + 30 treatments + 100 reviews populated</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>Engineering</h4>
+          <ul class="check">
+            <li>Perf budget passing in CI on PR builds</li>
+            <li>Sentry &amp; PostHog wired in production</li>
+            <li>Backups + point-in-time restore tested</li>
+            <li>Rate limits in place on every public mutating route</li>
+            <li>Audit log table exists and is being written</li>
+            <li>On-call runbook in <code>docs/runbook.md</code></li>
+            <li>Status page (status.knsis.kz) live</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>Legal &amp; ops</h4>
+          <ul class="check">
+            <li>ToS + Privacy Policy reviewed by KZ counsel (PII law)</li>
+            <li>Consent collection on consult form maps to schema</li>
+            <li>Photo consent flow signed in DB with timestamp</li>
+            <li>Medical disclaimer present on every treatment + clinic page</li>
+            <li>Data export request handler tested ("download my data")</li>
+            <li>Data deletion request handler tested</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h4>Soft-launch gate</h4>
+          <ul class="check">
+            <li>50 hand-invited users for 7 days</li>
+            <li>Daily 15-min triage standup with managers</li>
+            <li>≤ 5 P1 bugs at end of week; if more, slip GA</li>
+            <li>LCP P75 on real users below 3.0 s</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 15. OPEN -->
+    <section id="open">
+      <h2><span class="num">15</span> Open questions</h2>
+      <div class="sub">Decide before kickoff — every one of these has a fork on a WBS task.</div>
+      <ol>
+        <li><b>Hosting region:</b> Supabase <b>EU</b> (Stockholm) vs <b>AWS Seoul</b> — affects KZ data-residency obligations and KR webhook latency. Recommend EU.</li>
+        <li><b>OTP provider in KZ:</b> Mobizon vs SMSC Kazakhstan vs Telegram Gateway — pick one and lock the price.</li>
+        <li><b>WhatsApp Business Account owner:</b> Meta requires a verified BSP — under which legal entity?</li>
+        <li><b>Native apps later?</b> If yes, design system already maps; we'd ship Expo and reuse <code>app/(app)</code> via React Native Web. No effect on v1.</li>
+        <li><b>Doctor portal in v2?</b> Out of scope for v1, but the schema should be forward-compatible — confirm.</li>
+        <li><b>Payments ever?</b> Currently "never". Confirm so we can hard-code the "no price" guarantee everywhere.</li>
+        <li><b>Photo retention:</b> default 12 months after consult close? Need legal review.</li>
+        <li><b>Manager working hours per language</b> — affects routing + auto-reply copy outside hours.</li>
+      </ol>
+    </section>
+
+    <hr/>
+    <p style="font-size: 11.5px; color: var(--mute); text-align:center;">
+      knsis.kz · Build Roadmap &amp; WBS · v0.3 spec · Hand to Claude Code · Built for responsive web · Mobile-first PWA
+    </p>
+
+  </main>
+</div>
+
+</body>
+</html>
