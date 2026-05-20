@@ -47,6 +47,27 @@ When M-POST starts:
   whether to move the corresponding routes to Cloudflare Workers
   (Node compat flag) or accept the constraint of edge runtime.
 
+---
+
+## M0-07 · PWA adapter
+
+- **Spec §03 Frontend (`next-pwa`)** → **`@ducanh2912/next-pwa`** (App
+  Router-compatible fork of next-pwa, currently at 10.2.9).
+
+`next-pwa@5.6.0` (the package the spec names) hasn't been updated for
+Next.js App Router and has open issues with the runtime. The maintained
+fork ships a workbox-webpack-plugin integration that works out of the
+box with `app/manifest.ts` and the App Router build pipeline. `serwist`
+(next-pwa's spiritual successor) was also evaluated; we stayed with the
+fork because the API surface is closer to what the spec describes.
+
+The default workbox behaviour (StaleWhileRevalidate for navigations,
+CacheFirst for hashed assets) is unchanged from the spec's E2 decision.
+
+---
+
+## (running deviation note)
+
 Known follow-up: `@cloudflare/next-on-pages` is in maintenance mode;
 Cloudflare's newer recommended adapter is `@opennextjs/cloudflare` which
 targets Cloudflare Workers Assets, not Pages. We stay on Pages +
