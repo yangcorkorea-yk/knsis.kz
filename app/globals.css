@@ -2,4 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design tokens are added in M0-04. Pretendard wiring in M0-04. */
+/*
+ * Design tokens — mirrors docs/prototype/theme.jsx (the SoT) and
+ * _archive/v1-handoff/handoff-package/docs/08-design-tokens.md.
+ *
+ * These CSS custom properties exist so components can drop into
+ * inline styles (`style={{ color: 'var(--ink)' }}`) when a Tailwind
+ * alias is awkward; the same values live as `theme.extend.colors`
+ * etc. in tailwind.config.ts.
+ *
+ * Pretendard Variable is wired in app/layout.tsx via next/font/local
+ * which sets `--font-sans`.
+ */
+
+:root {
+  /* Surfaces */
+  --bg: #ffffff;
+  --bg-warm: #fbf8f5;
+  --bg-soft: #f7f4f0;
+
+  /* Brand — Rose (primary) */
+  --rose: #e8607a;
+  --rose-deep: #c84365;
+  --rose-soft: #fce7ec;
+  --rose-tint: #fdf1f4;
+
+  /* Brand — accents */
+  --lavender: #b8a4d4;
+  --lavender-soft: #efe8f8;
+  --beige: #d4b896;
+  --beige-soft: #f5efe6;
+
+  /* Neutrals */
+  --ink: #1a1a1a;
+  --ink-2: #3a3a3a;
+  --text: #5a5a5a;
+  --text-mute: #8a8a8a;
+  --border: #ece8e3;
+  --border-soft: #f2eeea;
+
+  /* State */
+  --success: #2f9e6a;
+  --warn: #d08a2c;
+  --danger: #a04432;
+
+  /* Radii */
+  --r-sm: 6px;
+  --r: 8px;
+  --r-md: 11px;
+  --r-lg: 14px;
+  --r-xl: 16px;
+  --r-2xl: 18px;
+  --r-full: 999px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-cta: 0 4px 14px rgba(232, 96, 122, 0.32);
+  --shadow-sheet: 0 -8px 24px rgba(0, 0, 0, 0.08);
+}
+
+html {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--bg);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
