@@ -21,13 +21,11 @@ import { prisma } from "@/lib/db/client";
 import { attemptSignin, type AttemptSigninDeps } from "@/lib/auth/staff-auth";
 import { STAFF_COOKIE_ATTRS, STAFF_COOKIE_NAME } from "@/lib/auth/staff-session";
 
-// Cloudflare Pages requires every non-static route to declare its
-// runtime. We run on the Workers edge runtime (the nodejs_compat
-// flag in wrangler.toml shims Node built-ins). NOTE: Prisma Client's
-// default engine does NOT yet work on Workers — runtime breakage at
-// the first DB call is expected until a driver adapter lands. See
-// _archive/CHANGES.md "M1-03 follow-up" for the options being weighed.
-export const runtime = "edge";
+// Auth routes read the request body, write a Set-Cookie, and hit the
+// DB. They're inherently dynamic — making it explicit also opts out
+// of Vercel's edge prerendering, which our Prisma client doesn't
+// support. Runtime defaults to Node, which is what Prisma needs.
+export const dynamic = "force-dynamic";
 
 const deps: AttemptSigninDeps = {
   findUserByEmail: (email) =>

@@ -45,27 +45,32 @@ pnpm e2e          # playwright test
 pnpm e2e:install  # playwright install --with-deps chromium (first time)
 pnpm price:check  # CI guard — fail on any price term
 pnpm i18n:check   # CI guard — fail on missing/unreviewed catalog keys
-pnpm build:cf     # build via @cloudflare/next-on-pages
-pnpm preview:cf   # wrangler pages dev .vercel/output/static
 ```
 
 ## Deploy
 
-Hosted on **Cloudflare Pages** (not Vercel — see `_archive/CHANGES.md`).
-Cloudflare's Git integration auto-deploys:
+Hosted on **Vercel**. Vercel's Git integration auto-deploys:
 
-- `main` branch → production (`*.pages.dev`, then `knsis.kz` at M6 cutover)
-- pull requests → preview deployments
+- `main` branch → production (`seoulbeauty-kz.vercel.app`, then `knsis.kz` at M6 cutover)
+- pull requests → preview deployments (`*.vercel.app`)
 
-Cloudflare Pages build settings (configured in the Pages dashboard):
+DNS remains on **Cloudflare** — the M6 cutover swings the `knsis.kz`
+A/CNAME records to Vercel.
 
-| Setting                | Value                                                                   |
-| ---------------------- | ----------------------------------------------------------------------- |
-| Build command          | `pnpm install --frozen-lockfile && pnpm exec @cloudflare/next-on-pages` |
-| Build output directory | `.vercel/output/static`                                                 |
-| Root directory         | `/`                                                                     |
-| Node version           | `22`                                                                    |
-| Compatibility flags    | `nodejs_compat`                                                         |
+Originally targeted Cloudflare Pages (decision M0-02), migrated to
+Vercel mid-M1 after Cloudflare Workers + Next.js 14 + Prisma proved
+incompatible for our auth routes. See
+`_archive/CHANGES.md` "M1-03 · Hosting migration".
+
+Required environment variables on Vercel (Production + Preview):
+
+| Var                   | Source                                                               |
+| --------------------- | -------------------------------------------------------------------- |
+| `DATABASE_URL`        | Supabase pooler URL (port 6543, `pgbouncer=true&connection_limit=1`) |
+| `DIRECT_URL`          | Supabase direct URL (port 5432) — `prisma migrate` only              |
+| `GUEST_COOKIE_SECRET` | Random 32+ bytes for HMAC signing                                    |
+| `RESEND_API_KEY`      | filled in M4-04                                                      |
+| `NEXT_PUBLIC_*`       | filled per integration                                               |
 
 ## Hard rules
 
