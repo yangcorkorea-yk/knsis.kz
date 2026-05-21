@@ -12,6 +12,11 @@ import { prisma } from "@/lib/db/client";
 import { signOut } from "@/lib/auth/staff-auth";
 import { STAFF_COOKIE_ATTRS, STAFF_COOKIE_NAME } from "@/lib/auth/staff-session";
 
+// Same edge-runtime declaration as signin (Cloudflare Pages requires
+// it on every non-static route). The Prisma adapter follow-up applies
+// here too.
+export const runtime = "edge";
+
 const deps = {
   // signOut() only uses deleteSession; the rest are stubs to satisfy
   // the StaffSessionDeps contract.

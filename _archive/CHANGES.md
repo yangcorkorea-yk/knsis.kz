@@ -95,6 +95,49 @@ CacheFirst for hashed assets) is unchanged from the spec's E2 decision.
 
 ---
 
+## M1-03 follow-up — Prisma Client on Cloudflare Pages edge runtime
+
+The Cloudflare adapter (`@cloudflare/next-on-pages`) requires every
+non-static App Router route to opt into the Workers edge runtime via
+`export const runtime = 'edge'`. M1-03's `app/api/auth/signin/route.ts`
+and `app/api/auth/signout/route.ts` now declare it; build is green and
+both routes are emitted as Edge Function Routes.
+
+That declaration is **necessary but not sufficient** for the routes
+to actually serve traffic — Prisma Client's default engine (the
+binary query engine that ships with `@prisma/client`) does not run on
+the Workers/V8 runtime, even with `nodejs_compat`. The first
+`prisma.user.findUnique` call from a signed-in attempt will throw
+unless we move to a driver-adapter setup. Options (decision pending,
+not picked yet):
+
+1. `@prisma/adapter-pg-worker` + `previewFeatures = ["driverAdapters"]`
+   in `schema.prisma`. Uses Cloudflare's `pg` (postgres.js fork) and
+   the Cloudflare Hyperdrive accelerator if we want. Closest to the
+   current code shape.
+2. `@prisma/adapter-neon` if we route through a Neon-style pooled
+   serverless driver. Requires the Supabase DB URL to expose the
+   websocket endpoint Neon expects — likely doesn't, so probably out.
+3. Prisma Accelerate — Prisma-hosted connection pooler. Cleanest dev
+   ergonomics, but adds a paid Prisma dependency and one more vendor.
+4. Move only the auth routes off Prisma and use raw SQL via
+   `postgres` / `@neondatabase/serverless`. Smallest blast radius;
+   keeps Prisma for the rest of M2/M3 where we want the generated
+   types.
+
+`nodejs_compat` is already in `wrangler.toml` from M0-02 so the flag
+half of the story is done.
+
+ESLint rule "every `app/api/**/route.ts` must export const runtime"
+considered and rejected for now — small benefit, custom rule to
+maintain, easier to lean on the Cloudflare adapter's build error
+which is loud and immediate.
+
+Trigger to revisit this entry: the first time someone tries to sign
+in against the Pages preview and sees a 500.
+
+---
+
 ## (running deviation note)
 
 Known follow-up: `@cloudflare/next-on-pages` is in maintenance mode;

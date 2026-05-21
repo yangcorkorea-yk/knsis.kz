@@ -21,6 +21,14 @@ import { prisma } from "@/lib/db/client";
 import { attemptSignin, type AttemptSigninDeps } from "@/lib/auth/staff-auth";
 import { STAFF_COOKIE_ATTRS, STAFF_COOKIE_NAME } from "@/lib/auth/staff-session";
 
+// Cloudflare Pages requires every non-static route to declare its
+// runtime. We run on the Workers edge runtime (the nodejs_compat
+// flag in wrangler.toml shims Node built-ins). NOTE: Prisma Client's
+// default engine does NOT yet work on Workers — runtime breakage at
+// the first DB call is expected until a driver adapter lands. See
+// _archive/CHANGES.md "M1-03 follow-up" for the options being weighed.
+export const runtime = "edge";
+
 const deps: AttemptSigninDeps = {
   findUserByEmail: (email) =>
     prisma.user.findUnique({
