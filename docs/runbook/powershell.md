@@ -56,3 +56,26 @@ update running deployments. Redeploy the affected deployment
 before testing.
 
 The Vercel UI shows a banner saying so right after you save — heed it.
+
+## Vercel CDN caches 404s from the previous deployment
+
+After a merge to `main`, Vercel cuts a new production deployment but
+the previous deployment's 404 / 500 responses can stay in the CDN for
+several minutes. Bypass for the post-merge smoke check:
+
+```powershell
+# Cache-bust query string + explicit no-cache header
+$cb = Get-Random
+$resp = Invoke-WebRequest "https://seoulbeauty-kz.vercel.app/api/auth/signin?cb=$cb" `
+  -Method POST `
+  -Headers @{ "Cache-Control" = "no-cache" } `
+  -ContentType "application/json" `
+  --data-binary '@body.json'
+$resp.Headers["x-vercel-cache"]    # MISS = fresh, HIT/STALE = still old
+```
+
+`x-vercel-cache: MISS` is the green flag — anything else means you're
+still seeing the previous deployment. Encountered after the M1 merge.
+
+For curl on PowerShell, use `--data-binary "@body.json"` (see the
+JSON-body trap above) and `-H "Cache-Control: no-cache"`.
