@@ -8,8 +8,11 @@
  * per Treatment id; then loads Treatments (optionally filtered by
  * concern category) and renders the grid.
  *
- * Layout: 2 columns ≤ md, 3 columns ≥ md. Mobile-first, centred
- * column ≤ md breakpoint.
+ * Chrome (header + FilterBar) lives in layout.tsx. The grid skeleton
+ * lives in loading.tsx and Suspends the page slot while a new
+ * filter combination is being resolved.
+ *
+ * Layout: 2 columns ≤ md, 3 columns ≥ md. Mobile-first.
  *
  * Hard rules check:
  *   - All copy from messages/{kz,ru,kr}.json (`categories.*`)
@@ -24,7 +27,6 @@ import type { TreatmentCategory } from "@prisma/client";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { FilterBar } from "@/components/discover/filter-bar";
 import { prisma } from "@/lib/db/client";
 import { CITY_SLUG_MAP, parseFilters } from "@/lib/discover/filters";
 import { isLocale, type Locale } from "@/lib/i18n/config";
@@ -80,46 +82,33 @@ export default async function CategoriesPage({
     orderBy: { createdAt: "desc" },
   });
 
+  if (treatments.length === 0) {
+    return <p className="px-4 text-sm text-ink-mute">{t("empty")}</p>;
+  }
+
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 bg-warm pb-24 md:max-w-3xl">
-      <header className="px-4 pt-8">
-        <h1 className="break-keep text-2xl font-extrabold tracking-display text-ink">
-          {t("title")}
-        </h1>
-        <p className="mt-1 text-sm text-ink-body">{t("subtitle")}</p>
-      </header>
-
-      <FilterBar />
-
-      {treatments.length === 0 ? (
-        <p className="px-4 text-sm text-ink-mute">{t("empty")}</p>
-      ) : (
-        <ul className="grid grid-cols-2 gap-3 px-4 md:grid-cols-3">
-          {treatments.map((tx) => {
-            const count = clinicCountByTreatment.get(tx.id) ?? 0;
-            return (
-              <li key={tx.id}>
-                <Card className="h-full">
-                  <CardContent className="space-y-2 pt-4">
-                    <Badge tone="lav" size="sm">
-                      {t(`filter.concern.${tx.category}`)}
-                    </Badge>
-                    <h2 className="line-clamp-2 break-keep text-sm font-semibold text-ink">
-                      {tr(tx.title, activeLocale)}
-                    </h2>
-                    <p className="line-clamp-2 text-xs text-ink-mute">
-                      {tr(tx.summary, activeLocale)}
-                    </p>
-                    <p className="pt-1 text-[11px] text-ink-mute">
-                      {t("card.clinic_count", { count })}
-                    </p>
-                  </CardContent>
-                </Card>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </main>
+    <ul className="grid grid-cols-2 gap-3 px-4 md:grid-cols-3">
+      {treatments.map((tx) => {
+        const count = clinicCountByTreatment.get(tx.id) ?? 0;
+        return (
+          <li key={tx.id}>
+            <Card className="h-full">
+              <CardContent className="space-y-2 pt-4">
+                <Badge tone="lav" size="sm">
+                  {t(`filter.concern.${tx.category}`)}
+                </Badge>
+                <h2 className="line-clamp-2 break-keep text-sm font-semibold text-ink">
+                  {tr(tx.title, activeLocale)}
+                </h2>
+                <p className="line-clamp-2 text-xs text-ink-mute">{tr(tx.summary, activeLocale)}</p>
+                <p className="pt-1 text-[11px] text-ink-mute">
+                  {t("card.clinic_count", { count })}
+                </p>
+              </CardContent>
+            </Card>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
