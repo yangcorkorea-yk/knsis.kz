@@ -3,5 +3,26 @@
     "kicker": "knsis.kz · MVP 셸",
     "title": "M0-06 · i18n",
     "subtitle": "KZ · RU · KR — next-intl 연결됨."
+  },
+  "me": {
+    "title": "내 페이지",
+    "profile": {
+      "section": "프로필",
+      "guest_badge": "게스트",
+      "guest_id_label": "세션",
+      "locale_label": "언어",
+      "no_session": "아직 요청을 보내지 않으셨습니다."
+    },
+    "consults": {
+      "section": "내 요청",
+      "empty": "아직 요청이 없습니다.",
+      "cta_new": "새 상담 요청"
+    },
+    "languages": {
+      "section": "언어",
+      "kz": "카자흐어",
+      "ru": "러시아어",
+      "kr": "한국어"
+    }
   }
 }

@@ -3,5 +3,26 @@
     "kicker": "knsis.kz · MVP қабықшасы",
     "title": "M0-06 · i18n",
     "subtitle": "KZ · RU · KR — next-intl қосылды."
+  },
+  "me": {
+    "title": "Менің бетім",
+    "profile": {
+      "section": "Профиль",
+      "guest_badge": "Қонақ",
+      "guest_id_label": "Сессия",
+      "locale_label": "Тіл",
+      "no_session": "Әлі сұрау жібермедіңіз."
+    },
+    "consults": {
+      "section": "Менің сұрауларым",
+      "empty": "Әзірге сұрау жоқ.",
+      "cta_new": "Жаңа кеңес сұрау"
+    },
+    "languages": {
+      "section": "Тіл",
+      "kz": "Қазақша",
+      "ru": "Орысша",
+      "kr": "Корей"
+    }
   }
 }

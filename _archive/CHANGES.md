@@ -1,5 +1,77 @@
 # Deviations from `MVP Roadmap & WBS.html`
 
+> **Hosting timeline:** Spec said Vercel. M0-02 chose Cloudflare Pages
+> for cost + DNS single-vendor. **M1-03 (mid-stream) reverted to
+> Vercel** after Cloudflare Workers + Next 14 + Prisma proved
+> incompatible — see the "M1-03 · Hosting migration" entry below for
+> the failure mode and triage. The earlier Cloudflare-related entries
+> are kept for context but are no longer active decisions.
+
+---
+
+## M1-03 · Hosting migration — Cloudflare Pages → Vercel
+
+**State**: active. Reverts the M0-02 hosting decision.
+
+**Trigger**: After M1-03 shipped staff sign-in, hitting
+`POST /api/auth/signin` on the Cloudflare Pages preview returned 500
+with an empty body. Triage:
+
+1. Cloudflare Pages requires every non-static route to declare
+   `export const runtime = "edge"`. Added.
+2. `@prisma/client`'s default engine doesn't run on Workers — needs a
+   driver adapter. Tried `@prisma/adapter-pg-worker@5.22.0` +
+   `@prisma/pg-worker@5.22.0` + `previewFeatures = ["driverAdapters"]`.
+3. The adapter pulls in `cloudflare:sockets` (a Workers-only virtual
+   module) and a dozen `node:*` prefixed built-ins. Webpack at build
+   time couldn't resolve either. Added:
+   - function-form externals for `cloudflare:sockets` + 11 Node
+     built-ins (`crypto`, `path`, `stream`, `string_decoder`, etc.)
+   - `NormalModuleReplacementPlugin` to strip the `node:` prefix
+   - `export const dynamic = "force-dynamic"` on the routes
+   - dynamic `await import("@/lib/db/client.edge")` inside POST
+4. Webpack compile passed, but Next.js 14.2.5's build-time **edge
+   sandbox** then failed: it evaluates the route module to collect
+   metadata, and that sandbox doesn't apply `nodejs_compat`. Throws
+   `Native module not found: url`. None of the above bypasses cured
+   it — the eval is module-level, runs regardless of `dynamic =
+   "force-dynamic"` or dynamic imports.
+
+**Options evaluated** (Neon adapter incompatible with Supabase pooler;
+Supabase REST API a partial fix that defers the same Prisma+Workers
+problem to M3; Next 15 upgrade a milestone-sized risk).
+
+**Decision**: revert hosting to Vercel. Standard Node runtime, Prisma
+works without driver adapter, no webpack workarounds.
+
+**Cost impact**: Vercel Pro $20/mo (shared account, no incremental
+cost to this project).
+
+**DNS**: remains on Cloudflare. M6 cutover swings the `knsis.kz`
+A/CNAME to Vercel.
+
+**Cleanup performed**:
+
+- Removed `@cloudflare/next-on-pages`, `wrangler` devDeps; removed
+  `build:cf` / `preview:cf` scripts; removed `workerd` from
+  `pnpm.onlyBuiltDependencies`.
+- Moved `wrangler.toml` → `_archive/v1-cloudflare/wrangler.toml`.
+- Removed `runtime = "edge"` from `app/api/auth/{signin,signout}/
+  route.ts`. Kept `dynamic = "force-dynamic"` since the routes always
+  write.
+- README.md "Deploy" section rewritten for Vercel; CLAUDE.md §4 +
+  §9 updated likewise.
+- All `@prisma/adapter-pg-worker` / `@prisma/pg-worker` / driver
+  adapter experiments stashed and dropped — not committed to the
+  branch.
+
+**Re-evaluation trigger** (if any of these fire, reopen this
+question): Vercel pricing changes, Cloudflare Workers + Next 15
+becomes drop-in viable, or a future need for Workers KV/D1/R2 that
+Vercel can't serve.
+
+---
+
 Decisions taken during MVP build that intentionally diverge from the
 master spec. Each entry: WBS task, what the spec says, what we did,
 why. The spec HTML is **not** edited — this file is the canonical
@@ -92,6 +164,49 @@ CacheFirst for hashed assets) is unchanged from the spec's E2 decision.
      KV, D1, R2 bindings without the Pages binding shim).
 - Owner: whoever picks up M-POST should re-read this entry before
   spec'ing the WhatsApp / Inngest queues.
+
+---
+
+## M1-03 follow-up — Prisma Client on Cloudflare Pages edge runtime
+
+The Cloudflare adapter (`@cloudflare/next-on-pages`) requires every
+non-static App Router route to opt into the Workers edge runtime via
+`export const runtime = 'edge'`. M1-03's `app/api/auth/signin/route.ts`
+and `app/api/auth/signout/route.ts` now declare it; build is green and
+both routes are emitted as Edge Function Routes.
+
+That declaration is **necessary but not sufficient** for the routes
+to actually serve traffic — Prisma Client's default engine (the
+binary query engine that ships with `@prisma/client`) does not run on
+the Workers/V8 runtime, even with `nodejs_compat`. The first
+`prisma.user.findUnique` call from a signed-in attempt will throw
+unless we move to a driver-adapter setup. Options (decision pending,
+not picked yet):
+
+1. `@prisma/adapter-pg-worker` + `previewFeatures = ["driverAdapters"]`
+   in `schema.prisma`. Uses Cloudflare's `pg` (postgres.js fork) and
+   the Cloudflare Hyperdrive accelerator if we want. Closest to the
+   current code shape.
+2. `@prisma/adapter-neon` if we route through a Neon-style pooled
+   serverless driver. Requires the Supabase DB URL to expose the
+   websocket endpoint Neon expects — likely doesn't, so probably out.
+3. Prisma Accelerate — Prisma-hosted connection pooler. Cleanest dev
+   ergonomics, but adds a paid Prisma dependency and one more vendor.
+4. Move only the auth routes off Prisma and use raw SQL via
+   `postgres` / `@neondatabase/serverless`. Smallest blast radius;
+   keeps Prisma for the rest of M2/M3 where we want the generated
+   types.
+
+`nodejs_compat` is already in `wrangler.toml` from M0-02 so the flag
+half of the story is done.
+
+ESLint rule "every `app/api/**/route.ts` must export const runtime"
+considered and rejected for now — small benefit, custom rule to
+maintain, easier to lean on the Cloudflare adapter's build error
+which is loud and immediate.
+
+Trigger to revisit this entry: the first time someone tries to sign
+in against the Pages preview and sees a 500.
 
 ---
 

@@ -19,8 +19,6 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium",
-    "build:cf": "next-on-pages",
-    "preview:cf": "wrangler pages dev .vercel/output/static --compatibility-flag=nodejs_compat",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
@@ -35,6 +33,7 @@
     "@ducanh2912/next-pwa": "^10.2.9",
     "@prisma/client": "^5.18.0",
     "@radix-ui/react-slot": "^1.2.4",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
@@ -45,7 +44,6 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1.13.5",
     "@playwright/test": "^1.45.0",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.3",
@@ -65,8 +63,7 @@
     "tailwindcss": "^3.4.6",
     "tsx": "^4.16.0",
     "typescript": "5.4.5",
-    "vitest": "^2.0.0",
-    "wrangler": "^3.78.0"
+    "vitest": "^2.0.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -74,8 +71,7 @@
       "@prisma/engines",
       "esbuild",
       "prisma",
-      "sharp",
-      "workerd"
+      "sharp"
     ]
   }
 }

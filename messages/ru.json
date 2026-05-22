@@ -3,5 +3,26 @@
     "kicker": "knsis.kz · оболочка MVP",
     "title": "M0-06 · i18n",
     "subtitle": "KZ · RU · KR — next-intl подключён."
+  },
+  "me": {
+    "title": "Моя страница",
+    "profile": {
+      "section": "Профиль",
+      "guest_badge": "Гость",
+      "guest_id_label": "Сессия",
+      "locale_label": "Язык",
+      "no_session": "Вы ещё не отправили запрос."
+    },
+    "consults": {
+      "section": "Мои запросы",
+      "empty": "Пока запросов нет.",
+      "cta_new": "Новый запрос на консультацию"
+    },
+    "languages": {
+      "section": "Язык",
+      "kz": "Казахский",
+      "ru": "Русский",
+      "kr": "Корейский"
+    }
   }
 }
