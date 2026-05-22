@@ -1,22 +1,56 @@
-// prisma/seed.ts — placeholder. Real seed data lands in M2-09
-// (treatments + clinics import) and M1-02 (staff admin user).
-//
-// Invoke via `pnpm db:seed`.
+/*
+ * prisma/seed.ts — M2-09 content seed entry point.
+ *
+ * Reads /seed/{treatments,clinics,reviews}.csv from the repo root
+ * and idempotently upserts them via lib/seed/loaders.ts.
+ *
+ * Re-running is safe: the loaders skip rows that already exist by
+ * slug / code / email. They never overwrite existing rows so the
+ * M7 RU/KR translation pass and any admin edits survive a re-seed.
+ *
+ * Invoke:
+ *   pnpm db:seed
+ *
+ * The staff admin seed lives outside this script (operator-side
+ * `node scripts/hash-password.mjs` + Supabase Table Editor insert).
+ */
 
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
+import { seedClinics, seedReviews, seedTreatments } from "../lib/seed/loaders";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("ℹ️  prisma seed: placeholder — no rows written yet.");
-  console.log("   Real seeds:");
-  console.log("   - M1-02 · staff admin user (Better-Auth bootstrap)");
-  console.log("   - M2-09 · treatments + clinics import");
+  const root = process.cwd();
+  const [treatmentsCsv, clinicsCsv, reviewsCsv] = await Promise.all([
+    readFile(join(root, "seed", "treatments.csv"), "utf8"),
+    readFile(join(root, "seed", "clinics.csv"), "utf8"),
+    readFile(join(root, "seed", "reviews.csv"), "utf8"),
+  ]);
+
+  console.log("• Treatments…");
+  const t = await seedTreatments(prisma, treatmentsCsv);
+  console.log(`  ${t.created} created, ${t.existing} already present`);
+
+  console.log("• Clinics…");
+  const c = await seedClinics(prisma, clinicsCsv);
+  console.log(`  ${c.created} created, ${c.existing} already present`);
+
+  console.log("• Reviews + seed customers…");
+  const r = await seedReviews(prisma, reviewsCsv);
+  console.log(`  reviews: ${r.reviews.created} created, ${r.reviews.existing} already present`);
+  console.log(
+    `  seed customers: ${r.customers.created} created, ${r.customers.existing} already present`,
+  );
+
+  console.log("\n✅ seed: done");
 }
 
 main()
   .catch((err) => {
-    console.error(err);
+    console.error("\n❌ seed failed:", err);
     process.exit(1);
   })
   .finally(async () => {
