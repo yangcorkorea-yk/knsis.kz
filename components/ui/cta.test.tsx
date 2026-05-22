@@ -61,4 +61,19 @@ describe("CTA renders without React.Children.only crash", () => {
     expect(html).toContain("<button");
     expect(html).toContain("OK");
   });
+
+  it("always emits whitespace-nowrap so button labels never wrap", () => {
+    // Production /kr regressed when the KR locale's '검색' label
+    // wrapped to two lines under the default whitespace handling.
+    // The fix lives in the cva base classes — pin it here so a
+    // future refactor doesn't drop it silently.
+    const plain = renderToString(<CTA>x</CTA>);
+    const asChildHtml = renderToString(
+      <CTA asChild>
+        <a href="/x">x</a>
+      </CTA>,
+    );
+    expect(plain).toMatch(/class="[^"]*\bwhitespace-nowrap\b/);
+    expect(asChildHtml).toMatch(/class="[^"]*\bwhitespace-nowrap\b/);
+  });
 });

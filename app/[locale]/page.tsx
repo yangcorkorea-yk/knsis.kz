@@ -90,7 +90,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
         <p className="text-xs font-bold uppercase tracking-widest text-rose-deep">
           {t("hero.kicker")}
         </p>
-        <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-display text-ink">
+        <h1 className="mt-2 break-keep text-3xl font-extrabold leading-tight tracking-display text-ink">
           {t("hero.title")}
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-body">{t("hero.subtitle")}</p>
