@@ -9,6 +9,25 @@ import { cn } from "@/lib/utils";
  * Prototype variants (primary, soft, outline, ink) and sizes (lg, md, sm)
  * are preserved. The prototype's full-width default is preserved via the
  * `fullWidth` prop (defaulting to true to mirror the source).
+ *
+ * asChild + Slot subtlety: Radix Slot calls React.Children.only on its
+ * children. JSX like
+ *   <Slot>
+ *     {icon}     // ← undefined or a node
+ *     {children}
+ *   </Slot>
+ * passes BOTH expressions to createElement, so the children array is
+ * always [icon, children] — even when icon is undefined. React.Children.
+ * only sees an array and throws (error #143). To stay safe under asChild,
+ * we pass exactly one child to Slot and refuse the icon prop. Without
+ * asChild we render <button>{icon}{children}</button>; a button is happy
+ * with multiple children, no Children.only on the path.
+ *
+ * Caller pattern (unchanged from M0-05):
+ *   <CTA asChild><Link href="/x">Click</Link></CTA>
+ *   <CTA icon={<X />}>Click</CTA>
+ * The combination asChild + icon is not supported — defer to the wrapped
+ * element's own composition (e.g. put the icon inside the <Link>).
  */
 
 const ctaVariants = cva(
@@ -51,12 +70,22 @@ export const CTA = forwardRef<HTMLButtonElement, CTAProps>(function CTA(
   { className, variant, size, fullWidth, icon, asChild, children, ...rest },
   ref,
 ) {
-  const Comp = asChild ? Slot : "button";
+  const merged = cn(ctaVariants({ variant, size, fullWidth }), className);
+  if (asChild) {
+    // Slot needs exactly one child. The `icon` prop is ignored on
+    // purpose here — the wrapped element (Link / a / etc.) owns its
+    // own content composition.
+    return (
+      <Slot ref={ref} className={merged} {...rest}>
+        {children}
+      </Slot>
+    );
+  }
   return (
-    <Comp ref={ref} className={cn(ctaVariants({ variant, size, fullWidth }), className)} {...rest}>
+    <button ref={ref} className={merged} {...rest}>
       {icon}
       {children}
-    </Comp>
+    </button>
   );
 });
 
