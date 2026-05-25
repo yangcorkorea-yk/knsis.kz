@@ -15,8 +15,8 @@
  *
  * The match* predicates are the in-memory equivalent of the old
  * server-side Prisma where-clauses — both layers share the same
- * filter shape so behaviour stays identical when discovery moves
- * client-side (next commit).
+ * filter shape so behaviour stays identical when we moved the
+ * work client-side.
  */
 
 import type { TreatmentCategory } from "@prisma/client";
@@ -83,30 +83,6 @@ export function parseFilters(
     out.language = language as InterpreterLang;
   }
   return out;
-}
-
-/**
- * Build the next URL search string when a filter pill is toggled.
- * If `value` is already active on that axis, the axis is cleared
- * (so a second tap toggles the filter off). Other axes are
- * preserved exactly.
- *
- * NOTE: retained for the current FilterBar's URL-routed taps. The
- * follow-up commit moves filter math client-side and drops this
- * function in favour of `applyToggle` / `applyClear` below.
- */
-export function toggleFilter(
-  current: URLSearchParams,
-  key: "area" | "concern" | "language",
-  value: string,
-): URLSearchParams {
-  const next = new URLSearchParams(current);
-  if (next.get(key) === value) {
-    next.delete(key);
-  } else {
-    next.set(key, value);
-  }
-  return next;
 }
 
 /** Serialise a typed filter set back to a stable URLSearchParams. */
