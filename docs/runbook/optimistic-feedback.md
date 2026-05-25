@@ -126,25 +126,116 @@ right value, and the final URL converges within one navigation.
 - Mutations through Server Actions where you want the form to
   block — use `useFormState` instead; it has a different lifecycle.
 
+## When client-side filtering wins over server-side optimistic
+
+The three-layer pattern above is a **mitigation** for slow server
+round-trips on read-shaped interactions (filters, sort, search
+narrowing). If you can avoid the round-trip altogether, do that
+instead.
+
+M2-02 started life as the canonical optimistic-UI example here.
+After a sign-off pass on the preview we swapped it for client-side
+filtering and the dead-tap class of bugs disappeared — including
+the rapid multi-axis race the optimistic pattern still let slip
+through (each axis was applied in order but intermediate server
+renders surfaced briefly). The criteria that decided the swap:
+
+1. **Bounded dataset.** The full set of items the user can filter
+   over is small enough to ship on first load. M2-02 lists
+   ~25 treatments + a couple hundred clinics — < 50 KB gzipped.
+2. **Filters are projections, not searches.** Pure client-side
+   predicates over the bulk dataset reproduce the server's
+   where-clause exactly (`matchClinic`, `matchTreatment` in
+   `lib/discover/filters.ts`).
+3. **Multi-axis combinations.** Optimistic UI resolves one axis at
+   a time; rapid taps across **different** axes can still walk
+   through intermediate server renders. In-memory math collapses
+   that to a single synchronous compose.
+4. **No write semantics on the same interaction.** Pill clicks are
+   pure reads — they don't change server state.
+
+When all four hold, replace the optimistic pattern with the
+**bulk-fetch + client-island** shape:
+
+- **Server component** fetches everything once
+  (`force-dynamic` is fine — it's still one round-trip per cold
+  load, not per tap). Project only the columns you need; nothing
+  PII.
+- **Client island** (`components/discover/categories-island.tsx`
+  in M2-02) holds the filter state in `useState`, runs
+  `useFilterableList` against the bulk data, and re-renders
+  synchronously on each tap.
+- **URL sync** via `window.history.replaceState` — NOT
+  `router.push` / `router.replace`. Both of the latter trigger a
+  Next.js re-render of a `force-dynamic` page, which refetches and
+  reintroduces the round-trip we just deleted. Listen for
+  `popstate` to handle back / forward.
+- **Reducer is pure.** `applyToggle(prev, key, value)` composes
+  deterministically regardless of how fast the user taps —
+  functional `setState` guarantees ordering, no race possible.
+- **`useFilterableList`** (`lib/discover/use-filterable-list.ts`)
+  memoises `items.filter(predicate)`; declare the predicate at
+  module scope so the memo doesn't invalidate on every render.
+
+What you give up:
+
+- A small first-load payload (acceptable when the bulk dataset is
+  bounded).
+- The grid skeleton no longer appears between filter taps — but
+  the whole point is that the grid updates synchronously, so
+  there's nothing to skeleton.
+
+What you keep:
+
+- Refresh + share work (URL is still authoritative).
+- Back / forward work (popstate listener re-parses the URL).
+- SSR-correct first paint (server parses `searchParams` and seeds
+  the island's initial state).
+
+The §Pattern above still applies to genuine **write** interactions
+(M3-01 consult form steps, submit buttons that mutate server
+state). Don't delete it from your toolkit — just stop reaching for
+it on pure-read filters when the four criteria above hold.
+
 ## Apply to (open work)
 
+Use **bulk-fetch + client-island** (preferred when the four
+criteria in the section above hold):
+
 - **M2-04 (Clinics list + tabs)** — verified/Korea/local tabs +
-  sort. Same pattern; tabs are pills.
+  sort. Bounded dataset, pure projection.
 - **M2-06 (Reviews feed)** — filter by treatment / region /
-  clinic.
-- **M2-08 (Search results)** — query input + result page. The
-  `<input>` already feels instant; the **submit** button + result
-  fetch needs this pattern.
-- **M3-01 (Consult form)** — multi-step form with photo upload.
-  Each step's "Next" is a navigation; same shape.
+  clinic. Bounded once the candidate clinic set is fetched.
+- **M2-08 (Search results)** — submit fetches a bounded result
+  page; narrow client-side from there.
 - **M5-03 (Admin Leads list)** — heavy filter usage by managers.
-  Same shape; consider extracting the pattern into a
-  `useOptimisticFilter()` hook when the third caller lands (per
-  CLAUDE.md §6 "no premature abstractions").
+  Likely the third caller for the island pattern; extract a
+  shared hook then (per CLAUDE.md §6 "no premature abstractions").
 
-## Reference implementation
+Use **optimistic UI** (this section's three-layer pattern) when
+the interaction is a write or a true server-only operation:
 
-`components/discover/filter-bar.tsx` — three pill rows (Area /
-Concern / Language) wired to URL state with this pattern.
-`components/discover/filter-bar.test.tsx` covers the four Pill
-visual states. Both files arrived in M2-02 fix commit `3af5db7`.
+- **M3-01 (Consult form)** — multi-step form. Each "Next" is a
+  navigation that may persist intermediate state; the form should
+  feel responsive while the server commits.
+
+## Reference implementations
+
+**Optimistic UI (write-shaped):** no shipped reference yet — the
+M2-02 prototype that lived here has been swapped out (see commit
+history of `components/discover/filter-bar.tsx`). M3-01 will be
+the next shipping example.
+
+**Bulk-fetch + client-island (read-shaped):**
+
+- `app/[locale]/categories/page.tsx` — server component, bulk
+  fetch + serialise.
+- `components/discover/categories-island.tsx` — state holder,
+  `window.history.replaceState` URL sync, `popstate` listener.
+- `components/discover/categories-grid.tsx` — `useFilterableList`
+  - count aggregation.
+- `components/discover/filter-bar.tsx` — stateless pill rows.
+- `lib/discover/filters.ts` — `parseFilters`, `applyToggle`,
+  `applyClear`, `matchClinic`, `matchTreatment`,
+  `filtersToSearchParams` (pure, fully unit-tested).
+- `lib/discover/use-filterable-list.ts` — memoised filter hook.
