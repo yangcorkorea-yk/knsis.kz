@@ -35,6 +35,46 @@
     },
     "empty": "아직 데이터가 없습니다. 요청을 보내 시작하세요."
   },
+  "categories": {
+    "title": "시술 둘러보기",
+    "subtitle": "검증된 클리닉의 서비스.",
+    "empty": "조건에 맞는 시술이 없습니다.",
+    "filter": {
+      "group_label": "필터",
+      "area": {
+        "label": "지역",
+        "all": "전체",
+        "seoul": "서울",
+        "busan": "부산",
+        "almaty": "알마티",
+        "astana": "아스타나"
+      },
+      "concern": {
+        "label": "분야",
+        "all": "전체",
+        "skin": "스킨",
+        "botox": "보톡스",
+        "filler": "필러",
+        "lift": "리프팅",
+        "acne": "여드름",
+        "pigment": "색소",
+        "hair": "헤어",
+        "cosmetic": "코스메틱",
+        "scalp": "두피"
+      },
+      "language": {
+        "label": "언어",
+        "all": "전체",
+        "kz": "카자흐",
+        "ru": "러시아",
+        "kr": "한국",
+        "en": "영어"
+      }
+    },
+    "card": {
+      "clinic_count": "클리닉 {count}곳"
+    }
+  },
   "me": {
     "title": "내 페이지",
     "profile": {
