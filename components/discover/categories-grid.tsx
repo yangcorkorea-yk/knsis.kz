@@ -33,6 +33,11 @@ export interface ClientClinic {
   treatmentIds: string[];
   city: string;
   interpreters: string[];
+  // Required by `matchClinic` since M2-04 added the kind facet to
+  // the shared filter shape. The categories grid never filters on
+  // kind itself, but `matchClinic` ignores `filters.kind` when it's
+  // absent, so the value is just along for the ride here.
+  kind: "korea" | "local";
 }
 
 export interface ClientTreatment {

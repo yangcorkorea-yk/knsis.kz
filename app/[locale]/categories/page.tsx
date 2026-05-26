@@ -44,7 +44,7 @@ export default async function CategoriesPage({
   const [clinics, treatments] = await Promise.all([
     prisma.clinic.findMany({
       where: { deletedAt: null, verifyState: "verified" },
-      select: { id: true, treatmentIds: true, location: true, interpreters: true },
+      select: { id: true, treatmentIds: true, location: true, interpreters: true, kind: true },
     }),
     prisma.treatment.findMany({
       where: { deletedAt: null },
@@ -62,6 +62,7 @@ export default async function CategoriesPage({
         treatmentIds: c.treatmentIds,
         city,
         interpreters: c.interpreters,
+        kind: c.kind,
       },
     ];
   });
