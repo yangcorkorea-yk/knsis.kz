@@ -15,3 +15,10 @@ Operational notes that bit us once and shouldn't again.
   three-locale seed at first-write time. KZ fallback visible to
   RU/KR users is a launch-quality defect, not a deferred-to-M7
   cosmetic. Fill-blanks merge protects reviewer edits.
+- [nextjs-not-found.md](./nextjs-not-found.md) —
+  `not-found.tsx` must NOT duplicate `<html>`. The root layout
+  is `{children}` only (locale layout owns `<html lang>`), so
+  the locale not-found has body content only and the root
+  not-found supplies the document. Missing either file lets
+  Next's built-in default 404 inject a second `<html>` →
+  HierarchyRequestError + React #418/#423 hydration crash.
