@@ -96,6 +96,54 @@
       "kr": "한국어"
     }
   },
+  "clinics": {
+    "title": "클리닉",
+    "subtitle": "언어와 분야로 클리닉을 찾아보세요.",
+    "empty": "조건에 맞는 클리닉이 없습니다.",
+    "verified": "검증됨",
+    "filter": {
+      "group_label": "클리닉 필터",
+      "area": {
+        "label": "지역",
+        "all": "전체",
+        "seoul": "서울",
+        "busan": "부산",
+        "almaty": "알마티",
+        "astana": "아스타나"
+      },
+      "kind": {
+        "label": "위치",
+        "all": "전체",
+        "korea": "한국",
+        "local": "카자흐스탄"
+      },
+      "language": {
+        "label": "언어",
+        "all": "전체",
+        "kz": "카자흐어",
+        "ru": "러시아어",
+        "kr": "한국어",
+        "en": "영어"
+      }
+    },
+    "kind": {
+      "korea": "한국",
+      "local": "카자흐스탄"
+    },
+    "card": {
+      "treatment_count": "시술 {count}개"
+    },
+    "detail": {
+      "hours_label": "운영 시간",
+      "interpreters_label": "통역 언어",
+      "treatments_label": "가능 시술",
+      "not_found": "클리닉을 찾을 수 없습니다."
+    },
+    "disclaimer": {
+      "aria_label": "의료 안내",
+      "body": "본 정보는 일반적 안내입니다. 의료 상담은 면허 의사와 하시기 바랍니다."
+    }
+  },
   "treatments": {
     "expects_label": "예상 결과",
     "recovery_label": "회복 기간",
