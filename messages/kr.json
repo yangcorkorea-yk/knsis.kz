@@ -103,6 +103,10 @@
     "related_clinics_empty": "아직 해당 클리닉이 없습니다.",
     "duration_min": "{minutes}분",
     "interpreters_prefix": "통역:",
+    "disclaimer": {
+      "aria_label": "의료 안내",
+      "body": "본 정보는 일반적 안내입니다. 의료 상담은 면허 의사와 하시기 바랍니다."
+    },
     "category": {
       "skin": "스킨",
       "botox": "보톡스",

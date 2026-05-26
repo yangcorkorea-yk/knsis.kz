@@ -6,26 +6,23 @@
  * expects / recovery / related-clinics layout from the prototype
  * (`docs/prototype/screens-a.jsx` ScreenTreatmentDetail).
  *
- * Status: SHELL ONLY on this commit.
+ * Disclaimer compliance: <MedicalDisclaimer> renders between the
+ * recovery section and the related-clinics list (matches the
+ * prototype `ScreenTreatmentDetail` line 594 placement). CLAUDE.md
+ * §2 hard rule: must be present on every treatment page.
  *
- * The Medical Disclaimer component is a CLAUDE.md §2 launch-hard-rule
- * requirement (no medical claims in UI copy; every treatment page
- * must carry the disclaimer). The copy needs explicit PM sign-off
- * before the component lands — placeholder copy is queued in the
- * PR description for review. The `MedicalDisclaimerSlot` marker
- * below is where the component plugs in once approved; the page
- * MUST NOT ship to main without the disclaimer rendered.
- *
- * Hard rules check (this commit):
+ * Hard rules check:
  *   - All copy from messages/{kz,ru,kr}.json (`treatments.*`)
  *   - Treatment text fields via lib/i18n/tr.ts (kz fallback)
  *   - No monetary fields, no medical-claim phrasing
  *   - No PII rendered (treatments + verified clinics only)
- *   - Disclaimer slot marked; copy to land in follow-up commit
+ *   - Disclaimer rendered with PM-approved placeholder copy
+ *     (KZ + RU pending native-speaker sign-off in M7 i18n QA)
  */
 
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { MedicalDisclaimer } from "@/components/treatments/medical-disclaimer";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { prisma } from "@/lib/db/client";
@@ -116,12 +113,7 @@ export default async function TreatmentDetailPage({ params: { locale, slug } }: 
         <p className="text-sm text-ink-2">{tr(treatment.recovery, activeLocale)}</p>
       </section>
 
-      {/*
-       * MedicalDisclaimerSlot — CLAUDE.md §2 hard rule.
-       * Component + finalised copy land in a follow-up commit on
-       * this PR, after PM signs off on the placeholder copy queued
-       * in the PR description.
-       */}
+      <MedicalDisclaimer body={t("disclaimer.body")} ariaLabel={t("disclaimer.aria_label")} />
 
       <section className="px-4">
         <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-ink-mute">
