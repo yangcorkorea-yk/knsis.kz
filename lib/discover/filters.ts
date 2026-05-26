@@ -56,14 +56,26 @@ export type InterpreterLang = (typeof INTERPRETER_LANGS)[number];
  */
 export const CLINIC_KINDS: readonly ClinicKind[] = ["korea", "local"] as const;
 
-export type FilterKey = "area" | "concern" | "language" | "kind";
+export type FilterKey = "area" | "concern" | "language" | "kind" | "treatment" | "clinic";
 
 export interface DiscoveryFilters {
   area?: CitySlug;
   concern?: TreatmentCategory;
   language?: InterpreterLang;
   kind?: ClinicKind;
+  /**
+   * Treatment slug (data-driven, not enum-bounded). Used by the M2-06
+   * reviews filter. `parseFilters` accepts any string here — the
+   * matcher returns `false` if the slug doesn't exist in the visible
+   * review set, so a stale URL just yields an empty result instead of
+   * surfacing garbage. Same idea for `clinic`.
+   */
+  treatment?: string;
+  clinic?: string;
 }
+
+/** Conservative slug regex: lowercase letters / digits / dashes. */
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
 function pickOne(value: unknown): string | undefined {
   if (typeof value === "string") return value;
@@ -96,6 +108,14 @@ export function parseFilters(
   if (kind && (CLINIC_KINDS as readonly string[]).includes(kind)) {
     out.kind = kind as ClinicKind;
   }
+  const treatment = pickOne(searchParams.treatment);
+  if (treatment && SLUG_RE.test(treatment)) {
+    out.treatment = treatment;
+  }
+  const clinic = pickOne(searchParams.clinic);
+  if (clinic && SLUG_RE.test(clinic)) {
+    out.clinic = clinic;
+  }
   return out;
 }
 
@@ -106,6 +126,8 @@ export function filtersToSearchParams(filters: DiscoveryFilters): URLSearchParam
   if (filters.concern) sp.set("concern", filters.concern);
   if (filters.language) sp.set("language", filters.language);
   if (filters.kind) sp.set("kind", filters.kind);
+  if (filters.treatment) sp.set("treatment", filters.treatment);
+  if (filters.clinic) sp.set("clinic", filters.clinic);
   return sp;
 }
 
@@ -132,6 +154,8 @@ export function applyToggle(
   if (prev.concern) merged.concern = prev.concern;
   if (prev.language) merged.language = prev.language;
   if (prev.kind) merged.kind = prev.kind;
+  if (prev.treatment) merged.treatment = prev.treatment;
+  if (prev.clinic) merged.clinic = prev.clinic;
   merged[key] = value;
   return parseFilters(merged);
 }
@@ -173,5 +197,26 @@ export function matchClinic(clinic: ClinicMatchShape, filters: DiscoveryFilters)
 
 export function matchTreatment(tx: TreatmentMatchShape, filters: DiscoveryFilters): boolean {
   if (filters.concern && tx.category !== filters.concern) return false;
+  return true;
+}
+
+/**
+ * Review shape for the M2-06 reviews feed. Denormalised at the
+ * server fetch so the client never needs to cross-reference IDs;
+ * city / treatment / clinic slugs come in pre-joined.
+ */
+export interface ReviewMatchShape {
+  treatmentSlug: string | null;
+  clinicSlug: string | null;
+  /** Canonical Cyrillic city of the clinic (matches CITY_SLUG_MAP). */
+  clinicCity: string | null;
+}
+
+export function matchReview(review: ReviewMatchShape, filters: DiscoveryFilters): boolean {
+  if (filters.area) {
+    if (!review.clinicCity || review.clinicCity !== CITY_SLUG_MAP[filters.area]) return false;
+  }
+  if (filters.treatment && review.treatmentSlug !== filters.treatment) return false;
+  if (filters.clinic && review.clinicSlug !== filters.clinic) return false;
   return true;
 }
