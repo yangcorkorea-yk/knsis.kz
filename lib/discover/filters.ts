@@ -19,7 +19,7 @@
  * work client-side.
  */
 
-import type { TreatmentCategory } from "@prisma/client";
+import type { ClinicKind, TreatmentCategory } from "@prisma/client";
 
 export const CITY_SLUGS = ["seoul", "busan", "almaty", "astana"] as const;
 export type CitySlug = (typeof CITY_SLUGS)[number];
@@ -47,12 +47,22 @@ export const CONCERNS: readonly TreatmentCategory[] = [
 export const INTERPRETER_LANGS = ["kz", "ru", "kr", "en"] as const;
 export type InterpreterLang = (typeof INTERPRETER_LANGS)[number];
 
-export type FilterKey = "area" | "concern" | "language";
+/**
+ * Clinic kind facet (M2-04). `korea` = clinic physically located in
+ * Korea (treats Kazakhstan customers travelling for treatment);
+ * `local` = clinic in Kazakhstan. The categories page (M2-02)
+ * doesn't surface this facet but the type lives here so the URL
+ * parser is consistent across both routes.
+ */
+export const CLINIC_KINDS: readonly ClinicKind[] = ["korea", "local"] as const;
+
+export type FilterKey = "area" | "concern" | "language" | "kind";
 
 export interface DiscoveryFilters {
   area?: CitySlug;
   concern?: TreatmentCategory;
   language?: InterpreterLang;
+  kind?: ClinicKind;
 }
 
 function pickOne(value: unknown): string | undefined {
@@ -82,6 +92,10 @@ export function parseFilters(
   if (language && (INTERPRETER_LANGS as readonly string[]).includes(language)) {
     out.language = language as InterpreterLang;
   }
+  const kind = pickOne(searchParams.kind);
+  if (kind && (CLINIC_KINDS as readonly string[]).includes(kind)) {
+    out.kind = kind as ClinicKind;
+  }
   return out;
 }
 
@@ -91,6 +105,7 @@ export function filtersToSearchParams(filters: DiscoveryFilters): URLSearchParam
   if (filters.area) sp.set("area", filters.area);
   if (filters.concern) sp.set("concern", filters.concern);
   if (filters.language) sp.set("language", filters.language);
+  if (filters.kind) sp.set("kind", filters.kind);
   return sp;
 }
 
@@ -116,6 +131,7 @@ export function applyToggle(
   if (prev.area) merged.area = prev.area;
   if (prev.concern) merged.concern = prev.concern;
   if (prev.language) merged.language = prev.language;
+  if (prev.kind) merged.kind = prev.kind;
   merged[key] = value;
   return parseFilters(merged);
 }
@@ -140,6 +156,8 @@ export interface ClinicMatchShape {
   city: string;
   /** Interpreter language codes (kz / ru / kr / en). */
   interpreters: readonly string[];
+  /** `korea` | `local` — used by the M2-04 clinics list, ignored by M2-02 grid. */
+  kind: ClinicKind;
 }
 
 export interface TreatmentMatchShape {
@@ -149,6 +167,7 @@ export interface TreatmentMatchShape {
 export function matchClinic(clinic: ClinicMatchShape, filters: DiscoveryFilters): boolean {
   if (filters.area && clinic.city !== CITY_SLUG_MAP[filters.area]) return false;
   if (filters.language && !clinic.interpreters.includes(filters.language)) return false;
+  if (filters.kind && clinic.kind !== filters.kind) return false;
   return true;
 }
 

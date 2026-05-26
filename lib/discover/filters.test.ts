@@ -118,6 +118,7 @@ describe("matchClinic", () => {
   const clinic = {
     city: CITY_SLUG_MAP.seoul,
     interpreters: ["kz", "ru"] as const,
+    kind: "korea" as const,
   };
 
   it("matches when no filters constrain the clinic axes", () => {
@@ -138,6 +139,18 @@ describe("matchClinic", () => {
 
   it("rejects when one of two area/language filters fails", () => {
     expect(matchClinic(clinic, { area: "seoul", language: "kr" })).toBe(false);
+  });
+
+  it("matches when kind aligns (korea)", () => {
+    expect(matchClinic(clinic, { kind: "korea" })).toBe(true);
+  });
+
+  it("rejects on kind mismatch (korea clinic, local filter)", () => {
+    expect(matchClinic(clinic, { kind: "local" })).toBe(false);
+  });
+
+  it("rejects when kind passes but language fails (compound)", () => {
+    expect(matchClinic(clinic, { kind: "korea", language: "kr" })).toBe(false);
   });
 });
 
