@@ -101,7 +101,7 @@ function PillRow<V extends string>({
       >
         {t(labelKey)}
       </h3>
-      <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 [&>*:first-child]:ml-4 [&>*:last-child]:mr-4">
+      <div className="flex snap-x snap-mandatory scroll-pl-4 scroll-pr-4 gap-2 overflow-x-auto pb-1">
         <Pill aria-pressed={active === null} onClick={onClear} highlighted={active === null}>
           {t(clearKey)}
         </Pill>
@@ -133,6 +133,13 @@ export function Pill({
       {...rest}
       className={cn(
         "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+        // Bind the scrollable row's left / right padding to the first
+        // and last pill themselves. Container padding on a horizontal
+        // overflow:auto box is unreliable across browsers, and the
+        // earlier arbitrary-variant attempt (`[&>*:first-child]:ml-4`)
+        // didn't survive Tailwind's default content scanner. Plain
+        // first: / last: variants are core Tailwind and always emit.
+        "first:ml-4 last:mr-4",
         // Focus ring uses the neutral ink-mute (#8A8A8A) instead of any
         // rose tone — after a pill is tapped to off-switch, the
         // :focus-visible state lingers on the button until the user

@@ -50,4 +50,20 @@ describe("Pill", () => {
     expect(html).toMatch(/focus-visible:ring-ink-mute/);
     expect(html).not.toMatch(/focus-visible:ring-rose/);
   });
+
+  // Regression for the first-pill-flush defect on scrolling rows.
+  // Container padding on overflow:auto rows isn't reliable across
+  // browsers, and the prior arbitrary-variant fix
+  // ([&>*:first-child]:ml-4) was not emitted by Tailwind's content
+  // scanner. The plumbing now lives on the Pill itself via core
+  // first: / last: variants, which always emit.
+  it("first-child Pill carries first:ml-4 (scroll row left gutter)", () => {
+    const html = renderToString(<Pill highlighted={false}>Seoul</Pill>);
+    expect(html).toMatch(/first:ml-4/);
+  });
+
+  it("last-child Pill carries last:mr-4 (scroll row right gutter)", () => {
+    const html = renderToString(<Pill highlighted={false}>Seoul</Pill>);
+    expect(html).toMatch(/last:mr-4/);
+  });
 });
