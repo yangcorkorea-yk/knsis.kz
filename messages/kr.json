@@ -95,5 +95,24 @@
       "ru": "러시아어",
       "kr": "한국어"
     }
+  },
+  "treatments": {
+    "expects_label": "예상 결과",
+    "recovery_label": "회복 기간",
+    "related_clinics_label": "이 시술 가능 클리닉",
+    "related_clinics_empty": "아직 해당 클리닉이 없습니다.",
+    "duration_min": "{minutes}분",
+    "interpreters_prefix": "통역:",
+    "category": {
+      "skin": "스킨",
+      "botox": "보톡스",
+      "filler": "필러",
+      "lift": "리프팅",
+      "acne": "여드름",
+      "pigment": "색소",
+      "hair": "헤어",
+      "cosmetic": "코스메틱",
+      "scalp": "두피"
+    }
   }
 }
