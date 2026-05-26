@@ -101,7 +101,7 @@ function PillRow<V extends string>({
       >
         {t(labelKey)}
       </h3>
-      <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 pl-4 pr-4">
+      <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 [&>*:first-child]:ml-4 [&>*:last-child]:mr-4">
         <Pill aria-pressed={active === null} onClick={onClear} highlighted={active === null}>
           {t(clearKey)}
         </Pill>
@@ -133,7 +133,14 @@ export function Pill({
       {...rest}
       className={cn(
         "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-deep focus-visible:ring-offset-2",
+        // Focus ring uses the neutral ink-mute (#8A8A8A) instead of any
+        // rose tone — after a pill is tapped to off-switch, the
+        // :focus-visible state lingers on the button until the user
+        // clicks elsewhere, and a rose-tinted ring there reads as
+        // "still active". Neutral gray keeps the focus indicator
+        // visible (WCAG 1.4.11 — 3.28:1 against #FFFFFF, passes AA)
+        // while staying decoupled from the active rose treatment.
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-mute focus-visible:ring-offset-2",
         "snap-start",
         highlighted
           ? "border-rose bg-rose-tint text-rose-deep"

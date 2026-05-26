@@ -38,4 +38,16 @@ describe("Pill", () => {
     const html = renderToString(<Pill highlighted={false}>Seoul</Pill>);
     expect(html).toMatch(/<button[^>]*type="button"/);
   });
+
+  // Regression for the off-switch focus-residue defect: after a pill
+  // is tapped to clear an axis, :focus-visible stays on the button
+  // until the user clicks elsewhere. A rose-tinted focus ring there
+  // looks like a lingering "still active" state. Neutral ink-mute
+  // keeps the indicator visible (WCAG 1.4.11 — 3.28:1 vs white,
+  // passes AA) but un-confusable with the active rose treatment.
+  it("focus ring uses neutral ink-mute (no rose tone in focus state)", () => {
+    const html = renderToString(<Pill highlighted={false}>Seoul</Pill>);
+    expect(html).toMatch(/focus-visible:ring-ink-mute/);
+    expect(html).not.toMatch(/focus-visible:ring-rose/);
+  });
 });
