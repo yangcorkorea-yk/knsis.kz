@@ -102,8 +102,8 @@ export default async function ClinicDetailPage({ params: { locale, slug } }: Pag
           <ul className="space-y-1">
             {hoursEntries.map(([day, range]) => (
               <li key={day} className="flex justify-between gap-3 text-sm text-ink-2">
-                <span className="text-ink-mute">{day}</span>
-                <span>{range}</span>
+                <span className="min-w-0 text-ink-mute">{day}</span>
+                <span className="min-w-0">{range}</span>
               </li>
             ))}
           </ul>

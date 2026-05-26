@@ -71,3 +71,25 @@ html {
 body {
   -webkit-font-smoothing: antialiased;
 }
+
+/*
+ * Mobile-first horizontal-overflow guard. Any rogue element that
+ * would push the document wider than the viewport (rare — usually
+ * a flex item that refuses to shrink, an SVG without max-width,
+ * a long unbreakable token) gets clipped rather than introducing
+ * a horizontal scrollbar that crops the right edge of every page.
+ *
+ * Added after PR #8 M2-04 sign-off found mobile clinic-detail
+ * rows ("10:00-16:00" → "10:00-16:0") clipped on first paint
+ * because something pushed body width past viewport width. With
+ * `overflow-x: hidden` on the document root the content stays
+ * within the viewport even if a future component leaks width.
+ *
+ * Does NOT affect intentional horizontal scroll containers
+ * (`overflow-x: auto` on the filter bar pill rows) — those have
+ * their own scroll context.
+ */
+html,
+body {
+  overflow-x: hidden;
+}

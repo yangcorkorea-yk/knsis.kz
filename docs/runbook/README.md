@@ -22,3 +22,9 @@ Operational notes that bit us once and shouldn't again.
   not-found supplies the document. Missing either file lets
   Next's built-in default 404 inject a second `<html>` →
   HierarchyRequestError + React #418/#423 hydration crash.
+- [mobile-overflow-and-pwa-cache.md](./mobile-overflow-and-pwa-cache.md) —
+  global `html, body { overflow-x: hidden }` against rogue
+  horizontal overflow, `min-w-0` on flex children that hold
+  variable-length text, and PWA navigation override from
+  `StaleWhileRevalidate` to `NetworkFirst` so fresh deploys
+  take effect immediately instead of one navigation later.
