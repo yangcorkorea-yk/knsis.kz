@@ -46,7 +46,7 @@ export interface SeedSummary {
   treatments: { created: number; updated: number; unchanged: number };
   clinics: { created: number; updated: number; unchanged: number };
   customers: { created: number; existing: number };
-  reviews: { created: number; existing: number };
+  reviews: { created: number; updated: number; unchanged: number };
 }
 
 function parseEnum<T extends string>(value: string, allowed: readonly T[], field: string): T {
@@ -338,15 +338,33 @@ export async function seedReviews(
 ): Promise<{ customers: SeedSummary["customers"]; reviews: SeedSummary["reviews"] }> {
   const rows = parseCsv(csv);
   let reviewsCreated = 0;
-  let reviewsExisting = 0;
+  let reviewsUpdated = 0;
+  let reviewsUnchanged = 0;
   let customersCreated = 0;
   let customersExisting = 0;
 
   for (const row of rows) {
     const code = row.code!.trim();
+    const body = trilingualFromRow(row, "body");
+
     const existingReview = await prisma.review.findUnique({ where: { code } });
     if (existingReview) {
-      reviewsExisting++;
+      // M2-06: Review.body became trilingual JSON. Apply the same
+      // fill-blanks merge we use for Treatment / Clinic — admin or
+      // M7 reviewer edits in DB survive a CSV re-run.
+      const existingBody = existingReview.body as Partial<Trilingual> | null;
+      const mergedBody = mergeTrilingual(existingBody, body);
+      const filled = detectFilledSlots("body", existingBody ?? undefined, mergedBody);
+      if (filled.length === 0) {
+        reviewsUnchanged++;
+        continue;
+      }
+      await prisma.review.update({
+        where: { code },
+        data: { body: mergedBody },
+      });
+      console.log(`  · ${code}: filled ${filled.join(", ")}`);
+      reviewsUpdated++;
       continue;
     }
     const customer = await ensureSeedCustomer(prisma, row.customer_slug!, row.customer_name!);
@@ -375,14 +393,15 @@ export async function seedReviews(
         clinicId: clinic?.id ?? null,
         txId: treatment?.id ?? null,
         rating,
-        body: row.body_kz ?? "",
+        body,
         state: parseEnum(row.state!, REVIEW_STATES, "review.state"),
       },
     });
+    console.log(`  · ${code}: created (kz/ru/kr body)`);
     reviewsCreated++;
   }
   return {
     customers: { created: customersCreated, existing: customersExisting },
-    reviews: { created: reviewsCreated, existing: reviewsExisting },
+    reviews: { created: reviewsCreated, updated: reviewsUpdated, unchanged: reviewsUnchanged },
   };
 }

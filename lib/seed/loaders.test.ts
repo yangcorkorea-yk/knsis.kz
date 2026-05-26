@@ -81,9 +81,9 @@ const CLINICS_CSV = `slug,kind,name_kz,name_ru,name_kr,city,city_kr,country,veri
 clinic-a,korea,Клиника А,Клиника А ру,클리닉 A,Сеул,서울,KR,verified,"{""mon-fri"":""10:00-19:00""}",ru|kz,a-one|a-two
 clinic-b,local,Клиника Б,Клиника Б ру,클리닉 B,Алматы,알마티,KZ,pending,"{""mon-sun"":""09:00-18:00""}",kz,a-one`;
 
-const REVIEWS_CSV = `code,customer_slug,customer_name,rating,clinic_slug,treatment_slug,state,body_kz
-KB-RV-T-0001,aliya,Әлия,5,clinic-a,a-one,published,Жақсы тәжірибе.
-KB-RV-T-0002,aliya,Әлия,4,clinic-b,a-one,published,Жайлы орта.`;
+const REVIEWS_CSV = `code,customer_slug,customer_name,rating,clinic_slug,treatment_slug,state,body_kz,body_ru,body_kr
+KB-RV-T-0001,aliya,Әлия,5,clinic-a,a-one,published,Жақсы тәжірибе.,Хороший опыт.,좋은 경험이었습니다.
+KB-RV-T-0002,aliya,Әлия,4,clinic-b,a-one,published,Жайлы орта.,Уютная обстановка.,편안한 환경이었습니다.`;
 
 describe("seedTreatments", () => {
   it("creates rows on first run, no NEW rows on second", async () => {
@@ -283,13 +283,13 @@ describe("seedClinics", () => {
 });
 
 describe("seedReviews", () => {
-  it("creates seed-customer User rows + Review rows; FK round-trip works", async () => {
+  it("creates seed-customer User rows + Review rows with trilingual body; FK round-trip works", async () => {
     const { client, store } = makeFakePrisma();
     await seedTreatments(client as never, TREATMENTS_CSV);
     await seedClinics(client as never, CLINICS_CSV);
     const r1 = await seedReviews(client as never, REVIEWS_CSV);
 
-    expect(r1.reviews).toEqual({ created: 2, existing: 0 });
+    expect(r1.reviews).toEqual({ created: 2, updated: 0, unchanged: 0 });
     // Both reviews share customer_slug "aliya" → one User row.
     expect(r1.customers.created).toBe(1);
     expect(store.user).toHaveLength(1);
@@ -297,17 +297,61 @@ describe("seedReviews", () => {
     expect(store.user[0]!.role).toBe("customer");
     expect(store.user[0]!.consentTos).toBe(true);
     expect(store.review).toHaveLength(2);
+    expect(store.review[0]!.body).toEqual({
+      kz: "Жақсы тәжірибе.",
+      ru: "Хороший опыт.",
+      kr: "좋은 경험이었습니다.",
+    });
   });
 
-  it("re-run is idempotent — reviews + customer rows untouched", async () => {
+  it("re-run with same CSV → no updates, no new rows", async () => {
     const { client, store } = makeFakePrisma();
     await seedTreatments(client as never, TREATMENTS_CSV);
     await seedClinics(client as never, CLINICS_CSV);
     await seedReviews(client as never, REVIEWS_CSV);
     const r2 = await seedReviews(client as never, REVIEWS_CSV);
-    expect(r2.reviews).toEqual({ created: 0, existing: 2 });
+    expect(r2.reviews).toEqual({ created: 0, updated: 0, unchanged: 2 });
     expect(store.review).toHaveLength(2);
     expect(store.user).toHaveLength(1);
+  });
+
+  it("fill-blanks merge: legacy KZ-only review body gets RU/KR filled on re-seed", async () => {
+    const { client, store } = makeFakePrisma();
+    await seedTreatments(client as never, TREATMENTS_CSV);
+    await seedClinics(client as never, CLINICS_CSV);
+    // Plant a pre-M2-06 row (string body migrated to KZ-only JSON).
+    const clinicA = store.clinic.find((c) => c.slug === "clinic-a")!;
+    const treatmentOne = store.treatment.find((t) => t.slug === "a-one")!;
+    store.user.push({
+      id: "fixture-user-0001",
+      email: "seed-aliya@knsis.kz",
+      name: "Әлия",
+      role: "customer",
+      locale: "kz",
+      consentTos: true,
+      consentedAt: new Date(),
+    });
+    store.review.push({
+      id: "fixture-review-0001",
+      code: "KB-RV-T-0001",
+      userId: "fixture-user-0001",
+      clinicId: clinicA.id,
+      txId: treatmentOne.id,
+      rating: 5,
+      body: { kz: "Жақсы тәжірибе.", ru: null, kr: null },
+      state: "published",
+      createdAt: new Date(),
+    });
+
+    const r = await seedReviews(client as never, REVIEWS_CSV);
+    expect(r.reviews.updated).toBe(1); // 0001 fills blanks
+    expect(r.reviews.created).toBe(1); // 0002 brand new
+    const refreshed = store.review.find((r) => r.code === "KB-RV-T-0001")!;
+    expect(refreshed.body).toEqual({
+      kz: "Жақсы тәжірибе.",
+      ru: "Хороший опыт.",
+      kr: "좋은 경험이었습니다.",
+    });
   });
 
   it("rejects rating outside 1-5", async () => {

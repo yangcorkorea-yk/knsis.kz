@@ -227,7 +227,7 @@ model Review {
   txId         String?     @db.Uuid
   treatment    Treatment?  @relation(fields: [txId], references: [id])
   rating       Int
-  body         String
+  body         Json // { kz, ru, kr } — trilingual since M2-06 (was String through PR #8)
   photos       String[]
   photoConsent Boolean     @default(false)
   state        ReviewState @default(pending)
