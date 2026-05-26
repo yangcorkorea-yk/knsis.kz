@@ -11,3 +11,7 @@ Operational notes that bit us once and shouldn't again.
   for filter / submit interactions on slow Vercel ↔ Supabase EU
   round-trips. Apply from the start in M2-04, M2-06, M2-08, M3,
   M5-03.
+- [i18n-dynamic-content.md](./i18n-dynamic-content.md) —
+  three-locale seed at first-write time. KZ fallback visible to
+  RU/KR users is a launch-quality defect, not a deferred-to-M7
+  cosmetic. Fill-blanks merge protects reviewer edits.

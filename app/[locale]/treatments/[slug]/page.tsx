@@ -124,7 +124,19 @@ export default async function TreatmentDetailPage({ params: { locale, slug } }: 
         ) : (
           <ul className="space-y-2">
             {relatedClinics.map((clinic) => {
-              const city = (clinic.location as { city?: unknown } | null)?.city ?? "";
+              const loc = clinic.location as {
+                city?: unknown;
+                cityI18n?: unknown;
+              } | null;
+              // Prefer the per-locale city display (M2-09 i18n expansion);
+              // fall back to the flat canonical city the categories filter
+              // still keys on. KR users used to see Russian Cyrillic city
+              // names — the trilingual cityI18n closes that gap.
+              const cityDisplay = loc?.cityI18n
+                ? tr(loc.cityI18n, activeLocale)
+                : typeof loc?.city === "string"
+                  ? loc.city
+                  : "";
               return (
                 <li key={clinic.id}>
                   <Card>
@@ -132,8 +144,8 @@ export default async function TreatmentDetailPage({ params: { locale, slug } }: 
                       <p className="text-sm font-semibold text-ink">
                         {tr(clinic.name, activeLocale)}
                       </p>
-                      {typeof city === "string" && city.length > 0 && (
-                        <p className="text-xs text-ink-mute">{city}</p>
+                      {cityDisplay.length > 0 && (
+                        <p className="text-xs text-ink-mute">{cityDisplay}</p>
                       )}
                       {clinic.interpreters.length > 0 && (
                         <p className="text-[11px] text-ink-mute">

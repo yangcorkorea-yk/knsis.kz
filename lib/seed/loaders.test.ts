@@ -3,9 +3,14 @@
  * loaders are idempotent and validate enums / FKs without hitting
  * a real database. Vitest sandbox has no Postgres.
  *
- * The fake only implements the operations the loaders touch
- * (findUnique by slug/email/code, findMany, create, count). No
+ * The fake implements only the operations the loaders touch
+ * (findUnique by slug/email/code, findMany, create, update). No
  * deletes, no transactions — neither path is taken by seed code.
+ *
+ * Fixture CSVs carry kz + ru + kr columns since M2-09's i18n
+ * expansion — see `docs/runbook/i18n-dynamic-content.md`. The
+ * fill-blanks merge on re-run is exercised below: a row with a
+ * locale already populated must NOT be overwritten by the CSV.
  */
 
 import { describe, expect, it } from "vitest";
@@ -47,6 +52,13 @@ function makeFakePrisma(): { client: unknown; store: FakeStore } {
       rows.push(row);
       return row;
     },
+    update: async ({ where, data }: { where: Row; data: Row }) => {
+      const key = Object.keys(where)[0]!;
+      const target = rows.find((r) => r[key] === where[key]);
+      if (!target) throw new Error(`fake.update miss: ${key}=${String(where[key])}`);
+      Object.assign(target, data);
+      return target;
+    },
   });
 
   const client = {
@@ -58,20 +70,23 @@ function makeFakePrisma(): { client: unknown; store: FakeStore } {
   return { client, store };
 }
 
-const TREATMENTS_CSV = `slug,category,title_kz,summary_kz,durationMin,recovery_kz,expects_kz
-a-one,pigment,Бір,Қысқа сипат,30,Жылдам,Жақсы|Шай
-a-two,botox,Екі,Қысқа сипат,15,Бірден,V-форма`;
+const TREATMENTS_CSV = `slug,category,title_kz,title_ru,title_kr,summary_kz,summary_ru,summary_kr,durationMin,recovery_kz,recovery_ru,recovery_kr,expects_kz,expects_ru,expects_kr
+a-one,pigment,Бір,Один,일번,Қысқа,Кратко,짧음,30,Жылдам,Быстро,빠르게,Жақсы|Шай,Хорошо|Чай,좋음|차
+a-two,botox,Екі,Два,이번,Қысқа,Кратко,짧음,15,Бірден,Сразу,즉시,V-форма,V-форма,V라인`;
 
-const CLINICS_CSV = `slug,kind,name_kz,city,country,verifyState,hours,interpreters,treatment_slugs
-clinic-a,korea,Клиника А,Сеул,KR,verified,"{""mon-fri"":""10:00-19:00""}",ru|kz,a-one|a-two
-clinic-b,local,Клиника Б,Алматы,KZ,pending,"{""mon-sun"":""09:00-18:00""}",kz,a-one`;
+const TREATMENTS_CSV_KZ_ONLY = `slug,category,title_kz,title_ru,title_kr,summary_kz,summary_ru,summary_kr,durationMin,recovery_kz,recovery_ru,recovery_kr,expects_kz,expects_ru,expects_kr
+a-three,acne,Үш,,,Қысқа,,,20,Жеңіл,,,Тазалық,,`;
+
+const CLINICS_CSV = `slug,kind,name_kz,name_ru,name_kr,city,city_kr,country,verifyState,hours,interpreters,treatment_slugs
+clinic-a,korea,Клиника А,Клиника А ру,클리닉 A,Сеул,서울,KR,verified,"{""mon-fri"":""10:00-19:00""}",ru|kz,a-one|a-two
+clinic-b,local,Клиника Б,Клиника Б ру,클리닉 B,Алматы,알마티,KZ,pending,"{""mon-sun"":""09:00-18:00""}",kz,a-one`;
 
 const REVIEWS_CSV = `code,customer_slug,customer_name,rating,clinic_slug,treatment_slug,state,body_kz
 KB-RV-T-0001,aliya,Әлия,5,clinic-a,a-one,published,Жақсы тәжірибе.
 KB-RV-T-0002,aliya,Әлия,4,clinic-b,a-one,published,Жайлы орта.`;
 
 describe("seedTreatments", () => {
-  it("creates rows on first run, no-op on second", async () => {
+  it("creates rows on first run, no NEW rows on second", async () => {
     const { client, store } = makeFakePrisma();
     const r1 = await seedTreatments(client as never, TREATMENTS_CSV);
     expect(r1).toEqual({ created: 2, existing: 0 });
@@ -82,11 +97,55 @@ describe("seedTreatments", () => {
     expect(store.treatment).toHaveLength(2);
   });
 
-  it("title/summary land as KZ-only with null ru/kr (M7 review fills the rest)", async () => {
+  it("writes the trilingual title/summary/recovery/expects from kz+ru+kr columns", async () => {
     const { client, store } = makeFakePrisma();
     await seedTreatments(client as never, TREATMENTS_CSV);
-    expect(store.treatment[0]!.title).toEqual({ kz: "Бір", ru: null, kr: null });
-    expect(store.treatment[0]!.expects).toEqual({ kz: ["Жақсы", "Шай"], ru: [], kr: [] });
+    expect(store.treatment[0]!.title).toEqual({ kz: "Бір", ru: "Один", kr: "일번" });
+    expect(store.treatment[0]!.summary).toEqual({ kz: "Қысқа", ru: "Кратко", kr: "짧음" });
+    expect(store.treatment[0]!.recovery).toEqual({
+      kz: "Жылдам",
+      ru: "Быстро",
+      kr: "빠르게",
+    });
+    expect(store.treatment[0]!.expects).toEqual({
+      kz: ["Жақсы", "Шай"],
+      ru: ["Хорошо", "Чай"],
+      kr: ["좋음", "차"],
+    });
+  });
+
+  it("leaves ru/kr null when a CSV cell is empty (KZ-only row falls back at the consumer)", async () => {
+    const { client, store } = makeFakePrisma();
+    await seedTreatments(client as never, TREATMENTS_CSV_KZ_ONLY);
+    expect(store.treatment[0]!.title).toEqual({ kz: "Үш", ru: null, kr: null });
+    expect(store.treatment[0]!.expects).toEqual({ kz: ["Тазалық"], ru: [], kr: [] });
+  });
+
+  it("fill-blanks merge: existing non-null locale wins over the CSV value", async () => {
+    const { client, store } = makeFakePrisma();
+    await seedTreatments(client as never, TREATMENTS_CSV);
+    // Simulate an M7 reviewer edit: a hand-corrected RU title in DB.
+    const target = store.treatment[0]!;
+    (target.title as Record<string, string>).ru = "Один (исправлено редактором)";
+
+    // Re-run seed — the curated RU value must survive.
+    await seedTreatments(client as never, TREATMENTS_CSV);
+    expect((target.title as Record<string, string>).ru).toBe("Один (исправлено редактором)");
+    // Other locales unchanged
+    expect((target.title as Record<string, string>).kz).toBe("Бір");
+    expect((target.title as Record<string, string>).kr).toBe("일번");
+  });
+
+  it("fill-blanks merge: CSV-new locale lands when previous row had it null", async () => {
+    const { client, store } = makeFakePrisma();
+    await seedTreatments(client as never, TREATMENTS_CSV_KZ_ONLY);
+    expect((store.treatment[0]!.title as Record<string, string | null>).ru).toBeNull();
+
+    // Operator updates the CSV with a freshly translated RU title and re-runs.
+    const filled = TREATMENTS_CSV_KZ_ONLY.replace(",Үш,,,", ",Үш,Три,삼번,");
+    await seedTreatments(client as never, filled);
+    expect((store.treatment[0]!.title as Record<string, string | null>).ru).toBe("Три");
+    expect((store.treatment[0]!.title as Record<string, string | null>).kr).toBe("삼번");
   });
 
   it("rejects unknown TreatmentCategory values", async () => {
@@ -109,15 +168,41 @@ describe("seedClinics", () => {
     expect((clinicA.location as Row).city).toBe("Сеул");
   });
 
-  it("idempotent on re-run", async () => {
-    const { client } = makeFakePrisma();
+  it("stores cityI18n alongside the flat city so KR users see Korean", async () => {
+    const { client, store } = makeFakePrisma();
     await seedTreatments(client as never, TREATMENTS_CSV);
     await seedClinics(client as never, CLINICS_CSV);
-    const r2 = await seedClinics(client as never, CLINICS_CSV);
-    expect(r2).toEqual({ created: 0, existing: 2 });
+    const clinicA = store.clinic.find((c) => c.slug === "clinic-a")!;
+    expect((clinicA.location as Row).cityI18n).toEqual({
+      kz: "Сеул",
+      ru: "Сеул",
+      kr: "서울",
+    });
   });
 
-  it("rejects clinic referencing a missing treatment slug (fail-fast)", async () => {
+  it("name lands as trilingual from name_kz/name_ru/name_kr", async () => {
+    const { client, store } = makeFakePrisma();
+    await seedTreatments(client as never, TREATMENTS_CSV);
+    await seedClinics(client as never, CLINICS_CSV);
+    expect(store.clinic[0]!.name).toEqual({
+      kz: "Клиника А",
+      ru: "Клиника А ру",
+      kr: "클리닉 A",
+    });
+  });
+
+  it("re-run is idempotent (no NEW rows) and fill-blanks merge applies to name", async () => {
+    const { client, store } = makeFakePrisma();
+    await seedTreatments(client as never, TREATMENTS_CSV);
+    await seedClinics(client as never, CLINICS_CSV);
+    // Hand-edit the KR name to simulate a reviewer pass.
+    (store.clinic[0]!.name as Record<string, string>).kr = "수동 수정 클리닉";
+    const r2 = await seedClinics(client as never, CLINICS_CSV);
+    expect(r2).toEqual({ created: 0, existing: 2 });
+    expect((store.clinic[0]!.name as Record<string, string>).kr).toBe("수동 수정 클리닉");
+  });
+
+  it("rejects clinic referencing a missing treatment slug (fail-fast on first create)", async () => {
     const { client } = makeFakePrisma();
     await seedTreatments(client as never, TREATMENTS_CSV);
     const bad = CLINICS_CSV.replace("a-one|a-two", "a-one|does-not-exist");
