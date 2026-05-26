@@ -151,7 +151,13 @@ export function Pill({
         "snap-start",
         highlighted
           ? "border-rose bg-rose-tint text-rose-deep"
-          : "border-line-soft bg-paper text-ink-2 hover:border-rose hover:text-rose-deep",
+          : // Hover used to preview the active rose treatment
+            // (`hover:border-rose hover:text-rose-deep`), which made
+            // an off-switch tap leave a rose-tinted "still active"
+            // look on the deactivated pill as long as the cursor
+            // stayed over it. Decouple hover from rose, matching
+            // the same intent we applied to the focus ring above.
+            "border-line-soft bg-paper text-ink-2 hover:bg-ground hover:text-ink",
       )}
     >
       {children}

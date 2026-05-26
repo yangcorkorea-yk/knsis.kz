@@ -66,4 +66,15 @@ describe("Pill", () => {
     const html = renderToString(<Pill highlighted={false}>Seoul</Pill>);
     expect(html).toMatch(/last:mr-4/);
   });
+
+  // Regression for the hover-residue defect: after an off-switch tap
+  // the previously-active pill is :hover'd until the cursor moves.
+  // The earlier hover:border-rose / hover:text-rose-deep made the
+  // deactivated pill look like it was still active. Hover is now
+  // decoupled from the rose treatment, same intent as the focus ring.
+  it("non-highlighted Pill has no rose hover treatment", () => {
+    const html = renderToString(<Pill highlighted={false}>Seoul</Pill>);
+    expect(html).not.toMatch(/hover:border-rose/);
+    expect(html).not.toMatch(/hover:text-rose-deep/);
+  });
 });
