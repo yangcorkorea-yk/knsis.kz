@@ -1,7 +1,7 @@
-slug,kind,name_kz,city,country,verifyState,hours,interpreters,treatment_slugs
-seoul-skin-clinic,korea,Сеул тері клиникасы,Сеул,KR,verified,"{""mon-fri"":""10:00-19:00"",""sat"":""10:00-15:00"",""sun"":""closed""}",ru|kz,pico-laser-toning|botox-jaw|hyaluronic-filler|pigment-spot-removal
-gangnam-medical-aesthetic,korea,Каннам медициналық эстетика,Сеул,KR,verified,"{""mon-fri"":""09:00-20:00"",""sat"":""10:00-17:00"",""sun"":""closed""}",ru|kz|en,botox-jaw|hyaluronic-filler|thread-lift-mini
-busan-aesthetic-center,korea,Пусан эстетикалық орталығы,Пусан,KR,verified,"{""mon-fri"":""10:00-19:00"",""sat"":""10:00-15:00"",""sun"":""closed""}",ru|en,pico-laser-toning|thread-lift-mini|hair-scalp-care
-almaty-derma-center,local,Алматы дерматологиялық орталығы,Алматы,KZ,verified,"{""mon-fri"":""09:00-18:00"",""sat"":""10:00-16:00"",""sun"":""closed""}",kz|ru,acne-medical-scaling|pigment-spot-removal|pico-laser-toning
-astana-beauty-medical,local,Астана сұлулық медициналық орталығы,Астана,KZ,verified,"{""mon-fri"":""10:00-20:00"",""sat"":""11:00-18:00"",""sun"":""closed""}",kz|ru,botox-jaw|hyaluronic-filler|acne-medical-scaling
-almaty-skin-spa,local,Алматы скин-спа,Алматы,KZ,verified,"{""mon-sun"":""10:00-21:00""}",kz|ru,hair-scalp-care|acne-medical-scaling
+slug,kind,name_kz,name_ru,name_kr,city,city_kr,country,verifyState,hours,interpreters,treatment_slugs
+seoul-skin-clinic,korea,Сеул тері клиникасы,Сеульская кожная клиника,서울 스킨 클리닉,Сеул,서울,KR,verified,"{""mon-fri"":""10:00-19:00"",""sat"":""10:00-15:00"",""sun"":""closed""}",ru|kz,pico-laser-toning|botox-jaw|hyaluronic-filler|pigment-spot-removal
+gangnam-medical-aesthetic,korea,Каннам медициналық эстетика,Каннам медицинская эстетика,강남 메디컬 에스테틱,Сеул,서울,KR,verified,"{""mon-fri"":""09:00-20:00"",""sat"":""10:00-17:00"",""sun"":""closed""}",ru|kz|en,botox-jaw|hyaluronic-filler|thread-lift-mini
+busan-aesthetic-center,korea,Пусан эстетикалық орталығы,Пусанский эстетический центр,부산 에스테틱 센터,Пусан,부산,KR,verified,"{""mon-fri"":""10:00-19:00"",""sat"":""10:00-15:00"",""sun"":""closed""}",ru|en,pico-laser-toning|thread-lift-mini|hair-scalp-care
+almaty-derma-center,local,Алматы дерматологиялық орталығы,Алматинский дерматологический центр,알마티 더마톨로지 센터,Алматы,알마티,KZ,verified,"{""mon-fri"":""09:00-18:00"",""sat"":""10:00-16:00"",""sun"":""closed""}",kz|ru,acne-medical-scaling|pigment-spot-removal|pico-laser-toning
+astana-beauty-medical,local,Астана сұлулық медициналық орталығы,Астанинский медицинский центр красоты,아스타나 뷰티 메디컬 센터,Астана,아스타나,KZ,verified,"{""mon-fri"":""10:00-20:00"",""sat"":""11:00-18:00"",""sun"":""closed""}",kz|ru,botox-jaw|hyaluronic-filler|acne-medical-scaling
+almaty-skin-spa,local,Алматы скин-спа,Алматы скин-спа,알마티 스킨 스파,Алматы,알마티,KZ,verified,"{""mon-sun"":""10:00-21:00""}",kz|ru,hair-scalp-care|acne-medical-scaling

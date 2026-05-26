@@ -1,0 +1,165 @@
+/*
+ * /[locale]/treatments/[slug] — Treatment detail (M2-03).
+ *
+ * Route shell. Server component. Fetches a single Treatment by
+ * slug + the verified clinics that offer it, renders the info /
+ * expects / recovery / related-clinics layout from the prototype
+ * (`docs/prototype/screens-a.jsx` ScreenTreatmentDetail).
+ *
+ * Disclaimer compliance: <MedicalDisclaimer> renders between the
+ * recovery section and the related-clinics list (matches the
+ * prototype `ScreenTreatmentDetail` line 594 placement). CLAUDE.md
+ * §2 hard rule: must be present on every treatment page.
+ *
+ * Hard rules check:
+ *   - All copy from messages/{kz,ru,kr}.json (`treatments.*`)
+ *   - Treatment text fields via lib/i18n/tr.ts (kz fallback)
+ *   - No monetary fields, no medical-claim phrasing
+ *   - No PII rendered (treatments + verified clinics only)
+ *   - Disclaimer rendered with PM-approved placeholder copy
+ *     (KZ + RU pending native-speaker sign-off in M7 i18n QA)
+ */
+
+import { notFound } from "next/navigation";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { MedicalDisclaimer } from "@/components/treatments/medical-disclaimer";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { prisma } from "@/lib/db/client";
+import { isLocale, type Locale } from "@/lib/i18n/config";
+import { tr, trList } from "@/lib/i18n/tr";
+
+export const dynamic = "force-dynamic";
+
+interface PageProps {
+  params: { locale: string; slug: string };
+}
+
+export default async function TreatmentDetailPage({ params: { locale, slug } }: PageProps) {
+  setRequestLocale(locale);
+  const activeLocale: Locale = isLocale(locale) ? locale : "kz";
+  const t = await getTranslations("treatments");
+
+  const treatment = await prisma.treatment.findFirst({
+    where: { slug, deletedAt: null },
+    select: {
+      id: true,
+      slug: true,
+      category: true,
+      title: true,
+      summary: true,
+      durationMin: true,
+      recovery: true,
+      expects: true,
+    },
+  });
+
+  if (!treatment) notFound();
+
+  const relatedClinics = await prisma.clinic.findMany({
+    where: {
+      deletedAt: null,
+      verifyState: "verified",
+      treatmentIds: { has: treatment.id },
+    },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      kind: true,
+      location: true,
+      interpreters: true,
+    },
+    take: 12,
+  });
+
+  const expects = trList(treatment.expects, activeLocale);
+
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 bg-warm pb-24 md:max-w-3xl">
+      <header className="px-4 pt-8">
+        <Badge tone="lav" size="sm">
+          {t(`category.${treatment.category}`)}
+        </Badge>
+        <h1 className="mt-2 break-keep text-2xl font-extrabold tracking-display text-ink">
+          {tr(treatment.title, activeLocale)}
+        </h1>
+        <p className="mt-2 text-sm text-ink-body">{tr(treatment.summary, activeLocale)}</p>
+        <p className="mt-3 text-xs text-ink-mute">
+          {t("duration_min", { minutes: treatment.durationMin })}
+        </p>
+      </header>
+
+      {expects.length > 0 && (
+        <section className="px-4">
+          <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-ink-mute">
+            {t("expects_label")}
+          </h2>
+          <ul className="space-y-2">
+            {expects.map((line, i) => (
+              <li key={i} className="flex gap-2 text-sm text-ink-2">
+                <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 rounded-full bg-rose-deep" />
+                <span className="flex-1">{line}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="px-4">
+        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-ink-mute">
+          {t("recovery_label")}
+        </h2>
+        <p className="text-sm text-ink-2">{tr(treatment.recovery, activeLocale)}</p>
+      </section>
+
+      <MedicalDisclaimer body={t("disclaimer.body")} ariaLabel={t("disclaimer.aria_label")} />
+
+      <section className="px-4">
+        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-ink-mute">
+          {t("related_clinics_label")}
+        </h2>
+        {relatedClinics.length === 0 ? (
+          <p className="text-sm text-ink-mute">{t("related_clinics_empty")}</p>
+        ) : (
+          <ul className="space-y-2">
+            {relatedClinics.map((clinic) => {
+              const loc = clinic.location as {
+                city?: unknown;
+                cityI18n?: unknown;
+              } | null;
+              // Prefer the per-locale city display (M2-09 i18n expansion);
+              // fall back to the flat canonical city the categories filter
+              // still keys on. KR users used to see Russian Cyrillic city
+              // names — the trilingual cityI18n closes that gap.
+              const cityDisplay = loc?.cityI18n
+                ? tr(loc.cityI18n, activeLocale)
+                : typeof loc?.city === "string"
+                  ? loc.city
+                  : "";
+              return (
+                <li key={clinic.id}>
+                  <Card>
+                    <CardContent className="space-y-1 pt-4">
+                      <p className="text-sm font-semibold text-ink">
+                        {tr(clinic.name, activeLocale)}
+                      </p>
+                      {cityDisplay.length > 0 && (
+                        <p className="text-xs text-ink-mute">{cityDisplay}</p>
+                      )}
+                      {clinic.interpreters.length > 0 && (
+                        <p className="text-[11px] text-ink-mute">
+                          {t("interpreters_prefix")} {clinic.interpreters.join(" · ")}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </main>
+  );
+}

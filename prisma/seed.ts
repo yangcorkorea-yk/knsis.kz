@@ -32,11 +32,15 @@ async function main() {
 
   console.log("• Treatments…");
   const t = await seedTreatments(prisma, treatmentsCsv);
-  console.log(`  ${t.created} created, ${t.existing} already present`);
+  console.log(
+    `  ${t.created} created, ${t.updated} updated (filled blanks), ${t.unchanged} unchanged`,
+  );
 
   console.log("• Clinics…");
   const c = await seedClinics(prisma, clinicsCsv);
-  console.log(`  ${c.created} created, ${c.existing} already present`);
+  console.log(
+    `  ${c.created} created, ${c.updated} updated (filled blanks), ${c.unchanged} unchanged`,
+  );
 
   console.log("• Reviews + seed customers…");
   const r = await seedReviews(prisma, reviewsCsv);
@@ -44,6 +48,28 @@ async function main() {
   console.log(
     `  seed customers: ${r.customers.created} created, ${r.customers.existing} already present`,
   );
+
+  // Diagnostic verification: sample one treatment row + one clinic
+  // row and print the trilingual JSON so the operator can see at a
+  // glance whether the fill-blanks merge actually persisted.
+  console.log("\n• Verification (sample row read-back)…");
+  const sampleTx = await prisma.treatment.findFirst({
+    select: { slug: true, title: true },
+  });
+  if (sampleTx) {
+    console.log(`  Treatment "${sampleTx.slug}" title: ${JSON.stringify(sampleTx.title)}`);
+  }
+  const sampleClinic = await prisma.clinic.findFirst({
+    select: { slug: true, name: true, location: true },
+  });
+  if (sampleClinic) {
+    console.log(`  Clinic "${sampleClinic.slug}" name: ${JSON.stringify(sampleClinic.name)}`);
+    console.log(
+      `    location.cityI18n: ${JSON.stringify(
+        (sampleClinic.location as { cityI18n?: unknown })?.cityI18n,
+      )}`,
+    );
+  }
 
   console.log("\n✅ seed: done");
 }
