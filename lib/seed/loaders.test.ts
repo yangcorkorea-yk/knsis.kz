@@ -89,11 +89,12 @@ describe("seedTreatments", () => {
   it("creates rows on first run, no NEW rows on second", async () => {
     const { client, store } = makeFakePrisma();
     const r1 = await seedTreatments(client as never, TREATMENTS_CSV);
-    expect(r1).toEqual({ created: 2, existing: 0 });
+    expect(r1).toEqual({ created: 2, updated: 0, unchanged: 0 });
     expect(store.treatment).toHaveLength(2);
 
+    // Same CSV, every locale slot already filled → no updates, no new rows.
     const r2 = await seedTreatments(client as never, TREATMENTS_CSV);
-    expect(r2).toEqual({ created: 0, existing: 2 });
+    expect(r2).toEqual({ created: 0, updated: 0, unchanged: 2 });
     expect(store.treatment).toHaveLength(2);
   });
 
@@ -128,24 +129,64 @@ describe("seedTreatments", () => {
     const target = store.treatment[0]!;
     (target.title as Record<string, string>).ru = "Один (исправлено редактором)";
 
-    // Re-run seed — the curated RU value must survive.
-    await seedTreatments(client as never, TREATMENTS_CSV);
+    // Re-run seed — the curated RU value must survive, no update fires.
+    const r = await seedTreatments(client as never, TREATMENTS_CSV);
+    expect(r).toEqual({ created: 0, updated: 0, unchanged: 2 });
     expect((target.title as Record<string, string>).ru).toBe("Один (исправлено редактором)");
-    // Other locales unchanged
     expect((target.title as Record<string, string>).kz).toBe("Бір");
     expect((target.title as Record<string, string>).kr).toBe("일번");
   });
 
   it("fill-blanks merge: CSV-new locale lands when previous row had it null", async () => {
     const { client, store } = makeFakePrisma();
-    await seedTreatments(client as never, TREATMENTS_CSV_KZ_ONLY);
+    const r1 = await seedTreatments(client as never, TREATMENTS_CSV_KZ_ONLY);
+    expect(r1).toEqual({ created: 1, updated: 0, unchanged: 0 });
     expect((store.treatment[0]!.title as Record<string, string | null>).ru).toBeNull();
 
     // Operator updates the CSV with a freshly translated RU title and re-runs.
     const filled = TREATMENTS_CSV_KZ_ONLY.replace(",Үш,,,", ",Үш,Три,삼번,");
-    await seedTreatments(client as never, filled);
+    const r2 = await seedTreatments(client as never, filled);
+    expect(r2).toEqual({ created: 0, updated: 1, unchanged: 0 });
     expect((store.treatment[0]!.title as Record<string, string | null>).ru).toBe("Три");
     expect((store.treatment[0]!.title as Record<string, string | null>).kr).toBe("삼번");
+  });
+
+  // Regression for the M2-09 fill-blanks bug surfaced at PR #7
+  // sign-off. Production rows from PR #3 seed had {kz, ru: null,
+  // kr: null}; the loader has to detect the null slots, call
+  // prisma.update, and persist all three locales. The fake's update
+  // mocks prisma's behaviour 1:1 (Object.assign on the row), so a
+  // failing update path here would have surfaced earlier — but we
+  // pin the integration shape explicitly now.
+  it("KZ-only existing row + 3-locale CSV → updates count + persisted JSON has all 3 locales", async () => {
+    const { client, store } = makeFakePrisma();
+    // Plant a KZ-only row simulating the PR #3 production state.
+    store.treatment.push({
+      id: "fixture-0001",
+      slug: "a-one",
+      category: "pigment",
+      title: { kz: "Бір", ru: null, kr: null },
+      summary: { kz: "Қысқа", ru: null, kr: null },
+      durationMin: 30,
+      recovery: { kz: "Жылдам", ru: null, kr: null },
+      expects: { kz: ["Жақсы"], ru: [], kr: [] },
+      createdAt: new Date(),
+    });
+
+    const r = await seedTreatments(client as never, TREATMENTS_CSV);
+    // a-one updates (blanks filled); a-two creates.
+    expect(r.created).toBe(1);
+    expect(r.updated).toBe(1);
+    expect(r.unchanged).toBe(0);
+
+    const refreshed = store.treatment.find((t) => t.slug === "a-one")!;
+    expect(refreshed.title).toEqual({ kz: "Бір", ru: "Один", kr: "일번" });
+    expect(refreshed.summary).toEqual({ kz: "Қысқа", ru: "Кратко", kr: "짧음" });
+    expect(refreshed.expects).toEqual({
+      kz: ["Жақсы"],
+      ru: ["Хорошо", "Чай"],
+      kr: ["좋음", "차"],
+    });
   });
 
   it("rejects unknown TreatmentCategory values", async () => {
@@ -162,7 +203,7 @@ describe("seedClinics", () => {
     const { client, store } = makeFakePrisma();
     await seedTreatments(client as never, TREATMENTS_CSV);
     const r1 = await seedClinics(client as never, CLINICS_CSV);
-    expect(r1).toEqual({ created: 2, existing: 0 });
+    expect(r1).toEqual({ created: 2, updated: 0, unchanged: 0 });
     const clinicA = store.clinic.find((c) => c.slug === "clinic-a")!;
     expect((clinicA.treatmentIds as string[]).length).toBe(2);
     expect((clinicA.location as Row).city).toBe("Сеул");
@@ -198,8 +239,39 @@ describe("seedClinics", () => {
     // Hand-edit the KR name to simulate a reviewer pass.
     (store.clinic[0]!.name as Record<string, string>).kr = "수동 수정 클리닉";
     const r2 = await seedClinics(client as never, CLINICS_CSV);
-    expect(r2).toEqual({ created: 0, existing: 2 });
+    expect(r2).toEqual({ created: 0, updated: 0, unchanged: 2 });
     expect((store.clinic[0]!.name as Record<string, string>).kr).toBe("수동 수정 클리닉");
+  });
+
+  // Regression for the M2-09 clinic fill-blanks bug (twin of the
+  // treatment-side regression): legacy production row has KZ-only
+  // name + no cityI18n; re-seed must persist name.ru / name.kr AND
+  // location.cityI18n on the existing row.
+  it("legacy KZ-only clinic + 3-locale CSV → name + cityI18n persisted", async () => {
+    const { client, store } = makeFakePrisma();
+    await seedTreatments(client as never, TREATMENTS_CSV);
+    store.clinic.push({
+      id: "fixture-clinic-0001",
+      slug: "clinic-a",
+      kind: "korea",
+      name: { kz: "Клиника А", ru: null, kr: null },
+      location: { country: "KR", city: "Сеул" },
+      interpreters: ["ru", "kz"],
+      treatmentIds: store.treatment.map((t) => t.id),
+      verifyState: "verified",
+      hours: { "mon-fri": "10:00-19:00" },
+      createdAt: new Date(),
+    });
+    const r = await seedClinics(client as never, CLINICS_CSV);
+    expect(r.updated).toBe(1);
+    expect(r.created).toBe(1); // clinic-b is new
+    const refreshed = store.clinic.find((c) => c.slug === "clinic-a")!;
+    expect(refreshed.name).toEqual({ kz: "Клиника А", ru: "Клиника А ру", kr: "클리닉 A" });
+    expect((refreshed.location as Record<string, unknown>).cityI18n).toEqual({
+      kz: "Сеул",
+      ru: "Сеул",
+      kr: "서울",
+    });
   });
 
   it("rejects clinic referencing a missing treatment slug (fail-fast on first create)", async () => {

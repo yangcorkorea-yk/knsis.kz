@@ -43,8 +43,8 @@ type Trilingual = { kz: string; ru: string | null; kr: string | null };
 type TrilingualList = { kz: string[]; ru: string[]; kr: string[] };
 
 export interface SeedSummary {
-  treatments: { created: number; existing: number };
-  clinics: { created: number; existing: number };
+  treatments: { created: number; updated: number; unchanged: number };
+  clinics: { created: number; updated: number; unchanged: number };
   customers: { created: number; existing: number };
   reviews: { created: number; existing: number };
 }
@@ -115,13 +115,40 @@ const CLINIC_KINDS = Object.values(ClinicKind) as ClinicKind[];
 const CLINIC_VERIFY_STATES = Object.values(ClinicVerifyState) as ClinicVerifyState[];
 const REVIEW_STATES = Object.values(ReviewState) as ReviewState[];
 
+function detectFilledSlots(
+  base: string,
+  existing: Partial<Trilingual> | undefined,
+  merged: Trilingual,
+): string[] {
+  const filled: string[] = [];
+  if (!existing?.ru && merged.ru) filled.push(`${base}.ru`);
+  if (!existing?.kr && merged.kr) filled.push(`${base}.kr`);
+  return filled;
+}
+
+function detectFilledListSlots(
+  base: string,
+  existing: Partial<TrilingualList> | undefined,
+  merged: TrilingualList,
+): string[] {
+  const filled: string[] = [];
+  if ((!existing?.ru || existing.ru.length === 0) && merged.ru.length > 0) {
+    filled.push(`${base}.ru`);
+  }
+  if ((!existing?.kr || existing.kr.length === 0) && merged.kr.length > 0) {
+    filled.push(`${base}.kr`);
+  }
+  return filled;
+}
+
 export async function seedTreatments(
   prisma: PrismaClient,
   csv: string,
 ): Promise<SeedSummary["treatments"]> {
   const rows = parseCsv(csv);
   let created = 0;
-  let existing = 0;
+  let updated = 0;
+  let unchanged = 0;
   for (const row of rows) {
     const slug = row.slug!.trim();
     const title = trilingualFromRow(row, "title");
@@ -131,18 +158,41 @@ export async function seedTreatments(
 
     const existingRow = await prisma.treatment.findUnique({ where: { slug } });
     if (existingRow) {
-      // Fill blank locale slots from the CSV; never overwrite a slot
-      // that already has content (admin / M7 reviewer wins).
+      // Compute the merged JSON ahead of time so we can compare with
+      // the existing value and only spend a DB write when a locale
+      // slot actually transitions from null/empty to filled.
+      const existingTitle = existingRow.title as Partial<Trilingual> | null;
+      const existingSummary = existingRow.summary as Partial<Trilingual> | null;
+      const existingRecovery = existingRow.recovery as Partial<Trilingual> | null;
+      const existingExpects = existingRow.expects as Partial<TrilingualList> | null;
+
+      const mergedTitle = mergeTrilingual(existingTitle, title);
+      const mergedSummary = mergeTrilingual(existingSummary, summary);
+      const mergedRecovery = mergeTrilingual(existingRecovery, recovery);
+      const mergedExpects = mergeTrilingualList(existingExpects, expects);
+
+      const filled = [
+        ...detectFilledSlots("title", existingTitle ?? undefined, mergedTitle),
+        ...detectFilledSlots("summary", existingSummary ?? undefined, mergedSummary),
+        ...detectFilledSlots("recovery", existingRecovery ?? undefined, mergedRecovery),
+        ...detectFilledListSlots("expects", existingExpects ?? undefined, mergedExpects),
+      ];
+
+      if (filled.length === 0) {
+        unchanged++;
+        continue;
+      }
       await prisma.treatment.update({
         where: { slug },
         data: {
-          title: mergeTrilingual(existingRow.title, title),
-          summary: mergeTrilingual(existingRow.summary, summary),
-          recovery: mergeTrilingual(existingRow.recovery, recovery),
-          expects: mergeTrilingualList(existingRow.expects, expects),
+          title: mergedTitle,
+          summary: mergedSummary,
+          recovery: mergedRecovery,
+          expects: mergedExpects,
         },
       });
-      existing++;
+      console.log(`  · ${slug}: filled ${filled.join(", ")}`);
+      updated++;
       continue;
     }
     await prisma.treatment.create({
@@ -156,9 +206,10 @@ export async function seedTreatments(
         expects,
       },
     });
+    console.log(`  · ${slug}: created (kz/ru/kr)`);
     created++;
   }
-  return { created, existing };
+  return { created, updated, unchanged };
 }
 
 export async function seedClinics(
@@ -167,7 +218,8 @@ export async function seedClinics(
 ): Promise<SeedSummary["clinics"]> {
   const rows = parseCsv(csv);
   let created = 0;
-  let existing = 0;
+  let updated = 0;
+  let unchanged = 0;
   for (const row of rows) {
     const slug = row.slug!.trim();
     const name = trilingualFromRow(row, "name");
@@ -177,37 +229,52 @@ export async function seedClinics(
     // — the categories filter (lib/discover/filters.ts CITY_SLUG_MAP)
     // depends on it. `location.cityI18n` carries the locale-aware
     // display value so KR users don't see Cyrillic city names.
+    const freshCityI18n = {
+      kz: city,
+      ru: city,
+      kr: cityKr ?? city,
+    } as const;
     const location: Prisma.InputJsonValue = {
       country: row.country ?? null,
       city,
-      cityI18n: {
-        kz: city,
-        ru: city,
-        kr: cityKr ?? city,
-      },
+      cityI18n: freshCityI18n,
     };
 
     const existingRow = await prisma.clinic.findUnique({ where: { slug } });
     if (existingRow) {
       const existingLoc = (existingRow.location ?? {}) as Record<string, unknown>;
       const existingCityI18n = (existingLoc.cityI18n ?? {}) as Record<string, string | null>;
-      const freshCityI18n = (location as { cityI18n: Record<string, string | null> }).cityI18n;
+      const mergedCityI18n = {
+        kz: existingCityI18n.kz ?? freshCityI18n.kz,
+        ru: existingCityI18n.ru ?? freshCityI18n.ru,
+        kr: existingCityI18n.kr ?? freshCityI18n.kr,
+      };
+      const mergedName = mergeTrilingual(existingRow.name, name);
+      const existingName = existingRow.name as Partial<Trilingual> | null;
+
+      const filled = [...detectFilledSlots("name", existingName ?? undefined, mergedName)];
+      if (!existingCityI18n.kr && mergedCityI18n.kr) filled.push("location.cityI18n.kr");
+      if (!existingCityI18n.ru && mergedCityI18n.ru) filled.push("location.cityI18n.ru");
+      if (!existingCityI18n.kz && mergedCityI18n.kz) filled.push("location.cityI18n.kz");
+
+      if (filled.length === 0) {
+        unchanged++;
+        continue;
+      }
+
       const mergedLocation: Prisma.InputJsonValue = {
         ...existingLoc,
-        cityI18n: {
-          kz: existingCityI18n.kz ?? freshCityI18n.kz,
-          ru: existingCityI18n.ru ?? freshCityI18n.ru,
-          kr: existingCityI18n.kr ?? freshCityI18n.kr,
-        },
+        cityI18n: mergedCityI18n,
       } as Prisma.InputJsonValue;
       await prisma.clinic.update({
         where: { slug },
         data: {
-          name: mergeTrilingual(existingRow.name, name),
+          name: mergedName,
           location: mergedLocation,
         },
       });
-      existing++;
+      console.log(`  · ${slug}: filled ${filled.join(", ")}`);
+      updated++;
       continue;
     }
 
@@ -232,9 +299,10 @@ export async function seedClinics(
         hours: parseHours(row.hours!),
       },
     });
+    console.log(`  · ${slug}: created (kz/ru/kr name + cityI18n)`);
     created++;
   }
-  return { created, existing };
+  return { created, updated, unchanged };
 }
 
 /**
