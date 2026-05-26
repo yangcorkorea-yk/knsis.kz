@@ -2,83 +2,38 @@
 
 /*
  * components/discover/filter-bar.tsx — three horizontally scrolling
- * pill rows (Area / Concern / Language) with optimistic feedback.
+ * pill rows (Area / Concern / Language). Stateless.
  *
- * Latency reality: Vercel ICN → IAD function + Supabase EU
- * round-trip puts the pill-tap → grid refresh at 1–2 s for KZ
- * users. Without immediate visual feedback the tap looked dead and
- * users would re-tap, which `toggleFilter` then read as a *second*
- * toggle → off-switch → user's intent inverted.
+ * The owning <CategoriesIsland> holds the filter state and runs the
+ * in-memory list filter; pills repaint synchronously when the parent
+ * re-renders, with zero network round-trip. That's the whole point
+ * of the client-side filtering refactor — see
+ * docs/runbook/optimistic-feedback.md §"When client-side filtering
+ * wins" for why this beat the previous useTransition + optimistic
+ * pattern.
  *
- * The defence is a three-layer optimistic update:
- *
- *   1. `useTransition` wraps router.push so React tracks the
- *      navigation as a non-urgent update and exposes isPending.
- *   2. A local `optimistic` record holds the user's *intended*
- *      active value per axis until the server response lands.
- *      The pill renders from `optimistic[key] ?? searchParams.get(key)`
- *      so the highlight repaints synchronously on click.
- *   3. The pending pill grows a small pulsing dot (Tailwind
- *      animate-pulse) so the user can see "yes, this is loading."
- *      `data-pending` attribute is on the button for hover-spy
- *      tooling / future a11y-status work.
- *
- * Why not `useOptimistic`? React 18.3.1 doesn't export it (canary
- * channel only). Next.js 14 ships canary internally but the public
- * API surface still goes through the installed react package's
- * types. setState + useTransition is the portable equivalent.
+ * Pill is exported so its rendered output can be locked down by unit
+ * tests independently of the FilterBar composition.
  */
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useState, useTransition } from "react";
-import { CITY_SLUGS, CONCERNS, INTERPRETER_LANGS, toggleFilter } from "@/lib/discover/filters";
+import {
+  CITY_SLUGS,
+  CONCERNS,
+  type DiscoveryFilters,
+  type FilterKey,
+  INTERPRETER_LANGS,
+} from "@/lib/discover/filters";
 import { cn } from "@/lib/utils";
 
-type AxisKey = "area" | "concern" | "language";
-type OptimisticMap = Partial<Record<AxisKey, string | null>>;
+interface FilterBarProps {
+  filters: DiscoveryFilters;
+  onToggle: (key: FilterKey, value: string) => void;
+  onClear: (key: FilterKey) => void;
+}
 
-export function FilterBar() {
+export function FilterBar({ filters, onToggle, onClear }: FilterBarProps) {
   const t = useTranslations("categories.filter");
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const [isPending, startTransition] = useTransition();
-  const [optimistic, setOptimistic] = useState<OptimisticMap>({});
-
-  // Once the navigation resolves and searchParams catches up, drop
-  // the optimistic overlay so the URL is the single source of truth
-  // again. Without this the user would see stale optimistic state
-  // if they navigated again via back/forward.
-  useEffect(() => {
-    if (!isPending) setOptimistic({});
-  }, [isPending]);
-
-  function effectiveActive(key: AxisKey): string | null {
-    return key in optimistic ? (optimistic[key] ?? null) : searchParams.get(key);
-  }
-
-  function navigate(key: AxisKey, value: string) {
-    const next = toggleFilter(new URLSearchParams(searchParams.toString()), key, value);
-    const target = next.get(key); // null if the same value was tapped to clear
-    setOptimistic((prev) => ({ ...prev, [key]: target }));
-    startTransition(() => {
-      const qs = next.toString();
-      router.push(qs ? `${pathname}?${qs}` : pathname);
-    });
-  }
-
-  function clearAxis(key: AxisKey) {
-    setOptimistic((prev) => ({ ...prev, [key]: null }));
-    startTransition(() => {
-      const next = new URLSearchParams(searchParams.toString());
-      next.delete(key);
-      const qs = next.toString();
-      router.push(qs ? `${pathname}?${qs}` : pathname);
-    });
-  }
-
   return (
     <div className="space-y-3" role="group" aria-label={t("group_label")}>
       <PillRow
@@ -87,10 +42,9 @@ export function FilterBar() {
         clearKey="area.all"
         values={CITY_SLUGS}
         labelOf={(v) => t(`area.${v}`)}
-        active={effectiveActive("area")}
-        isPending={isPending && "area" in optimistic}
-        onSelect={(v) => navigate("area", v)}
-        onClear={() => clearAxis("area")}
+        active={filters.area ?? null}
+        onSelect={(v) => onToggle("area", v)}
+        onClear={() => onClear("area")}
       />
       <PillRow
         axis="concern"
@@ -98,10 +52,9 @@ export function FilterBar() {
         clearKey="concern.all"
         values={CONCERNS}
         labelOf={(v) => t(`concern.${v}`)}
-        active={effectiveActive("concern")}
-        isPending={isPending && "concern" in optimistic}
-        onSelect={(v) => navigate("concern", v)}
-        onClear={() => clearAxis("concern")}
+        active={filters.concern ?? null}
+        onSelect={(v) => onToggle("concern", v)}
+        onClear={() => onClear("concern")}
       />
       <PillRow
         axis="language"
@@ -109,23 +62,21 @@ export function FilterBar() {
         clearKey="language.all"
         values={INTERPRETER_LANGS}
         labelOf={(v) => t(`language.${v}`)}
-        active={effectiveActive("language")}
-        isPending={isPending && "language" in optimistic}
-        onSelect={(v) => navigate("language", v)}
-        onClear={() => clearAxis("language")}
+        active={filters.language ?? null}
+        onSelect={(v) => onToggle("language", v)}
+        onClear={() => onClear("language")}
       />
     </div>
   );
 }
 
 interface PillRowProps<V extends string> {
-  axis: AxisKey;
+  axis: FilterKey;
   labelKey: string;
   clearKey: string;
   values: readonly V[];
   labelOf: (v: V) => string;
   active: string | null;
-  isPending: boolean;
   onSelect: (v: V) => void;
   onClear: () => void;
 }
@@ -137,7 +88,6 @@ function PillRow<V extends string>({
   values,
   labelOf,
   active,
-  isPending,
   onSelect,
   onClear,
 }: PillRowProps<V>) {
@@ -151,13 +101,8 @@ function PillRow<V extends string>({
       >
         {t(labelKey)}
       </h3>
-      <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 pl-4 pr-4">
-        <Pill
-          aria-pressed={active === null}
-          onClick={onClear}
-          highlighted={active === null}
-          pending={isPending && active === null}
-        >
+      <div className="flex snap-x snap-mandatory scroll-pl-4 scroll-pr-4 gap-2 overflow-x-auto pb-1">
+        <Pill aria-pressed={active === null} onClick={onClear} highlighted={active === null}>
           {t(clearKey)}
         </Pill>
         {values.map((v) => (
@@ -166,7 +111,6 @@ function PillRow<V extends string>({
             aria-pressed={active === v}
             onClick={() => onSelect(v)}
             highlighted={active === v}
-            pending={isPending && active === v}
           >
             {labelOf(v)}
           </Pill>
@@ -179,33 +123,44 @@ function PillRow<V extends string>({
 export function Pill({
   children,
   highlighted,
-  pending,
   ...rest
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   highlighted: boolean;
-  pending: boolean;
 }) {
   return (
     <button
       type="button"
-      data-pending={pending ? "true" : undefined}
       {...rest}
       className={cn(
         "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-deep focus-visible:ring-offset-2",
+        // Bind the scrollable row's left / right padding to the first
+        // and last pill themselves. Container padding on a horizontal
+        // overflow:auto box is unreliable across browsers, and the
+        // earlier arbitrary-variant attempt (`[&>*:first-child]:ml-4`)
+        // didn't survive Tailwind's default content scanner. Plain
+        // first: / last: variants are core Tailwind and always emit.
+        "first:ml-4 last:mr-4",
+        // Focus ring uses the neutral ink-mute (#8A8A8A) instead of any
+        // rose tone — after a pill is tapped to off-switch, the
+        // :focus-visible state lingers on the button until the user
+        // clicks elsewhere, and a rose-tinted ring there reads as
+        // "still active". Neutral gray keeps the focus indicator
+        // visible (WCAG 1.4.11 — 3.28:1 against #FFFFFF, passes AA)
+        // while staying decoupled from the active rose treatment.
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-mute focus-visible:ring-offset-2",
         "snap-start",
         highlighted
           ? "border-rose bg-rose-tint text-rose-deep"
-          : "border-line-soft bg-paper text-ink-2 hover:border-rose hover:text-rose-deep",
+          : // Hover used to preview the active rose treatment
+            // (`hover:border-rose hover:text-rose-deep`), which made
+            // an off-switch tap leave a rose-tinted "still active"
+            // look on the deactivated pill as long as the cursor
+            // stayed over it. Decouple hover from rose, matching
+            // the same intent we applied to the focus ring above.
+            "border-line-soft bg-paper text-ink-2 hover:bg-ground hover:text-ink",
       )}
     >
       {children}
-      {pending && (
-        <span
-          aria-hidden="true"
-          className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-rose-deep"
-        />
-      )}
     </button>
   );
 }

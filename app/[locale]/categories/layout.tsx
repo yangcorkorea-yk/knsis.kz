@@ -1,19 +1,15 @@
 /*
  * /[locale]/categories — layout.
  *
- * Owns the chrome (header + FilterBar). Lives in the layout slot
- * so the pill row stays mounted across navigations — when the user
- * taps a pill the URL changes, `loading.tsx` paints the grid
- * skeleton in the `{children}` slot, and the active pill on the
- * FilterBar is repainted immediately (useSearchParams reacts to
- * the new URL without unmounting).
+ * Owns the page header. FilterBar moved into <CategoriesIsland> as
+ * part of the client-side filtering refactor — it has to share state
+ * with the grid, and the island is the only place that state lives.
  *
  * Page-level data fetching lives in `page.tsx`.
  */
 
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
-import { FilterBar } from "@/components/discover/filter-bar";
 
 export default async function CategoriesLayout({
   children,
@@ -33,7 +29,6 @@ export default async function CategoriesLayout({
         </h1>
         <p className="mt-1 text-sm text-ink-body">{t("subtitle")}</p>
       </header>
-      <FilterBar />
       {children}
     </main>
   );
