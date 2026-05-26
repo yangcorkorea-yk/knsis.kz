@@ -21,7 +21,7 @@
  *   - Disclaimer lands on /clinics/[slug] (not on the list page)
  */
 
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { type ClientClinicCardData } from "@/components/clinics/clinic-card";
 import { ClinicsIsland } from "@/components/clinics/clinics-island";
 import { prisma } from "@/lib/db/client";
@@ -40,6 +40,7 @@ export default async function ClinicsPage({
   setRequestLocale(locale);
   const activeLocale: Locale = isLocale(locale) ? locale : "kz";
   const initialFilters = parseFilters(searchParams);
+  const t = await getTranslations("clinics");
 
   const clinics = await prisma.clinic.findMany({
     where: { deletedAt: null, verifyState: "verified" },
@@ -75,5 +76,15 @@ export default async function ClinicsPage({
     ];
   });
 
-  return <ClinicsIsland initialFilters={initialFilters} clinics={cardData} locale={activeLocale} />;
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 bg-warm pb-24 md:max-w-3xl">
+      <header className="px-4 pt-8">
+        <h1 className="break-keep text-2xl font-extrabold tracking-display text-ink">
+          {t("title")}
+        </h1>
+        <p className="mt-1 text-sm text-ink-body">{t("subtitle")}</p>
+      </header>
+      <ClinicsIsland initialFilters={initialFilters} clinics={cardData} locale={activeLocale} />
+    </main>
+  );
 }
