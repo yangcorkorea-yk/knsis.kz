@@ -146,7 +146,7 @@
     "title": "Поиск",
     "placeholder": "Поиск по процедурам, клиникам, отзывам",
     "submit": "Поиск",
-    "results_count": "{count} результатов по запросу '{query}'",
+    "results_count": "{count} результатов по запросу «{query}»",
     "empty_results": "По запросу ничего не найдено.",
     "no_query_hint": "Введите запрос для поиска.",
     "section": {

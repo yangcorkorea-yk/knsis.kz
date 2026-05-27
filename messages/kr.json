@@ -146,7 +146,7 @@
     "title": "검색",
     "placeholder": "시술, 클리닉, 후기 검색",
     "submit": "검색",
-    "results_count": "'{query}'에 대한 {count}개 결과",
+    "results_count": "“{query}”에 대한 {count}개 결과",
     "empty_results": "검색 결과가 없습니다.",
     "no_query_hint": "검색어를 입력하세요.",
     "section": {

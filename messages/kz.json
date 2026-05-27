@@ -146,7 +146,7 @@
     "title": "Іздеу",
     "placeholder": "Емшара, клиника, пікір іздеу",
     "submit": "Іздеу",
-    "results_count": "'{query}' үшін {count} нәтиже",
+    "results_count": "«{query}» үшін {count} нәтиже",
     "empty_results": "Сұраныс бойынша нәтиже табылмады.",
     "no_query_hint": "Іздеу үшін сұранысты енгізіңіз.",
     "section": {
