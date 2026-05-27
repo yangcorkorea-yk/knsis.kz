@@ -28,3 +28,8 @@ Operational notes that bit us once and shouldn't again.
   variable-length text, and PWA navigation override from
   `StaleWhileRevalidate` to `NetworkFirst` so fresh deploys
   take effect immediately instead of one navigation later.
+- [environment-recovery-checklist.md](./environment-recovery-checklist.md) —
+  flat 7-step "I just came back / fresh laptop" checklist:
+  branch sync, prisma generate, migration deploy, db:seed
+  verification, Vercel env vars, admin user check, PWA service
+  worker reset.
