@@ -128,6 +128,20 @@
       "body": "본 후기는 개인 경험입니다. 의료 조언이 아닙니다. 구체적인 안내는 면허 의사와 상담하시기 바랍니다."
     }
   },
+  "gallery": {
+    "title": "전후 사진",
+    "subtitle": "실제 환자 사례 (모바일 최적화).",
+    "consent_banner": "본 페이지의 모든 사진은 환자 본인 동의 하에 게재되었습니다.",
+    "before_label": "전",
+    "after_label": "후",
+    "case_caption_label": "사례",
+    "empty": "아직 갤러리가 없습니다.",
+    "slider_aria_label": "전후 사진 비교",
+    "disclaimer": {
+      "aria_label": "갤러리 안내",
+      "body": "이 사진은 실제 환자의 사례입니다. 결과는 개인에 따라 다를 수 있습니다. 의료 상담은 의사와 하시기 바랍니다."
+    }
+  },
   "search": {
     "title": "검색",
     "placeholder": "시술, 클리닉, 후기 검색",
