@@ -17,9 +17,10 @@
  *   2. ConsentBanner — every page view shows it (no dismiss)
  *   3. MedicalDisclaimer (gallery-specific copy — "results vary
  *      by individual")
- *   4. Case grid: stacked Iteration-3 CaseCards (horizontal-swipe
- *      image row + caption + procedure #tag + interview blockquote
- *      + clinic meta). Single depth — no /[slug] detail.
+ *   4. Case grid: stacked Iteration-3b CaseCards (4-thumbnail row
+ *      → click opens ImageModal lightbox + caption + procedure #tag
+ *      + interview blockquote + clinic meta). Single depth — no
+ *      /[slug] detail.
  *   5. Empty state if the case array is empty
  *
  * Hard rules check:
@@ -78,6 +79,12 @@ export default async function BeforeAfterPage({
 
   const labels = {
     interviewLabel: t("interview_label"),
+    modal: {
+      modalLabel: t("image_modal_label"),
+      closeLabel: t("image_modal_close"),
+      prevLabel: t("image_modal_prev"),
+      nextLabel: t("image_modal_next"),
+    },
   };
 
   return (

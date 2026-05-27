@@ -1,4 +1,4 @@
-# Decision: Before/After gallery — single-depth feed card (Iteration 3)
+# Decision: Before/After gallery — single-depth feed card with thumbnail-row + modal (Iteration 3b)
 
 **Date:** M2 polish window (PR #11 final shape)
 **Decided by:** PM
@@ -53,48 +53,81 @@ user one level deeper to see the actual content broke that
 mental model and added a click + a back-tap to every case
 view.
 
-### Iteration 3 — single-depth feed card (LAUNCH FORM)
+### Iteration 3a — single-depth feed card with horizontal-swipe row
 
-**What it is.** No detail route. The list card carries
-everything:
+**What it was.** No detail route. The list card carried a
+full-width image at the top, four CSS scroll-snap pages
+(2 before + 2 after angles), with a static 4-dot indicator
+underneath. Caption + procedure #tag + interview blockquote +
+clinic meta sat below.
 
-- 4-image horizontal-swipe row at the top edge (2 before + 2
-  after angles). Pure CSS scroll snap; no JS. Static page
-  dots underneath.
-- Caption.
-- Procedure as a `#tag` linking to the M2-03 treatment
-  detail page.
-- User interview blockquote — the trust artefact this surface
-  exists for.
-- Clinic meta line linking to the M2-04 clinic detail page.
+**Why it failed PM sign-off.**
 
-The interactive `<BeforeAfterSlider>` from Iterations 1 and 2
-is deleted; the swipe-through-angles pattern replaces the
-drag-reveal pattern entirely (the M5 real-image step still
-benefits — multiple angles is what users actually want to see).
+The visual reference PM was holding against (강남언니 캡처 4)
+is **not** a full-width swipe surface. It is a row of small
+thumbnails — all 4 angles visible at a glance — that open a
+modal when tapped. Iteration 3a optimised for the wrong
+mental model:
 
-## Why Iteration 3 is right
+1. The user has to swipe to see angles 2-4. Three swipes
+   per case across a 6-case feed is friction; the social-feed
+   pattern PM wants is "scan the angle row, decide, open
+   one image full-screen if it catches you."
+2. The 1-image full-width hero competed with the caption +
+   interview for vertical space. The thumbnail row compresses
+   the photographic real estate so the trust copy
+   (interview blockquote) lands above the fold.
 
-- **Depth 0.** Matches the PM's reference app pattern. No
-  click to evaluate; users scan the feed and stop when an
-  interview catches them.
-- **Multiple angles.** A surgeon's "after" rarely tells the
-  story from one angle; swiping through 2 + 2 reads as
-  evidence rather than marketing.
-- **Trust copy.** The interview blockquote is the surface's
-  reason to exist — user-voice copy reads as a real human
-  experience and tracks with the M2-06 reviews pattern.
-- **Mobile-native.** Horizontal swipe inside a vertical feed
-  is the dominant pattern (Instagram, TikTok carousels,
-  강남언니). No new mental model.
+### Iteration 3b — 4-thumbnail row + image modal (LAUNCH FORM)
 
-## Files affected by Iteration 3
+**What it is.** Still no detail route. The list card carries
+everything, with the image affordance reshaped:
 
-Deleted:
+- **Row of 4 small square thumbnails** at the top edge of the
+  card (CSS grid, `grid-cols-4`). All 4 angles visible
+  simultaneously without a gesture. Each thumbnail is a
+  `<button>` element.
+- Tapping any thumbnail opens an **`<ImageModal>` lightbox**
+  showing that image full-screen. Left / right arrows (or ←/→
+  keyboard, or horizontal touch swipe) navigate across the 4
+  angles. Close via X button, backdrop click, or Esc.
+- The modal carries full a11y: `role="dialog"` + `aria-modal`
+  - initial focus on the close button + focus return to the
+    triggering thumbnail on close + body-scroll lock while open.
+- Caption, procedure `#tag`, interview blockquote, clinic meta
+  — unchanged from 3a.
 
-- `app/[locale]/before-after/[slug]/page.tsx`
-- `components/gallery/before-after-slider.tsx`
-- `components/gallery/before-after-slider.test.tsx`
+The page-indicator dots from 3a are deleted (no scroll context
+to indicate). The horizontal scroll-snap row is deleted (all
+angles already visible inline).
+
+## Why Iteration 3b is right
+
+- **Depth 0 evaluation, depth 1 close-up.** The card surfaces
+  all 4 angles at a glance for "is this case relevant?"; the
+  modal handles "show me this one bigger." The 강남언니
+  reference pattern PM validated against works exactly this
+  way.
+- **Multiple angles, no gesture cost.** All 4 angles visible
+  inline. Users compare before-vs-after with their eyes, not
+  their thumbs.
+- **Trust copy lands above the fold.** Compressing the photo
+  row from full-width to a thumbnail strip pulls the interview
+  blockquote — the surface's reason to exist — up where it
+  catches the user during the scan.
+- **Mobile-native, accessible.** Thumbnail-grid + modal is a
+  dominant medical/portfolio pattern; the modal carries full
+  WCAG 2.1 AA keyboard + screen-reader support.
+
+## Files affected by Iterations 3a → 3b
+
+Deleted across the 3 → 3b arc:
+
+- `app/[locale]/before-after/[slug]/page.tsx` (Iteration 2)
+- `components/gallery/before-after-slider.tsx` (Iteration 2)
+- `components/gallery/before-after-slider.test.tsx` (Iteration 2)
+- Iteration 3a page-indicator dots + scroll-snap row inside
+  `components/gallery/case-card.tsx` (replaced in 3b)
 
 i18n keys retired:
 
@@ -103,19 +136,34 @@ i18n keys retired:
 - `gallery.slider_aria_label` (no slider anymore)
 - `gallery.case_caption_label` (sr-only prefix retired)
 
-i18n keys added:
+i18n keys added in 3a:
 
 - `gallery.interview_label` — sr-only prefix on the
   interview blockquote ("후기" / "Отзыв" / "Пікір")
+
+i18n keys added in 3b:
+
+- `gallery.image_modal_label` — `aria-label` on the dialog
+- `gallery.image_modal_close` — sr-only label on the X button
+- `gallery.image_modal_prev` — sr-only label on the ← arrow
+- `gallery.image_modal_next` — sr-only label on the → arrow
 
 i18n keys touched (M2-polish dev-jargon scrub):
 
 - `gallery.subtitle` — parenthetical "(mobile optimised)"
   removed in all three locales
 
-Rewritten:
+Rewritten / added:
 
-- `components/gallery/case-card.tsx` — Iteration 3 layout
+- `components/gallery/case-card.tsx` — Iteration 3b layout
+  (now `"use client"`; state drives which thumbnail's modal
+  is open)
+- `components/gallery/image-modal.tsx` — **new** Iteration 3b
+  lightbox component
+- `components/gallery/case-card.test.tsx` — rewritten for 3b
+  shape
+- `components/gallery/image-modal.test.tsx` — **new** a11y +
+  structural contract
 - `lib/gallery/mock-cases.ts` — `GalleryCase` shape gains
   `images: [GalleryImage, GalleryImage, GalleryImage,
 GalleryImage]` + `interview: TrilingualText`. 6 cases × 3
@@ -139,9 +187,15 @@ all unchanged.
 
 ## Reversibility
 
-If a UX study later prefers Iteration 2's separate detail
-page (e.g. deep-linkable case URLs, more room for context
-copy), the path back is:
+**Back to Iteration 3a (full-width swipe + dots):** rewrite
+the thumbnail row in `case-card.tsx` to a `snap-x snap-mandatory
+overflow-x-auto` flex row of full-width images + a static dot
+indicator beneath; delete the `<ImageModal>` mount and its 4
+i18n keys.
+
+**Back to Iteration 2 (separate detail page):** if a UX study
+later prefers deep-linkable case URLs / more room for context
+copy:
 
 1. Restore `app/[locale]/before-after/[slug]/page.tsx` from
    PR #11's deleted-files diff.
@@ -150,7 +204,7 @@ copy), the path back is:
 3. Restore the `slider_aria_label` / `before_label` /
    `after_label` i18n keys.
 4. Change `CaseCard` to wrap in `<Link href=".../[slug]">`
-   and drop the inline interview + tag + meta.
+   and drop the inline interview + tag + meta + modal.
 
-The mock data layer doesn't change either way — `GalleryCase`
-already carries everything either pattern needs.
+The mock data layer doesn't change for any of these paths —
+`GalleryCase` already carries everything each pattern needs.
