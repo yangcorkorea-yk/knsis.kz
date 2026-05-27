@@ -16,8 +16,10 @@
  *   2. ConsentBanner — every page view shows it (no dismiss)
  *   3. MedicalDisclaimer (gallery-specific copy — "results vary
  *      by individual")
- *   4. Case grid: stacked CaseCards, each with a
- *      BeforeAfterSlider
+ *   4. Case grid: stacked CaseCards (static split preview);
+ *      tapping a card navigates to /[locale]/before-after/[slug]
+ *      where the interactive slider lives. M2-polish PM decision —
+ *      list → detail pattern matches Treatment / Clinic / Review.
  *   5. Empty state if the case array is empty
  *
  * Hard rules check:
@@ -77,7 +79,6 @@ export default async function BeforeAfterPage({
   const labels = {
     before: t("before_label"),
     after: t("after_label"),
-    sliderAria: t("slider_aria_label"),
     captionLabel: t("case_caption_label"),
   };
 
