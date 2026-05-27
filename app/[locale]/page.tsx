@@ -176,7 +176,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
                       {"★".repeat(r.rating)}
                       <span className="text-line">{"★".repeat(5 - r.rating)}</span>
                     </div>
-                    <p className="line-clamp-3 text-sm text-ink-body">{r.body}</p>
+                    <p className="line-clamp-3 text-sm text-ink-body">{tr(r.body, activeLocale)}</p>
                     {r.clinic && (
                       <p className="text-xs text-ink-mute">{tr(r.clinic.name, activeLocale)}</p>
                     )}

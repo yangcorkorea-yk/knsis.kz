@@ -20,12 +20,23 @@ Anything backed by a Trilingual JSON column on a domain row:
 | ----------- | ----------------------------------------- | ----------------------------------------------------------------------------- |
 | `Treatment` | `title`, `summary`, `recovery`, `expects` | `/[locale]/treatments/[slug]` (M2-03)                                         |
 | `Clinic`    | `name`, `location.cityI18n`, `about`      | `/[locale]/clinics/[slug]` (M2-05); also surfaces in related-clinics on M2-03 |
-| `Review`    | (kz-only — review.body is single String)  | `/[locale]/reviews` (M2-06)                                                   |
+| `Review`    | `body`                                    | `/[locale]/reviews` (M2-06)                                                   |
 
-`Review.body` deliberately stays mono-lingual: a reviewer wrote
-in one language about their personal experience, we don't
-auto-translate it. The M2-06 PR will decide whether to scope
-review display by locale or annotate translations.
+`Review.body` was String through PR #8 and the runbook earlier
+flagged it as "deliberately mono-lingual." M2-06 reversed that
+call: even seed-fictional reviews need to render in the user's
+locale because the spec rule (no KZ fallback visible to RU/KR
+users) extends to the reviews feed. The schema migration
+`20260526044000_reviews_body_trilingual` converts existing
+String values to `{ kz: <existing>, ru: null, kr: null }` JSONB
+and the loader fills RU/KR slots from the expanded CSV.
+
+For genuinely user-authored reviews (post-MVP), this stays the
+same shape — the user writes in one locale, that locale's slot
+is populated, the others stay null until an M7-style review pass
+fills them or the surface decides to hide non-locale reviews.
+Today's M2-06 seed isn't real user copy; the translations are
+implementer-written and queued for M7 native review.
 
 ## Seed pipeline (M2-09)
 

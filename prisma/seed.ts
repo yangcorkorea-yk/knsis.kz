@@ -44,14 +44,15 @@ async function main() {
 
   console.log("• Reviews + seed customers…");
   const r = await seedReviews(prisma, reviewsCsv);
-  console.log(`  reviews: ${r.reviews.created} created, ${r.reviews.existing} already present`);
+  console.log(
+    `  reviews: ${r.reviews.created} created, ${r.reviews.updated} updated (filled blanks), ${r.reviews.unchanged} unchanged`,
+  );
   console.log(
     `  seed customers: ${r.customers.created} created, ${r.customers.existing} already present`,
   );
 
-  // Diagnostic verification: sample one treatment row + one clinic
-  // row and print the trilingual JSON so the operator can see at a
-  // glance whether the fill-blanks merge actually persisted.
+  // Diagnostic verification: sample one row per trilingual model so
+  // the operator can see at a glance whether fill-blanks persisted.
   console.log("\n• Verification (sample row read-back)…");
   const sampleTx = await prisma.treatment.findFirst({
     select: { slug: true, title: true },
@@ -69,6 +70,12 @@ async function main() {
         (sampleClinic.location as { cityI18n?: unknown })?.cityI18n,
       )}`,
     );
+  }
+  const sampleReview = await prisma.review.findFirst({
+    select: { code: true, body: true },
+  });
+  if (sampleReview) {
+    console.log(`  Review "${sampleReview.code}" body: ${JSON.stringify(sampleReview.body)}`);
   }
 
   console.log("\n✅ seed: done");

@@ -1,7 +1,7 @@
-code,customer_slug,customer_name,rating,clinic_slug,treatment_slug,state,body_kz
-KB-RV-0001,aliya,Әлия,5,seoul-skin-clinic,pico-laser-toning,published,Дәрігер мұқият түсіндірді. Процедурадан кейін терім жұмсақ болды.
-KB-RV-0002,aigerim,Айгерім,4,almaty-derma-center,acne-medical-scaling,published,Қызметкерлер кәсіби. Емшара әсерлі болды.
-KB-RV-0003,dariga,Дариға,5,gangnam-medical-aesthetic,hyaluronic-filler,published,Сеулде заманауи жабдықтар. Тілмаш аса көмектесті.
-KB-RV-0004,madina,Мадина,4,astana-beauty-medical,botox-jaw,published,Алғашқы келудің өзінде сенім орнатты. Ұсынамын.
-KB-RV-0005,saule,Сәуле,5,busan-aesthetic-center,thread-lift-mini,published,Пусандағы клиника таза және рахат. Нәтижеге қанағаттандым.
-KB-RV-0006,gulnara,Гүлнара,4,almaty-skin-spa,hair-scalp-care,published,Бас терісі күтімінен кейін шаш күші байқалды.
+code,customer_slug,customer_name,rating,clinic_slug,treatment_slug,state,body_kz,body_ru,body_kr
+KB-RV-0001,aliya,Әлия,5,seoul-skin-clinic,pico-laser-toning,published,Дәрігер мұқият түсіндірді. Процедурадан кейін терім жұмсақ болды.,Врач подробно всё объяснил. После процедуры кожа стала мягкой.,의사 선생님이 자세히 설명해 주셨습니다. 시술 후 피부가 부드러워졌어요.
+KB-RV-0002,aigerim,Айгерім,4,almaty-derma-center,acne-medical-scaling,published,Қызметкерлер кәсіби. Емшара әсерлі болды.,Персонал профессиональный. Процедура оказалась эффективной.,직원분들이 전문적이셨고 시술 효과도 좋았습니다.
+KB-RV-0003,dariga,Дариға,5,gangnam-medical-aesthetic,hyaluronic-filler,published,Сеулде заманауи жабдықтар. Тілмаш аса көмектесті.,В Сеуле современное оборудование. Переводчик очень помог.,서울 클리닉의 장비가 현대적이었고 통역도 큰 도움이 되었습니다.
+KB-RV-0004,madina,Мадина,4,astana-beauty-medical,botox-jaw,published,Алғашқы келудің өзінде сенім орнатты. Ұсынамын.,Уже на первом визите вызвали доверие. Рекомендую.,첫 방문부터 신뢰가 갔습니다. 추천드려요.
+KB-RV-0005,saule,Сәуле,5,busan-aesthetic-center,thread-lift-mini,published,Пусандағы клиника таза және рахат. Нәтижеге қанағаттандым.,Клиника в Пусане чистая и уютная. Результатом довольна.,부산 클리닉은 깨끗하고 편안했어요. 결과에 만족합니다.
+KB-RV-0006,gulnara,Гүлнара,4,almaty-skin-spa,hair-scalp-care,published,Бас терісі күтімінен кейін шаш күші байқалды.,После ухода за кожей головы появилась заметная сила волос.,두피 케어 후 모발에 힘이 생긴 것이 느껴졌습니다.

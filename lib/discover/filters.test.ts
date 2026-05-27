@@ -9,6 +9,7 @@ import {
   filtersToSearchParams,
   INTERPRETER_LANGS,
   matchClinic,
+  matchReview,
   matchTreatment,
   parseFilters,
 } from "./filters";
@@ -48,6 +49,20 @@ describe("parseFilters", () => {
 
   it("preserves valid axes when one is unknown (no all-or-nothing)", () => {
     expect(parseFilters({ area: "seoul", concern: "nope" })).toEqual({ area: "seoul" });
+  });
+
+  it("accepts slug-shaped treatment / clinic axes (data-driven, no enum check)", () => {
+    expect(parseFilters({ treatment: "pico-laser-toning", clinic: "seoul-skin-clinic" })).toEqual({
+      treatment: "pico-laser-toning",
+      clinic: "seoul-skin-clinic",
+    });
+  });
+
+  it("rejects treatment / clinic values that aren't slug-shaped", () => {
+    // Defensive — keeps URL injection out of the in-memory matcher.
+    expect(parseFilters({ treatment: "../../etc/passwd" })).toEqual({});
+    expect(parseFilters({ clinic: "SHOUTING" })).toEqual({});
+    expect(parseFilters({ treatment: "spaces are bad" })).toEqual({});
   });
 });
 
@@ -169,6 +184,74 @@ describe("matchTreatment", () => {
 
   it("ignores area / language filters (those only constrain clinics)", () => {
     expect(matchTreatment({ category: "skin" }, { area: "seoul", language: "kz" })).toBe(true);
+  });
+});
+
+describe("matchReview", () => {
+  const review = {
+    treatmentSlug: "pico-laser-toning",
+    clinicSlug: "seoul-skin-clinic",
+    clinicCity: CITY_SLUG_MAP.seoul,
+  };
+
+  it("matches when no filters apply", () => {
+    expect(matchReview(review, {})).toBe(true);
+  });
+
+  it("matches when area aligns with clinic city", () => {
+    expect(matchReview(review, { area: "seoul" })).toBe(true);
+  });
+
+  it("rejects on area mismatch", () => {
+    expect(matchReview(review, { area: "busan" })).toBe(false);
+  });
+
+  it("rejects when filters.area is set but the review's clinicCity is null", () => {
+    expect(matchReview({ ...review, clinicCity: null }, { area: "seoul" })).toBe(false);
+  });
+
+  it("matches on treatment slug exact", () => {
+    expect(matchReview(review, { treatment: "pico-laser-toning" })).toBe(true);
+  });
+
+  it("rejects on treatment slug mismatch", () => {
+    expect(matchReview(review, { treatment: "botox-jaw" })).toBe(false);
+  });
+
+  it("matches on clinic slug exact", () => {
+    expect(matchReview(review, { clinic: "seoul-skin-clinic" })).toBe(true);
+  });
+
+  it("rejects on clinic slug mismatch", () => {
+    expect(matchReview(review, { clinic: "almaty-derma-center" })).toBe(false);
+  });
+
+  it("compound: passes only when every set axis aligns", () => {
+    expect(
+      matchReview(review, {
+        area: "seoul",
+        treatment: "pico-laser-toning",
+        clinic: "seoul-skin-clinic",
+      }),
+    ).toBe(true);
+    expect(
+      matchReview(review, {
+        area: "seoul",
+        treatment: "pico-laser-toning",
+        clinic: "almaty-derma-center",
+      }),
+    ).toBe(false);
+  });
+
+  it("ignores clinic / area filters when review's slugs are null (orphan review)", () => {
+    // matchReview is strict — null + a set filter = no match
+    expect(matchReview({ treatmentSlug: null, clinicSlug: null, clinicCity: null }, {})).toBe(true);
+    expect(
+      matchReview(
+        { treatmentSlug: null, clinicSlug: null, clinicCity: null },
+        { treatment: "anything" },
+      ),
+    ).toBe(false);
   });
 });
 

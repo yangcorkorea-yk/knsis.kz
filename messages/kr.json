@@ -96,6 +96,38 @@
       "kr": "한국어"
     }
   },
+  "reviews": {
+    "title": "후기",
+    "subtitle": "시술과 클리닉에 대한 실제 경험담.",
+    "empty": "조건에 맞는 후기가 없습니다.",
+    "rating_label": "{rating}점",
+    "filter": {
+      "group_label": "후기 필터",
+      "area": {
+        "label": "지역",
+        "all": "전체",
+        "seoul": "서울",
+        "busan": "부산",
+        "almaty": "알마티",
+        "astana": "아스타나"
+      },
+      "treatment": {
+        "label": "시술",
+        "all": "전체"
+      },
+      "clinic": {
+        "label": "클리닉",
+        "all": "전체"
+      }
+    },
+    "card": {
+      "anonymous_avatar_label": "익명 사용자"
+    },
+    "disclaimer": {
+      "aria_label": "후기 안내",
+      "body": "본 후기는 개인 경험입니다. 의료 조언이 아닙니다. 구체적인 안내는 면허 의사와 상담하시기 바랍니다."
+    }
+  },
   "notfound": {
     "body": "요청하신 페이지를 찾을 수 없습니다.",
     "home_link": "홈으로"
