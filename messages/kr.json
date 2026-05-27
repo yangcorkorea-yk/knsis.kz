@@ -128,6 +128,26 @@
       "body": "본 후기는 개인 경험입니다. 의료 조언이 아닙니다. 구체적인 안내는 면허 의사와 상담하시기 바랍니다."
     }
   },
+  "search": {
+    "title": "검색",
+    "placeholder": "시술, 클리닉, 후기 검색",
+    "submit": "검색",
+    "results_count": "'{query}'에 대한 {count}개 결과",
+    "empty_results": "검색 결과가 없습니다.",
+    "no_query_hint": "검색어를 입력하세요.",
+    "section": {
+      "treatments": "시술",
+      "clinics": "클리닉",
+      "reviews": "후기"
+    },
+    "trending_label": "인기 시술",
+    "recent_label": "최근 검색",
+    "recent_clear": "기록 비우기",
+    "disclaimer": {
+      "aria_label": "검색 안내",
+      "body": "검색 결과는 일반 정보입니다. 구체적인 진료 상담은 의사와 상담하시기 바랍니다."
+    }
+  },
   "notfound": {
     "body": "요청하신 페이지를 찾을 수 없습니다.",
     "home_link": "홈으로"
