@@ -12,14 +12,14 @@
  * backed by Supabase Storage signed URLs.
  *
  * Page layout (top → bottom):
- *   1. Header (title + subtitle)
+ *   1. Header (title + subtitle — copy stripped of dev-jargon
+ *      "(mobile optimised)" parenthetical per M2-polish PM)
  *   2. ConsentBanner — every page view shows it (no dismiss)
  *   3. MedicalDisclaimer (gallery-specific copy — "results vary
  *      by individual")
- *   4. Case grid: stacked CaseCards (static split preview);
- *      tapping a card navigates to /[locale]/before-after/[slug]
- *      where the interactive slider lives. M2-polish PM decision —
- *      list → detail pattern matches Treatment / Clinic / Review.
+ *   4. Case grid: stacked Iteration-3 CaseCards (horizontal-swipe
+ *      image row + caption + procedure #tag + interview blockquote
+ *      + clinic meta). Single depth — no /[slug] detail.
  *   5. Empty state if the case array is empty
  *
  * Hard rules check:
@@ -77,9 +77,7 @@ export default async function BeforeAfterPage({
   );
 
   const labels = {
-    before: t("before_label"),
-    after: t("after_label"),
-    captionLabel: t("case_caption_label"),
+    interviewLabel: t("interview_label"),
   };
 
   return (

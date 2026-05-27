@@ -1,18 +1,27 @@
 /*
- * components/gallery/case-card.tsx — list card for the B/A
- * gallery (M2-07 → M2-polish revision).
+ * components/gallery/case-card.tsx — single feed card for the
+ * Before/After gallery (M2-07 Iteration 3).
  *
- * Original M2-07 build rendered a full <BeforeAfterSlider> inline
- * on every list card; PM sign-off flipped to a list → detail
- * pattern matching Treatment / Clinic / Review surfaces. The
- * slider now lives on `/[locale]/before-after/[slug]`; the list
- * card shows a static split preview (two tone halves with a
- * thin vertical divider) plus the caption + meta line, and
- * wraps in a <Link> to the detail route.
+ * Single-depth pattern (no list → detail). The card carries
+ * everything the user needs to evaluate the case:
+ *   - 4-image horizontal-swipe row (2 before + 2 after) at the
+ *     top edge of the card, full-bleed
+ *   - static page indicator dots (4 dots, MVP scope; the
+ *     active-dot tracking that would need scroll JS is M5)
+ *   - caption
+ *   - procedure as a #tag — link to the M2-03 treatment detail
+ *   - user interview blockquote — the trust artefact this
+ *     surface exists for
+ *   - clinic meta link — M2-04 clinic detail
  *
- * Static preview is intentional: the slider is the interactive
- * payoff of the detail page. A repeating interactive widget on
- * every list card competes with scroll + adds visual noise.
+ * Server component. The horizontal swipe is pure CSS (snap-x
+ * + overflow-x-auto + scrollbar-none); touch devices get
+ * native swipe without JS, and vertical page scroll keeps
+ * working because the swipe row's own scroll context owns
+ * horizontal gestures.
+ *
+ * Visual reference: KR medical-aesthetic feed pattern
+ * (강남언니) — depth 0, image-first, social-trust copy.
  */
 
 import Link from "next/link";
@@ -22,9 +31,9 @@ import type { Locale } from "@/lib/i18n/config";
 import { tr, type TrilingualText } from "@/lib/i18n/tr";
 import { cn } from "@/lib/utils";
 
-// Duplicated from before-after-slider.tsx (the only other place
-// that maps a CaseTone to a Tailwind gradient class). Two callers
-// is below the M0 "extract on third use" threshold per CLAUDE.md §6.
+// Tone → Tailwind gradient class. Duplicated from earlier slider
+// drafts; only this component renders gradients now (the slider
+// + its split-preview card variant were removed in Iteration 3).
 const TONE_CLASSES: Record<CaseTone, string> = {
   warm: "bg-gradient-to-br from-warm to-ground",
   ground: "bg-gradient-to-br from-ground to-line-soft",
@@ -39,64 +48,68 @@ interface Props {
   treatmentTitle: TrilingualText | null;
   clinicName: TrilingualText | null;
   labels: {
-    before: string;
-    after: string;
-    captionLabel: string;
+    /** "후기" / "Отзыв" / "Пікір" — sr-only prefix on the interview blockquote. */
+    interviewLabel: string;
   };
 }
 
 export function CaseCard({ case_, locale, treatmentTitle, clinicName, labels }: Props) {
   const captionText = tr(case_.caption, locale);
+  const interviewText = tr(case_.interview, locale);
   const treatmentText = treatmentTitle ? tr(treatmentTitle, locale) : "";
   const clinicText = clinicName ? tr(clinicName, locale) : "";
   return (
-    <Link
-      href={`/${locale}/before-after/${case_.slug}`}
-      aria-label={captionText}
-      className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-mute focus-visible:ring-offset-2"
-    >
-      <Card>
-        <CardContent className="space-y-3 pt-4">
+    <Card className="overflow-hidden">
+      {/* Image swipe row — full-bleed (breaks out of CardContent padding). */}
+      <div
+        className="scrollbar-none flex snap-x snap-mandatory overflow-x-auto"
+        aria-label={captionText}
+      >
+        {case_.images.map((img, i) => (
           <div
+            key={i}
             aria-hidden="true"
-            className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-line-soft"
+            className={cn("aspect-[4/3] w-full shrink-0 snap-start", TONE_CLASSES[img.tone])}
+          />
+        ))}
+      </div>
+
+      {/* Static page indicator dots. M5 swap path: bind active dot
+          to scrollLeft via a useEffect — out of MVP scope. */}
+      <div className="flex justify-center gap-1.5 pt-3" aria-hidden="true">
+        {case_.images.map((_, i) => (
+          <span key={i} className="block h-1.5 w-1.5 rounded-full bg-ink-mute/40" />
+        ))}
+      </div>
+
+      <CardContent className="space-y-3 pt-3">
+        <p className="break-keep text-sm font-semibold text-ink">{captionText}</p>
+
+        {treatmentText && (
+          <Link
+            href={`/${locale}/treatments/${case_.treatmentSlug}`}
+            className="inline-flex items-center rounded text-xs font-medium text-rose-deep hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-mute focus-visible:ring-offset-2"
           >
-            <div
-              className={cn(
-                "absolute inset-y-0 left-0 flex w-1/2 items-end p-2",
-                TONE_CLASSES[case_.beforeTone],
-              )}
-            >
-              <span className="rounded-full bg-paper/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-ink-2 shadow-card">
-                {labels.before}
-              </span>
-            </div>
-            <div
-              className={cn(
-                "absolute inset-y-0 right-0 flex w-1/2 items-end justify-end p-2",
-                TONE_CLASSES[case_.afterTone],
-              )}
-            >
-              <span className="rounded-full bg-paper/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-rose-deep shadow-card">
-                {labels.after}
-              </span>
-            </div>
-            {/* Static centre divider — the detail page's slider replaces this with a draggable handle. */}
-            <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-paper" />
-          </div>
-          <p className="break-keep text-sm font-medium text-ink-2">
-            <span className="sr-only">{labels.captionLabel}: </span>
-            {captionText}
-          </p>
-          {(treatmentText || clinicText) && (
-            <p className="text-[11px] text-ink-mute">
-              {treatmentText}
-              {treatmentText && clinicText && <span className="mx-1">·</span>}
-              {clinicText}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-    </Link>
+            #{treatmentText}
+          </Link>
+        )}
+
+        {interviewText && (
+          <blockquote className="rounded-md border-l-2 border-rose bg-rose-tint/40 px-3 py-2 text-sm leading-relaxed text-ink-2">
+            <span className="sr-only">{labels.interviewLabel}: </span>
+            {interviewText}
+          </blockquote>
+        )}
+
+        {clinicText && (
+          <Link
+            href={`/${locale}/clinics/${case_.clinicSlug}`}
+            className="inline-block rounded text-[11px] text-ink-mute underline-offset-2 hover:text-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-mute focus-visible:ring-offset-2"
+          >
+            {clinicText}
+          </Link>
+        )}
+      </CardContent>
+    </Card>
   );
 }
