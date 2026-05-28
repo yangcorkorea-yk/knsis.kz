@@ -1,25 +1,30 @@
 /*
- * POST /api/leads — M3-03 consult-form submit endpoint.
+ * POST /api/leads — M3 consult-form submit endpoint.
  *
  * Pipeline:
  *   1. ensureGuestUserFromRequest (creates User row on first
  *      meaningful POST; bot UA short-circuits with 410)
  *   2. Parse + Zod-validate the body via leadSubmitSchema
+ *   2.5. Turnstile siteverify — skipped automatically when
+ *        TURNSTILE_SECRET_KEY is blank (dev mock)
+ *   2.6. Rate limit — 5 leads / user / 24h + 1 / phone / 10 min
  *   3. Composes createLead with real Prisma queries
+ *      (idempotency-key short-circuit lives inside createLead)
  *   4. Fires the PM "new lead" Resend email — non-fatal on
  *      failure (the Lead row is already persisted; PM will
  *      still see it in the M5 admin inbox)
  *   5. Returns { code }
  *
  * Response shape:
- *   200 { code }                              — happy + idempotent reuse
- *   400 { ok: false, code: "validation" }     — Zod parse error
+ *   200 { code }                                 — happy + idempotent reuse
+ *   400 { ok: false, code: "validation" }        — Zod parse error
  *   400 { ok: false, code: "invalid_treatment" } — slug not in catalog
- *   410 { ok: false, code: "bot" }
- *   500 { ok: false, code: "internal" }       — Prisma surprise / code-gen exhausted
- *
- * Rate limit (5 leads / IP / day, 1 lead / phone / 10 min)
- * + Turnstile siteverify land in M3-05.
+ *   403 { ok: false, code: "turnstile_invalid"
+ *                       | "turnstile_unreachable" } — CAPTCHA failure
+ *   410 { ok: false, code: "bot" }               — UA matched bot regex
+ *   429 { ok: false, code: "rate_user_day"
+ *                       | "rate_phone_window" } — rate limit
+ *   500 { ok: false, code: "internal" }          — Prisma / code-gen surprise
  */
 
 import { Prisma } from "@prisma/client";
