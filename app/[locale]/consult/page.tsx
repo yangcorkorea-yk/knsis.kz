@@ -1,22 +1,33 @@
 /*
  * /[locale]/consult — M3 single-page consult form entry route.
  *
- * Server component. Loads the active Treatment list, resolves
- * area labels for the region pill row + language-dropdown
- * options + the full label bag, then renders the ConsultForm
- * island. The form owns its own h1/header now (single-page
- * redesign) so the page is just the data shell.
+ * Page layout mirrors the rest of the public surfaces (categories,
+ * treatments, clinics, reviews, search, before-after):
+ *   - `<main>` is the centered max-width column, widens on desktop
+ *     to `md:max-w-3xl` like the other public discovery pages
+ *   - `<header>` is a direct child of main with its own `px-4`
+ *   - `<MedicalDisclaimer>` is a direct child of main and owns its
+ *     own horizontal margin (`mx-4` inside the component)
+ *   - The form sits inside a thin `px-4` wrapper so all of its
+ *     sections get the same horizontal padding
+ *
+ * Previous M3 sign-off matrix surfaced a layout mismatch: the form
+ * used to render its own `<header>` + `<MedicalDisclaimer>` inside
+ * a `px-4` wrapper, so the disclaimer's own `mx-4` doubled the
+ * padding and the consult page didn't widen on desktop like the
+ * other public surfaces. Captured in
+ * `docs/runbook/page-layout-consistency.md`.
  *
  * Hard rules:
  *   - All copy from `consult.*` in messages/{kz,ru,kr}.json
- *   - Medical disclaimer rendered above the form sections
- *     (consistent with every M2 medical-adjacent surface)
+ *   - Medical disclaimer rendered above the form
  *   - No PII captured until the POST hits /api/leads
  *   - No monetary fields on schema or in copy
  */
 
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ConsultForm, type TreatmentOption } from "@/components/consult/consult-form";
+import { MedicalDisclaimer } from "@/components/treatments/medical-disclaimer";
 import { prisma } from "@/lib/db/client";
 import { CITY_SLUGS } from "@/lib/discover/filters";
 import { isLocale, type Locale } from "@/lib/i18n/config";
@@ -70,18 +81,24 @@ export default async function ConsultPage({ params: { locale } }: { params: { lo
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 bg-warm pb-24">
-      <div className="px-4 pt-8">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 bg-warm pb-24 md:max-w-3xl">
+      <header className="flex flex-col gap-2 px-4 pt-8">
+        <h1 className="break-keep text-2xl font-extrabold tracking-display text-ink">
+          {t("title")}
+        </h1>
+        <p className="text-sm text-ink-body">{t("subtitle")}</p>
+        <p className="text-[11px] text-ink-mute">{t("input_locale_hint")}</p>
+      </header>
+
+      <MedicalDisclaimer body={t("disclaimer.body")} ariaLabel={t("disclaimer.aria_label")} />
+
+      <div className="px-4">
         <ConsultForm
           locale={activeLocale}
           treatments={treatments}
           turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ""}
           labels={{
-            title: t("title"),
-            subtitle: t("subtitle"),
-            inputLocaleHint: t("input_locale_hint"),
-            disclaimerBody: t("disclaimer.body"),
-            disclaimerAriaLabel: t("disclaimer.aria_label"),
+            formAriaLabel: t("title"),
             footerNote: t("footer"),
 
             sectionContact: t("section.contact"),

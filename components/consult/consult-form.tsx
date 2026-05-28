@@ -42,7 +42,6 @@ import { Controller, useForm } from "react-hook-form";
 import type { Resolver, SubmitHandler } from "react-hook-form";
 import { CTA } from "@/components/ui/cta";
 import { Input } from "@/components/ui/input";
-import { MedicalDisclaimer } from "@/components/treatments/medical-disclaimer";
 import { TurnstileWidget } from "@/components/consult/turnstile-widget";
 import { CITY_SLUGS } from "@/lib/discover/filters";
 import { leadSubmitSchema, type LeadSubmit, type PhotoRef } from "@/lib/leads/schema";
@@ -57,12 +56,16 @@ export interface TreatmentOption {
 }
 
 export interface Labels {
-  // Page-level
-  title: string;
-  subtitle: string;
-  inputLocaleHint: string;
-  disclaimerBody: string;
-  disclaimerAriaLabel: string;
+  /**
+   * Form aria-label — typically the page's h1 / title. The form
+   * itself doesn't render a visible header (the page does); this
+   * label keeps screen-reader semantics intact.
+   */
+  formAriaLabel: string;
+  /**
+   * Reassurance copy rendered under the submit button — "manager
+   * will contact you via WhatsApp / Telegram within 24h" etc.
+   */
   footerNote: string;
 
   // Section headings
@@ -237,18 +240,8 @@ export function ConsultForm({ locale, treatments, labels, turnstileSiteKey }: Pr
       onSubmit={handleSubmit(onSubmit)}
       noValidate
       className="flex flex-col gap-6"
-      aria-label={labels.title}
+      aria-label={labels.formAriaLabel}
     >
-      <header className="flex flex-col gap-2">
-        <h1 className="break-keep text-2xl font-extrabold tracking-display text-ink">
-          {labels.title}
-        </h1>
-        <p className="text-sm text-ink-body">{labels.subtitle}</p>
-        <p className="text-[11px] text-ink-mute">{labels.inputLocaleHint}</p>
-      </header>
-
-      <MedicalDisclaimer body={labels.disclaimerBody} ariaLabel={labels.disclaimerAriaLabel} />
-
       <section className="flex flex-col gap-4">
         <h2 className="text-sm font-bold uppercase tracking-wide text-ink-mute">
           {labels.sectionContact}
@@ -322,7 +315,7 @@ export function ConsultForm({ locale, treatments, labels, turnstileSiteKey }: Pr
           <select
             id={`${formId}-language`}
             className={cn(
-              "flex h-11 w-full rounded-md border border-line bg-ground px-3 text-sm text-ink",
+              "flex h-11 w-full rounded-md border border-line bg-paper px-3 text-sm text-ink",
               "focus-visible:border-rose focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-soft",
             )}
             {...register("preferredLanguage")}
@@ -403,7 +396,7 @@ export function ConsultForm({ locale, treatments, labels, turnstileSiteKey }: Pr
             maxLength={2000}
             placeholder={labels.messagePlaceholder}
             className={cn(
-              "w-full rounded-md border border-line bg-ground px-3 py-2 text-sm text-ink",
+              "w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink",
               "placeholder:text-ink-mute focus-visible:border-rose focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-soft",
             )}
             {...register("message")}

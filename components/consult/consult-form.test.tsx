@@ -19,11 +19,7 @@ const TREATMENTS: TreatmentOption[] = [
 ];
 
 const LABELS: Labels = {
-  title: "HERO TITLE",
-  subtitle: "HERO SUBTITLE",
-  inputLocaleHint: "RU INPUT OK",
-  disclaimerBody: "DISCLAIMER BODY",
-  disclaimerAriaLabel: "DISCLAIMER ARIA",
+  formAriaLabel: "FORM ARIA",
   footerNote: "FOOTER NOTE",
 
   sectionContact: "SECTION CONTACT",
@@ -80,17 +76,13 @@ function render(treatments = TREATMENTS) {
 }
 
 describe("ConsultForm (M3 single-page initial render)", () => {
-  it("renders the hero title + subtitle + Russian-input hint", () => {
+  it("does NOT render its own header (page owns h1 / subtitle / disclaimer)", () => {
     const html = render();
-    expect(html).toContain("HERO TITLE");
-    expect(html).toContain("HERO SUBTITLE");
-    expect(html).toContain("RU INPUT OK");
-  });
-
-  it("renders the medical disclaimer", () => {
-    const html = render();
-    expect(html).toContain("DISCLAIMER BODY");
-    expect(html).toContain("DISCLAIMER ARIA");
+    // The form should never duplicate the page-level heading.
+    expect(html).not.toMatch(/<h1\b/);
+    // The medical disclaimer is rendered at the page level (in
+    // app/[locale]/consult/page.tsx) — not inside the form.
+    expect(html).not.toContain('aria-label="Medical');
   });
 
   it("renders ALL three sections inline (no step gating)", () => {
@@ -166,9 +158,9 @@ describe("ConsultForm (M3 single-page initial render)", () => {
     expect(html).toContain("FOOTER NOTE");
   });
 
-  it("the form's aria-label is the hero title (single-page identity)", () => {
+  it("the form carries the page-level aria-label for screen readers", () => {
     const html = render();
-    expect(html).toMatch(/<form[^>]*aria-label="HERO TITLE"/);
+    expect(html).toMatch(/<form[^>]*aria-label="FORM ARIA"/);
   });
 
   it("the form has noValidate so the browser's native validation doesn't compete with Zod messages", () => {
@@ -180,5 +172,19 @@ describe("ConsultForm (M3 single-page initial render)", () => {
     const html = render();
     expect(html).not.toMatch(/\b\d\/3\b/);
     expect(html).not.toMatch(/Step \d/);
+  });
+
+  it("text inputs + textarea + select use bg-paper for visibility against bg-warm pages (M3 sign-off fix)", () => {
+    const html = render();
+    // Text input + textarea + select all carry bg-paper class.
+    expect(html).toMatch(/<input[^>]*class="[^"]*bg-paper/);
+    expect(html).toMatch(/<textarea[^>]*class="[^"]*bg-paper/);
+    expect(html).toMatch(/<select[^>]*class="[^"]*bg-paper/);
+    // Regression: bg-ground should NOT appear on the input affordance
+    // (it's still fine on pill toggles / hover states, but inputs need
+    // the higher-contrast bg-paper).
+    expect(html).not.toMatch(/<input[^>]*class="[^"]*bg-ground/);
+    expect(html).not.toMatch(/<textarea[^>]*class="[^"]*bg-ground/);
+    expect(html).not.toMatch(/<select[^>]*class="[^"]*bg-ground/);
   });
 });

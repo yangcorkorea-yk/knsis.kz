@@ -48,7 +48,7 @@ export default async function ConsultDonePage({ params: { locale }, searchParams
       : null;
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 bg-warm px-4 pb-24 pt-10">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 bg-warm px-4 pb-24 pt-10 md:max-w-3xl">
       <header className="flex flex-col gap-2">
         <h1 className="break-keep text-2xl font-extrabold tracking-display text-ink">
           {t("title")}
