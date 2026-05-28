@@ -38,3 +38,27 @@ Operational notes that bit us once and shouldn't again.
   scrollbar is hidden via the `.scrollbar-none` utility on the
   scrolling container. Don't apply to page-content scrollers —
   those need a visible scrollbar.
+- [icu-message-format-quotes.md](./icu-message-format-quotes.md) —
+  ASCII single quotes around an ICU placeholder
+  (`'{query}'`) escape the placeholder and surface the literal
+  on screen. Use locale-appropriate typographic quotes
+  (`«…»` for kz/ru, `“…”` for kr) and let the catalog hygiene
+  test guard the regression vector.
+- [preview-url-volatility-and-branch-alias.md](./preview-url-volatility-and-branch-alias.md) —
+  Vercel branch alias + PWA SW + CDN cache stack three layers
+  of "the preview is showing the previous deploy" between
+  push and visual sign-off. Five-step triage before declaring
+  a HEAD defect.
+- [modal-a11y-pattern.md](./modal-a11y-pattern.md) — the
+  site-wide modal contract: `role="dialog"` + `aria-modal`,
+  initial focus on the close button, focus return to the
+  trigger, Esc / outside / X close, body scroll lock.
+  ImageModal is the reference implementation.
+- [vitest-vs-playwright-coverage.md](./vitest-vs-playwright-coverage.md) —
+  vitest runs in node env (no DOM); it covers SSR structural
+  assertions only. Behavioural assertions (events, focus,
+  side effects) go to Playwright. Don't add jsdom.
+- [preview-vs-production-coverage.md](./preview-vs-production-coverage.md) —
+  the three-environment (local / Vercel preview / production)
+  matrix: what each layer catches, what each misses, and why
+  the preview visual sign-off is non-negotiable.
