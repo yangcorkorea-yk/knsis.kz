@@ -140,6 +140,9 @@ export async function POST(req: Request) {
       photos,
       message,
       idempotencyKey,
+      whatsappId,
+      telegramId,
+      preferredLanguage,
     }) =>
       prisma.lead.create({
         data: {
@@ -152,6 +155,9 @@ export async function POST(req: Request) {
           photos,
           message,
           idempotencyKey,
+          whatsappId,
+          telegramId,
+          preferredLanguage,
         },
         select: { code: true },
       }),
@@ -209,7 +215,10 @@ async function notifyPm(
     code,
     locale,
     phone: payload.phone,
-    name: payload.name ?? null,
+    name: payload.name,
+    whatsappId: payload.whatsappId ?? null,
+    telegramId: payload.telegramId ?? null,
+    preferredLanguage: payload.preferredLanguage,
     treatmentTitles,
     regionLabels: payload.regions,
     kind: payload.kind,

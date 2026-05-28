@@ -28,14 +28,17 @@
  *
  * Hard rules satisfied:
  *   - channelPref locked to `inapp` (Channel.email/wa/tg/sms not
- *     written here — outbound goes through lib/messaging/send.ts)
+ *     written here — outbound goes through lib/messaging/send.ts).
+ *     The new whatsappId / telegramId columns are informational
+ *     ONLY (manager opens the chat manually); no Channel.wa / .tg
+ *     write path is added.
  *   - No monetary field is written (Lead schema doesn't expose one)
  *   - consentTos timestamp captured (legal requirement)
- *   - PII (phone, name) lives in User columns — Supabase disk
- *     encryption covers this at-rest
+ *   - PII (phone, name, WA/TG ids) lives in User / Lead columns
+ *     — Supabase disk encryption covers this at-rest
  */
 
-import { Channel } from "@prisma/client";
+import { Channel, type Locale } from "@prisma/client";
 import type { LeadSubmit } from "./schema";
 
 export interface CreateLeadDeps {
@@ -82,6 +85,9 @@ export interface CreateLeadDeps {
     photos: string[];
     message: string | null;
     idempotencyKey: string | null;
+    whatsappId: string | null;
+    telegramId: string | null;
+    preferredLanguage: Locale;
   }) => Promise<{ code: string }>;
   /** True if a unique-constraint violation on `Lead.code` is the cause. */
   isCodeUniqueViolation: (error: unknown) => boolean;
@@ -140,6 +146,9 @@ export async function createLead(
         photos: payload.photos.map((p) => p.path),
         message: payload.message?.trim() ? payload.message.trim() : null,
         idempotencyKey: deps.idempotencyKey ?? null,
+        whatsappId: payload.whatsappId ?? null,
+        telegramId: payload.telegramId ?? null,
+        preferredLanguage: payload.preferredLanguage,
       });
       return { ok: true, code: inserted.code, reused: false };
     } catch (e) {

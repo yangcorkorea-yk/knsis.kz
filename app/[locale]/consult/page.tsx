@@ -1,20 +1,18 @@
 /*
- * /[locale]/consult — M3-01 consult form entry route.
+ * /[locale]/consult — M3 single-page consult form entry route.
  *
- * Server component. Loads the active Treatment list (slug + title)
- * so the goal step can offer real options instead of free-text.
- * Hands the catalog labels + tr-resolved options to the client
- * ConsultForm island.
+ * Server component. Loads the active Treatment list, resolves
+ * area labels for the region pill row + language-dropdown
+ * options + the full label bag, then renders the ConsultForm
+ * island. The form owns its own h1/header now (single-page
+ * redesign) so the page is just the data shell.
  *
  * Hard rules:
  *   - All copy from `consult.*` in messages/{kz,ru,kr}.json
- *   - Medical disclaimer rendered above the form (consistent
- *     with every M2 medical-adjacent surface — treatments,
- *     clinics, reviews, search, gallery)
- *   - No PII captured until the POST hits /api/leads (form
- *     state is client-only via sessionStorage until submit)
- *   - Monetary fields absent from copy + schema — quotes are
- *     1-on-1 manager work (CLAUDE.md §2 rule 1)
+ *   - Medical disclaimer rendered above the form sections
+ *     (consistent with every M2 medical-adjacent surface)
+ *   - No PII captured until the POST hits /api/leads
+ *   - No monetary fields on schema or in copy
  */
 
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -50,9 +48,11 @@ export default async function ConsultPage({ params: { locale } }: { params: { lo
 
   const errors: Record<string, string> = {};
   for (const key of [
+    "name_required",
+    "name_too_long",
     "phone_required",
     "phone_format",
-    "name_too_long",
+    "contact_id_too_long",
     "treatment_required",
     "region_required",
     "kind_required",
@@ -71,61 +71,67 @@ export default async function ConsultPage({ params: { locale } }: { params: { lo
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 bg-warm pb-24">
-      <header className="px-4 pt-8">
-        <h1 className="break-keep text-2xl font-extrabold tracking-display text-ink">
-          {t("title")}
-        </h1>
-        <p className="mt-1 text-sm text-ink-body">{t("subtitle")}</p>
-      </header>
-
-      <div className="px-4">
+      <div className="px-4 pt-8">
         <ConsultForm
           locale={activeLocale}
           treatments={treatments}
           turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ""}
           labels={{
+            title: t("title"),
+            subtitle: t("subtitle"),
+            inputLocaleHint: t("input_locale_hint"),
             disclaimerBody: t("disclaimer.body"),
             disclaimerAriaLabel: t("disclaimer.aria_label"),
-            stepProgressByStep: [1, 2, 3].map((current) =>
-              t("step_progress", { current, total: 3 }),
-            ),
+            footerNote: t("footer"),
 
-            stepContactTitle: t("steps.contact.title"),
-            stepGoalTitle: t("steps.goal.title"),
-            stepPhotosTitle: t("steps.photos.title"),
+            sectionContact: t("section.contact"),
+            sectionGoal: t("section.goal"),
+            sectionExtras: t("section.extras"),
 
-            phoneLabel: t("steps.contact.phone_label"),
-            phoneHelp: t("steps.contact.phone_help"),
-            phonePlaceholder: t("steps.contact.phone_placeholder"),
-            nameLabel: t("steps.contact.name_label"),
-            nameHelp: t("steps.contact.name_help"),
-            namePlaceholder: t("steps.contact.name_placeholder"),
+            nameLabel: t("fields.name_label"),
+            namePlaceholder: t("fields.name_placeholder"),
+            phoneLabel: t("fields.phone_label"),
+            phoneHelp: t("fields.phone_help"),
+            phonePlaceholder: t("fields.phone_placeholder"),
+            whatsappLabel: t("fields.whatsapp_label"),
+            whatsappHelp: t("fields.whatsapp_help"),
+            whatsappPlaceholder: t("fields.whatsapp_placeholder"),
+            whatsappBadge: t("fields.whatsapp_badge"),
+            telegramLabel: t("fields.telegram_label"),
+            telegramHelp: t("fields.telegram_help"),
+            telegramPlaceholder: t("fields.telegram_placeholder"),
+            telegramBadge: t("fields.telegram_badge"),
+            contactChannelsNote: t("fields.contact_channels_note"),
+            languageLabel: t("fields.language_label"),
+            languageHelp: t("fields.language_help"),
+            languageOptions: {
+              kz: t("fields.language_option.kz"),
+              ru: t("fields.language_option.ru"),
+              kr: t("fields.language_option.kr"),
+            },
 
-            treatmentLabel: t("steps.goal.treatment_label"),
-            treatmentEmpty: t("steps.goal.treatment_empty"),
-            regionLabel: t("steps.goal.region_label"),
-            kindLabel: t("steps.goal.kind_label"),
-            kindKorea: t("steps.goal.kind.korea"),
-            kindLocal: t("steps.goal.kind.local"),
+            treatmentLabel: t("fields.treatment_label"),
+            treatmentEmpty: t("fields.treatment_empty"),
+            regionLabel: t("fields.region_label"),
+            kindLabel: t("fields.kind_label"),
+            kindKorea: t("fields.kind.korea"),
+            kindLocal: t("fields.kind.local"),
             areaLabels,
 
-            photoLabel: t("steps.photos.photo_label"),
-            photoHelp: t("steps.photos.photo_help"),
-            photoAddButton: t("steps.photos.photo_add_button"),
-            photoRemoveButton: t("steps.photos.photo_remove_button"),
-            photoUploading: t("steps.photos.photo_uploading"),
-            messageLabel: t("steps.photos.message_label"),
-            messageHelp: t("steps.photos.message_help"),
-            messagePlaceholder: t("steps.photos.message_placeholder"),
-            consentTosLabel: t("steps.photos.consent_tos_label"),
-            consentMktLabel: t("steps.photos.consent_mkt_label"),
-            consentRequiredNote: t("steps.photos.consent_required_note"),
+            photoLabel: t("fields.photo_label"),
+            photoHelp: t("fields.photo_help"),
+            photoAddButton: t("fields.photo_add_button"),
+            photoRemoveButton: t("fields.photo_remove_button"),
+            photoUploading: t("fields.photo_uploading"),
+            messageLabel: t("fields.message_label"),
+            messageHelp: t("fields.message_help"),
+            messagePlaceholder: t("fields.message_placeholder"),
+            consentTosLabel: t("fields.consent_tos_label"),
+            consentMktLabel: t("fields.consent_mkt_label"),
+            consentRequiredNote: t("fields.consent_required_note"),
 
-            back: t("button.back"),
-            next: t("button.next"),
             submit: t("button.submit"),
             submitting: t("button.submitting"),
-
             errors,
           }}
         />

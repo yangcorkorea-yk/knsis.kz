@@ -2,10 +2,6 @@
  * lib/notifications/lead-created.test.ts — pin the PM-alert
  * email shape so a refactor can't silently break the format the
  * PM is reading off their phone.
- *
- * Only the pure formatter is exercised here; the Resend wrapper
- * is a thin glue layer that's e2e-tested via a real send in
- * Playwright (or skipped when RESEND_API_KEY isn't set in CI).
  */
 
 import { describe, expect, it } from "vitest";
@@ -16,6 +12,9 @@ const BASE: LeadCreatedInput = {
   locale: "kr",
   phone: "+77012345678",
   name: "Aigerim",
+  whatsappId: "+77012345678",
+  telegramId: "@aigerim",
+  preferredLanguage: "kr",
   treatmentTitles: ["보톡스 KR", "필러 KR"],
   regionLabels: ["서울", "알마티"],
   kind: ["korea"],
@@ -26,10 +25,50 @@ const BASE: LeadCreatedInput = {
 };
 
 describe("formatLeadCreatedEmail", () => {
-  it("subject includes the code + locale", () => {
+  it("subject includes the code + consult language", () => {
     const { subject } = formatLeadCreatedEmail(BASE);
     expect(subject).toContain("KB-2026-0427");
+    // M3 polish: consult language (preferredLanguage) drives the subject tag,
+    // since that's what the manager needs to know up-front.
     expect(subject).toContain("KR");
+  });
+
+  it("opens with a REACH NOW block listing WhatsApp + Telegram", () => {
+    const { text } = formatLeadCreatedEmail(BASE);
+    // Block delimited by === lines + indented >> markers.
+    expect(text).toMatch(/^=== REACH NOW ===/);
+    expect(text).toContain(">> WhatsApp:  +77012345678");
+    expect(text).toContain(">> Telegram:  @aigerim");
+  });
+
+  it("renders only the channels that exist (WA only)", () => {
+    const { text } = formatLeadCreatedEmail({
+      ...BASE,
+      whatsappId: "+77012345678",
+      telegramId: null,
+    });
+    expect(text).toContain(">> WhatsApp:");
+    expect(text).not.toContain(">> Telegram:");
+  });
+
+  it("renders only the channels that exist (TG only)", () => {
+    const { text } = formatLeadCreatedEmail({
+      ...BASE,
+      whatsappId: null,
+      telegramId: "@aigerim",
+    });
+    expect(text).not.toContain(">> WhatsApp:");
+    expect(text).toContain(">> Telegram:");
+  });
+
+  it("falls back to a 'call phone' line in REACH NOW when both WA + TG are absent", () => {
+    const { text } = formatLeadCreatedEmail({
+      ...BASE,
+      whatsappId: null,
+      telegramId: null,
+    });
+    expect(text).toMatch(/REACH NOW/);
+    expect(text).toContain("(no WhatsApp / Telegram — call +77012345678)");
   });
 
   it("body lists every field in a fixed key/value layout", () => {
@@ -37,19 +76,22 @@ describe("formatLeadCreatedEmail", () => {
     expect(text).toContain("Code:        KB-2026-0427");
     expect(text).toContain("Phone:       +77012345678");
     expect(text).toContain("Name:        Aigerim");
+    expect(text).toContain("Site locale: kr");
+    expect(text).toContain("Consult lang: kr");
     expect(text).toContain("Treatments:  보톡스 KR, 필러 KR");
     expect(text).toContain("Regions:     서울, 알마티");
     expect(text).toContain("Path:        korea");
     expect(text).toContain("Photos:      yes");
   });
 
-  it("renders (anonymous) when name is missing or empty", () => {
-    expect(formatLeadCreatedEmail({ ...BASE, name: null }).text).toContain(
-      "Name:        (anonymous)",
-    );
-    expect(formatLeadCreatedEmail({ ...BASE, name: "  " }).text).toContain(
-      "Name:        (anonymous)",
-    );
+  it("preferredLanguage and site locale are distinct fields (user can submit on KZ site with KR consult)", () => {
+    const { text } = formatLeadCreatedEmail({
+      ...BASE,
+      locale: "kz",
+      preferredLanguage: "kr",
+    });
+    expect(text).toContain("Site locale: kz");
+    expect(text).toContain("Consult lang: kr");
   });
 
   it("renders (none) when message is missing or empty after trim", () => {
@@ -64,7 +106,7 @@ describe("formatLeadCreatedEmail", () => {
     expect(formatLeadCreatedEmail({ ...BASE, consentMkt: false }).text).toContain("Marketing:   —");
   });
 
-  it("admin URL composes appUrl + locale + code (no trailing slash)", () => {
+  it("admin URL composes appUrl + site locale + code (no trailing slash)", () => {
     expect(formatLeadCreatedEmail(BASE).text).toContain(
       "https://seoulbeauty-kz.vercel.app/admin/kr/leads/KB-2026-0427",
     );

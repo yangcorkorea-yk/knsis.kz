@@ -1,39 +1,39 @@
 "use client";
 
 /*
- * components/consult/consult-form.tsx — M3-01 multi-step consult
- * form (3 steps: contact → goal → photos+consent).
+ * components/consult/consult-form.tsx — M3 single-page consult
+ * form (PM redesign at M3 preview sign-off).
  *
- * Single client component on purpose. The form is one cohesive
- * interaction; splitting per-step into 4 files for 3 transitions
- * + 1 orchestrator is premature abstraction. The step bodies are
- * inline render branches off `currentStep`.
+ * History:
+ *   - Initial (M3-01): 3-step multi-step with per-step trigger().
+ *   - Polish (this file): single-page scroll matching the
+ *     Kazakhstan-market reference UI. All sections render
+ *     inline; one submit button at the bottom. PM hypothesis:
+ *     fewer clicks → higher conversion on the mobile-first
+ *     surface our users actually live on.
  *
- * State:
- *   - `useForm` (RHF + Zod) holds the merged shape across steps.
- *     Per-step "Next" validates the step's Zod slice (trigger())
- *     and advances; submit validates the merged schema.
- *   - `currentStep` is local state (1 | 2 | 3); going back is
- *     non-destructive (RHF keeps the values).
- *   - In-progress values are mirrored to sessionStorage on every
- *     successful step advance so a refresh / accidental-close
- *     doesn't lose the user's typing (WBS M3-01 "resumable").
- *     Cleared on successful submit.
+ * Sections (top to bottom):
+ *   1. Header — title, subtitle, "you can type in Russian" hint,
+ *      Medical Disclaimer.
+ *   2. Contact — name * / phone * / WhatsApp / Telegram /
+ *      preferred consult language. WA/TG are optional but the
+ *      help copy strongly recommends one (Kazakhstan reality:
+ *      managers reach users via WhatsApp / Telegram, phone is
+ *      the fallback).
+ *   3. Goal — treatment multi-select / region multi-select /
+ *      kind (korea | local).
+ *   4. Extras — photo upload / free-text message / ToS +
+ *      marketing consent.
+ *   5. Turnstile widget (only renders when site key configured).
+ *   6. Submit footer.
  *
- * Photo uploader (M3-01 shape, M3-02 backend wire):
- *   - Holds the array of `PhotoRef` ({ path, mime }) returned by
- *     the upload endpoint. Files POST to `/api/uploads` as
- *     multipart/form-data; the endpoint runs sharp to strip EXIF
- *     + re-encode + writes to the private bucket. Until M3-02
- *     lands the endpoint is a stub — the form still renders the
- *     uploader so the structural contract can be tested.
+ * Resumability: every field is mirrored to sessionStorage on
+ * change so refresh / accidental-close doesn't lose typing.
+ * Cleared on successful submit.
  *
- * Disclaimer: every M2 surface that surfaces medical-adjacent UX
- * (treatments, clinics, reviews, search, gallery) carries the
- * Medical Disclaimer. The consult form is the most committed of
- * those surfaces — the user is submitting their medical context
- * for evaluation. Disclaimer renders above the form per the M2
- * convention.
+ * WA / TG / preferredLanguage are sent on POST /api/leads;
+ * the manager opens the actual chat outside the platform (hard
+ * rule §8 still locks Channel writes to inapp / email).
  */
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,13 +45,7 @@ import { Input } from "@/components/ui/input";
 import { MedicalDisclaimer } from "@/components/treatments/medical-disclaimer";
 import { TurnstileWidget } from "@/components/consult/turnstile-widget";
 import { CITY_SLUGS } from "@/lib/discover/filters";
-import {
-  leadSubmitSchema,
-  type LeadSubmit,
-  type PhotoRef,
-  stepContactSchema,
-  stepGoalSchema,
-} from "@/lib/leads/schema";
+import { leadSubmitSchema, type LeadSubmit, type PhotoRef } from "@/lib/leads/schema";
 import type { Locale } from "@/lib/i18n/config";
 import { tr, type TrilingualText } from "@/lib/i18n/tr";
 import { cn } from "@/lib/utils";
@@ -62,33 +56,40 @@ export interface TreatmentOption {
   title: TrilingualText;
 }
 
-interface Labels {
+export interface Labels {
   // Page-level
+  title: string;
+  subtitle: string;
+  inputLocaleHint: string;
   disclaimerBody: string;
   disclaimerAriaLabel: string;
-  /**
-   * Pre-formatted step-progress strings, indexed by step-1
-   * (i.e. `stepProgressByStep[0]` is the copy for step 1).
-   * Server pre-computes via `t("step_progress", …)` because
-   * Next.js App Router won't pass functions from a server
-   * component to a client component (runtime serialization).
-   */
-  stepProgressByStep: readonly string[];
+  footerNote: string;
 
-  // Step titles
-  stepContactTitle: string;
-  stepGoalTitle: string;
-  stepPhotosTitle: string;
+  // Section headings
+  sectionContact: string;
+  sectionGoal: string;
+  sectionExtras: string;
 
-  // Step 1 — contact
+  // Contact fields
+  nameLabel: string;
+  namePlaceholder: string;
   phoneLabel: string;
   phoneHelp: string;
   phonePlaceholder: string;
-  nameLabel: string;
-  nameHelp: string;
-  namePlaceholder: string;
+  whatsappLabel: string;
+  whatsappHelp: string;
+  whatsappPlaceholder: string;
+  whatsappBadge: string;
+  telegramLabel: string;
+  telegramHelp: string;
+  telegramPlaceholder: string;
+  telegramBadge: string;
+  contactChannelsNote: string;
+  languageLabel: string;
+  languageHelp: string;
+  languageOptions: { kz: string; ru: string; kr: string };
 
-  // Step 2 — goal
+  // Goal fields
   treatmentLabel: string;
   treatmentEmpty: string;
   regionLabel: string;
@@ -97,7 +98,7 @@ interface Labels {
   kindLocal: string;
   areaLabels: Record<string, string>;
 
-  // Step 3 — photos
+  // Extras
   photoLabel: string;
   photoHelp: string;
   photoAddButton: string;
@@ -110,13 +111,9 @@ interface Labels {
   consentMktLabel: string;
   consentRequiredNote: string;
 
-  // Buttons
-  back: string;
-  next: string;
+  // Button + errors
   submit: string;
   submitting: string;
-
-  // Errors (keyed by the catalog error path; the form maps them)
   errors: Record<string, string>;
 }
 
@@ -124,21 +121,14 @@ interface Props {
   locale: Locale;
   treatments: TreatmentOption[];
   labels: Labels;
-  /**
-   * From NEXT_PUBLIC_TURNSTILE_SITE_KEY. Empty string = dev mock
-   * (widget not rendered; server siteverify also skipped via
-   * blank TURNSTILE_SECRET_KEY).
-   */
   turnstileSiteKey: string;
 }
 
 type FormShape = LeadSubmit;
 
-const STORAGE_KEY = "knsis_consult_draft_v1";
-const TOTAL_STEPS = 3;
+const STORAGE_KEY = "knsis_consult_draft_v2";
 
 export function ConsultForm({ locale, treatments, labels, turnstileSiteKey }: Props) {
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [photos, setPhotos] = useState<PhotoRef[]>([]);
   const [uploadingCount, setUploadingCount] = useState(0);
   const [submitState, setSubmitState] = useState<
@@ -156,8 +146,11 @@ export function ConsultForm({ locale, treatments, labels, turnstileSiteKey }: Pr
     resolver: zodResolver(leadSubmitSchema) as Resolver<FormShape>,
     mode: "onTouched",
     defaultValues: {
-      phone: "",
       name: "",
+      phone: "",
+      whatsappId: "",
+      telegramId: "",
+      preferredLanguage: locale,
       treatmentSlugs: [],
       regions: [],
       kind: [],
@@ -167,9 +160,9 @@ export function ConsultForm({ locale, treatments, labels, turnstileSiteKey }: Pr
       consentMkt: false,
     },
   });
-  const { register, handleSubmit, control, trigger, setValue, formState, watch } = form;
+  const { register, handleSubmit, control, setValue, formState, watch } = form;
 
-  // Restore in-progress draft from sessionStorage (resumability).
+  // Restore in-progress draft from sessionStorage.
   useEffect(() => {
     if (restoredOnce.current) return;
     restoredOnce.current = true;
@@ -186,32 +179,20 @@ export function ConsultForm({ locale, treatments, labels, turnstileSiteKey }: Pr
         setValue("photos", draft._photos);
       }
     } catch {
-      // Corrupt draft — ignore and start fresh.
+      // Corrupt draft — ignore.
     }
   }, [setValue]);
 
-  // Mirror current state to sessionStorage on every change.
+  // Mirror state to sessionStorage on every change.
   const watched = watch();
   useEffect(() => {
     if (!restoredOnce.current) return;
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ...watched, _photos: photos }));
     } catch {
-      // Quota / disabled — best-effort only.
+      // Quota / disabled — best-effort.
     }
   }, [watched, photos]);
-
-  async function goNext() {
-    const stepFields: (keyof FormShape)[] =
-      currentStep === 1 ? ["phone", "name"] : ["treatmentSlugs", "regions", "kind"];
-    const ok = await trigger(stepFields);
-    if (!ok) return;
-    setCurrentStep((s) => (s === 1 ? 2 : 3));
-  }
-
-  function goBack() {
-    setCurrentStep((s) => (s === 3 ? 2 : 1));
-  }
 
   const onSubmit: SubmitHandler<FormShape> = async (values) => {
     setSubmitState({ kind: "submitting" });
@@ -255,161 +236,207 @@ export function ConsultForm({ locale, treatments, labels, turnstileSiteKey }: Pr
       id={formId}
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className="flex flex-col gap-5"
-      aria-label={
-        currentStep === 1
-          ? labels.stepContactTitle
-          : currentStep === 2
-            ? labels.stepGoalTitle
-            : labels.stepPhotosTitle
-      }
+      className="flex flex-col gap-6"
+      aria-label={labels.title}
     >
+      <header className="flex flex-col gap-2">
+        <h1 className="break-keep text-2xl font-extrabold tracking-display text-ink">
+          {labels.title}
+        </h1>
+        <p className="text-sm text-ink-body">{labels.subtitle}</p>
+        <p className="text-[11px] text-ink-mute">{labels.inputLocaleHint}</p>
+      </header>
+
       <MedicalDisclaimer body={labels.disclaimerBody} ariaLabel={labels.disclaimerAriaLabel} />
 
-      <p className="text-xs text-ink-mute" aria-live="polite">
-        {labels.stepProgressByStep[currentStep - 1] ?? ""}
-      </p>
-
-      {currentStep === 1 && (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-lg font-bold text-ink">{labels.stepContactTitle}</h2>
-          <Field
-            id={`${formId}-phone`}
-            label={labels.phoneLabel}
-            help={labels.phoneHelp}
-            error={err(e.phone?.message as string | undefined)}
-          >
-            <Input
-              id={`${formId}-phone`}
-              type="tel"
-              autoComplete="tel"
-              inputMode="tel"
-              placeholder={labels.phonePlaceholder}
-              {...register("phone")}
-            />
-          </Field>
-          <Field
+      <section className="flex flex-col gap-4">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-ink-mute">
+          {labels.sectionContact}
+        </h2>
+        <Field
+          id={`${formId}-name`}
+          label={labels.nameLabel}
+          error={err(e.name?.message as string | undefined)}
+          required
+        >
+          <Input
             id={`${formId}-name`}
-            label={labels.nameLabel}
-            help={labels.nameHelp}
-            error={err(e.name?.message as string | undefined)}
-          >
-            <Input
-              id={`${formId}-name`}
-              type="text"
-              autoComplete="name"
-              placeholder={labels.namePlaceholder}
-              {...register("name")}
-            />
-          </Field>
-        </section>
-      )}
-
-      {currentStep === 2 && (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-lg font-bold text-ink">{labels.stepGoalTitle}</h2>
-          <CheckboxGroup
-            legend={labels.treatmentLabel}
-            error={err(e.treatmentSlugs?.message as string | undefined)}
-            empty={treatments.length === 0 ? labels.treatmentEmpty : null}
-            control={control}
-            name="treatmentSlugs"
-            options={treatments.map((t) => ({ value: t.slug, label: tr(t.title, locale) }))}
+            type="text"
+            autoComplete="name"
+            placeholder={labels.namePlaceholder}
+            {...register("name")}
           />
-          <CheckboxGroup
-            legend={labels.regionLabel}
-            error={err(e.regions?.message as string | undefined)}
-            empty={null}
-            control={control}
-            name="regions"
-            options={CITY_SLUGS.map((slug) => ({
-              value: slug,
-              label: labels.areaLabels[slug] ?? slug,
-            }))}
+        </Field>
+        <Field
+          id={`${formId}-phone`}
+          label={labels.phoneLabel}
+          help={labels.phoneHelp}
+          error={err(e.phone?.message as string | undefined)}
+          required
+        >
+          <Input
+            id={`${formId}-phone`}
+            type="tel"
+            autoComplete="tel"
+            inputMode="tel"
+            placeholder={labels.phonePlaceholder}
+            {...register("phone")}
           />
-          <CheckboxGroup
-            legend={labels.kindLabel}
-            error={err(e.kind?.message as string | undefined)}
-            empty={null}
-            control={control}
-            name="kind"
-            options={[
-              { value: "korea", label: labels.kindKorea },
-              { value: "local", label: labels.kindLocal },
-            ]}
+        </Field>
+        <Field
+          id={`${formId}-whatsapp`}
+          label={labels.whatsappLabel}
+          help={labels.whatsappHelp}
+          error={err(e.whatsappId?.message as string | undefined)}
+          badge={labels.whatsappBadge}
+        >
+          <Input
+            id={`${formId}-whatsapp`}
+            type="text"
+            placeholder={labels.whatsappPlaceholder}
+            {...register("whatsappId")}
           />
-        </section>
-      )}
-
-      {currentStep === 3 && (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-lg font-bold text-ink">{labels.stepPhotosTitle}</h2>
-          <PhotoUploader
-            photos={photos}
-            setPhotos={(next) => {
-              setPhotos(next);
-              setValue("photos", next, { shouldValidate: true });
-            }}
-            uploadingCount={uploadingCount}
-            setUploadingCount={setUploadingCount}
-            labels={{
-              photoLabel: labels.photoLabel,
-              photoHelp: labels.photoHelp,
-              photoAddButton: labels.photoAddButton,
-              photoRemoveButton: labels.photoRemoveButton,
-              photoUploading: labels.photoUploading,
-              errors: labels.errors,
-            }}
+        </Field>
+        <Field
+          id={`${formId}-telegram`}
+          label={labels.telegramLabel}
+          help={labels.telegramHelp}
+          error={err(e.telegramId?.message as string | undefined)}
+          badge={labels.telegramBadge}
+        >
+          <Input
+            id={`${formId}-telegram`}
+            type="text"
+            placeholder={labels.telegramPlaceholder}
+            {...register("telegramId")}
           />
-          <Field
-            id={`${formId}-message`}
-            label={labels.messageLabel}
-            help={labels.messageHelp}
-            error={err(e.message?.message as string | undefined)}
-          >
-            <textarea
-              id={`${formId}-message`}
-              rows={4}
-              maxLength={2000}
-              placeholder={labels.messagePlaceholder}
-              className={cn(
-                "w-full rounded-md border border-line bg-ground px-3 py-2 text-sm text-ink",
-                "placeholder:text-ink-mute focus-visible:border-rose focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-soft",
-              )}
-              {...register("message")}
-            />
-          </Field>
-
-          <fieldset className="flex flex-col gap-3 rounded-md border border-line p-3">
-            <label className="flex items-start gap-2 text-sm text-ink">
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 rounded border-line text-rose focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-soft"
-                {...register("consentTos")}
-              />
-              <span>{labels.consentTosLabel}</span>
-            </label>
-            {e.consentTos?.message && (
-              <p className="text-xs text-rose-deep" role="alert">
-                {err(e.consentTos.message as string)}
-              </p>
+        </Field>
+        <p className="text-[11px] text-rose-deep">{labels.contactChannelsNote}</p>
+        <Field
+          id={`${formId}-language`}
+          label={labels.languageLabel}
+          help={labels.languageHelp}
+          error={err(e.preferredLanguage?.message as string | undefined)}
+          required
+        >
+          <select
+            id={`${formId}-language`}
+            className={cn(
+              "flex h-11 w-full rounded-md border border-line bg-ground px-3 text-sm text-ink",
+              "focus-visible:border-rose focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-soft",
             )}
-            <label className="flex items-start gap-2 text-sm text-ink-body">
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 rounded border-line text-rose focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-soft"
-                {...register("consentMkt")}
-              />
-              <span>{labels.consentMktLabel}</span>
-            </label>
-            <p className="text-[11px] text-ink-mute">{labels.consentRequiredNote}</p>
-          </fieldset>
-        </section>
-      )}
+            {...register("preferredLanguage")}
+          >
+            <option value="kz">{labels.languageOptions.kz}</option>
+            <option value="ru">{labels.languageOptions.ru}</option>
+            <option value="kr">{labels.languageOptions.kr}</option>
+          </select>
+        </Field>
+      </section>
 
-      {currentStep === 3 && (
-        <TurnstileWidget siteKey={turnstileSiteKey} onToken={handleTurnstileToken} />
-      )}
+      <section className="flex flex-col gap-4">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-ink-mute">
+          {labels.sectionGoal}
+        </h2>
+        <CheckboxGroup
+          legend={labels.treatmentLabel}
+          error={err(e.treatmentSlugs?.message as string | undefined)}
+          empty={treatments.length === 0 ? labels.treatmentEmpty : null}
+          control={control}
+          name="treatmentSlugs"
+          options={treatments.map((t) => ({ value: t.slug, label: tr(t.title, locale) }))}
+        />
+        <CheckboxGroup
+          legend={labels.regionLabel}
+          error={err(e.regions?.message as string | undefined)}
+          empty={null}
+          control={control}
+          name="regions"
+          options={CITY_SLUGS.map((slug) => ({
+            value: slug,
+            label: labels.areaLabels[slug] ?? slug,
+          }))}
+        />
+        <CheckboxGroup
+          legend={labels.kindLabel}
+          error={err(e.kind?.message as string | undefined)}
+          empty={null}
+          control={control}
+          name="kind"
+          options={[
+            { value: "korea", label: labels.kindKorea },
+            { value: "local", label: labels.kindLocal },
+          ]}
+        />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-ink-mute">
+          {labels.sectionExtras}
+        </h2>
+        <PhotoUploader
+          photos={photos}
+          setPhotos={(next) => {
+            setPhotos(next);
+            setValue("photos", next, { shouldValidate: true });
+          }}
+          uploadingCount={uploadingCount}
+          setUploadingCount={setUploadingCount}
+          labels={{
+            photoLabel: labels.photoLabel,
+            photoHelp: labels.photoHelp,
+            photoAddButton: labels.photoAddButton,
+            photoRemoveButton: labels.photoRemoveButton,
+            photoUploading: labels.photoUploading,
+            errors: labels.errors,
+          }}
+        />
+        <Field
+          id={`${formId}-message`}
+          label={labels.messageLabel}
+          help={labels.messageHelp}
+          error={err(e.message?.message as string | undefined)}
+        >
+          <textarea
+            id={`${formId}-message`}
+            rows={4}
+            maxLength={2000}
+            placeholder={labels.messagePlaceholder}
+            className={cn(
+              "w-full rounded-md border border-line bg-ground px-3 py-2 text-sm text-ink",
+              "placeholder:text-ink-mute focus-visible:border-rose focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-soft",
+            )}
+            {...register("message")}
+          />
+        </Field>
+
+        <fieldset className="flex flex-col gap-3 rounded-md border border-line p-3">
+          <label className="flex items-start gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4 rounded border-line text-rose focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-soft"
+              {...register("consentTos")}
+            />
+            <span>{labels.consentTosLabel}</span>
+          </label>
+          {e.consentTos?.message && (
+            <p className="text-xs text-rose-deep" role="alert">
+              {err(e.consentTos.message as string)}
+            </p>
+          )}
+          <label className="flex items-start gap-2 text-sm text-ink-body">
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4 rounded border-line text-rose focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-soft"
+              {...register("consentMkt")}
+            />
+            <span>{labels.consentMktLabel}</span>
+          </label>
+          <p className="text-[11px] text-ink-mute">{labels.consentRequiredNote}</p>
+        </fieldset>
+      </section>
+
+      <TurnstileWidget siteKey={turnstileSiteKey} onToken={handleTurnstileToken} />
 
       {submitState.kind === "error" && (
         <p className="text-sm text-rose-deep" role="alert">
@@ -417,57 +444,59 @@ export function ConsultForm({ locale, treatments, labels, turnstileSiteKey }: Pr
         </p>
       )}
 
-      <div className="flex gap-2 pt-2">
-        {currentStep > 1 && (
-          <CTA type="button" variant="outline" size="md" fullWidth={false} onClick={goBack}>
-            {labels.back}
-          </CTA>
-        )}
-        {currentStep < 3 && (
-          <CTA type="button" size="md" fullWidth={true} onClick={goNext}>
-            {labels.next}
-          </CTA>
-        )}
-        {currentStep === 3 && (
-          <CTA
-            type="submit"
-            size="md"
-            fullWidth={true}
-            disabled={
-              submitState.kind === "submitting" ||
-              uploadingCount > 0 ||
-              (!!turnstileSiteKey && !turnstileToken)
-            }
-          >
-            {submitState.kind === "submitting" ? labels.submitting : labels.submit}
-          </CTA>
-        )}
+      <div className="flex flex-col gap-2 pt-2">
+        <CTA
+          type="submit"
+          size="lg"
+          fullWidth
+          icon={<PaperPlaneIcon />}
+          disabled={
+            submitState.kind === "submitting" ||
+            uploadingCount > 0 ||
+            (!!turnstileSiteKey && !turnstileToken)
+          }
+        >
+          {submitState.kind === "submitting" ? labels.submitting : labels.submit}
+        </CTA>
+        <p className="text-center text-[11px] text-ink-mute">{labels.footerNote}</p>
       </div>
     </form>
   );
 }
 
-// ── small helpers, kept in-file because they're form-internal ────────
+// ── small helpers, kept in-file ──────────────────────────────────────
 
 function Field({
   id,
   label,
   help,
   error,
+  badge,
+  required,
   children,
 }: {
   id: string;
   label: string;
   help?: string;
   error?: string;
+  badge?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   const helpId = help ? `${id}-help` : undefined;
   const errId = error ? `${id}-err` : undefined;
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-sm font-medium text-ink">
-        {label}
+      <label htmlFor={id} className="flex items-center gap-2 text-sm font-medium text-ink">
+        <span>
+          {label}
+          {required && <span className="ml-0.5 text-rose-deep">*</span>}
+        </span>
+        {badge && (
+          <span className="rounded bg-rose-tint px-1.5 py-0.5 text-[10px] font-semibold text-rose-deep">
+            {badge}
+          </span>
+        )}
       </label>
       <div aria-describedby={[helpId, errId].filter(Boolean).join(" ") || undefined}>
         {children}
@@ -551,8 +580,6 @@ function CheckboxGroup<TName extends "treatmentSlugs" | "regions" | "kind">({
     </fieldset>
   );
 }
-
-// ── photo uploader ──────────────────────────────────────────────────
 
 const MAX_PHOTOS = 3;
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
@@ -664,5 +691,25 @@ function PhotoUploader({
         </p>
       )}
     </div>
+  );
+}
+
+function PaperPlaneIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <line x1="22" y1="2" x2="11" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    </svg>
   );
 }

@@ -1,11 +1,18 @@
 /*
  * lib/notifications/lead-created.ts — "new lead landed" PM
- * alert (M3-03).
+ * alert (M3-03 · polished at M3 sign-off).
  *
  * Per the M3 Option A decision (docs/decisions/lead-channel-strategy.md):
  * leads land in the DB → admin inbox surfaces them in M5 →
  * this module fires a Resend transactional email to the PM
  * so they don't have to poll the inbox.
+ *
+ * Polish (M3 sign-off): the email body now opens with a
+ * "REACH NOW" block carrying WhatsApp / Telegram identifiers
+ * (the actual contact channels in Kazakhstan) above the
+ * detail metadata. The PM clicks straight from inbox → chat
+ * without scrolling. Phone stays in the detail block as a
+ * fallback channel.
  *
  * Distinct from `lib/messaging/send.ts`:
  *   - `send.ts` is the seam for outbound *customer-facing*
@@ -30,8 +37,14 @@ export interface LeadCreatedInput {
   locale: "kz" | "ru" | "kr";
   /** Display phone (already E.164-normalised by the schema). */
   phone: string;
-  /** Optional name; rendered as "(anonymous)" when absent. */
-  name?: string | null;
+  /** Required name from the form (M3 polish: name is now required). */
+  name: string;
+  /** WhatsApp identifier the manager opens manually. */
+  whatsappId: string | null;
+  /** Telegram identifier the manager opens manually. */
+  telegramId: string | null;
+  /** Locale the user requested the consult to be conducted in. */
+  preferredLanguage: "kz" | "ru" | "kr";
   treatmentTitles: string[];
   regionLabels: string[];
   kind: ("korea" | "local")[];
@@ -52,30 +65,54 @@ export interface FormattedEmail {
  * handles HTML wrapping for marketing surfaces, but ops alerts
  * read better as wall-of-text and don't depend on the recipient's
  * email client rendering CSS.
+ *
+ * Layout:
+ *   [REACH NOW]
+ *     WhatsApp:  …
+ *     Telegram:  …
+ *   ── then ──
+ *   Code / Locale / Phone / Name / Lang / Treatments / Regions
+ *   / Path / Photos / Marketing
+ *   ── Message ──
+ *   Open in admin: …
  */
 export function formatLeadCreatedEmail(input: LeadCreatedInput): FormattedEmail {
-  const subject = `[knsis.kz] New lead ${input.code} (${input.locale.toUpperCase()})`;
-  const name = input.name?.trim() || "(anonymous)";
+  const subject = `[knsis.kz] New lead ${input.code} (${input.preferredLanguage.toUpperCase()})`;
   const adminUrl = `${input.appUrl.replace(/\/+$/, "")}/admin/${input.locale}/leads/${input.code}`;
+  const hasReachChannel = !!(input.whatsappId || input.telegramId);
 
-  const lines = [
-    `A new consult request landed.`,
-    ``,
-    `Code:        ${input.code}`,
-    `Locale:      ${input.locale}`,
-    `Phone:       ${input.phone}`,
-    `Name:        ${name}`,
-    `Treatments:  ${input.treatmentTitles.join(", ") || "—"}`,
-    `Regions:     ${input.regionLabels.join(", ") || "—"}`,
-    `Path:        ${input.kind.join(" + ") || "—"}`,
-    `Photos:      ${input.hasPhotos ? "yes" : "no"}`,
-    `Marketing:   ${input.consentMkt ? "opted in" : "—"}`,
-    ``,
-    `Message:`,
-    input.message?.trim() ? input.message.trim() : "(none)",
-    ``,
-    `Open in admin: ${adminUrl}`,
-  ];
+  const lines: string[] = [];
+
+  // Reach-now block — visually prominent (===), at the top.
+  if (hasReachChannel) {
+    lines.push(`=== REACH NOW ===`);
+    if (input.whatsappId) lines.push(`  >> WhatsApp:  ${input.whatsappId}`);
+    if (input.telegramId) lines.push(`  >> Telegram:  ${input.telegramId}`);
+    lines.push(`=================`);
+    lines.push(``);
+  } else {
+    // No WA/TG → flag phone as the only reach channel.
+    lines.push(`=== REACH NOW ===`);
+    lines.push(`  (no WhatsApp / Telegram — call ${input.phone})`);
+    lines.push(`=================`);
+    lines.push(``);
+  }
+
+  lines.push(`Code:        ${input.code}`);
+  lines.push(`Site locale: ${input.locale}`);
+  lines.push(`Consult lang: ${input.preferredLanguage}`);
+  lines.push(`Name:        ${input.name}`);
+  lines.push(`Phone:       ${input.phone}`);
+  lines.push(`Treatments:  ${input.treatmentTitles.join(", ") || "—"}`);
+  lines.push(`Regions:     ${input.regionLabels.join(", ") || "—"}`);
+  lines.push(`Path:        ${input.kind.join(" + ") || "—"}`);
+  lines.push(`Photos:      ${input.hasPhotos ? "yes" : "no"}`);
+  lines.push(`Marketing:   ${input.consentMkt ? "opted in" : "—"}`);
+  lines.push(``);
+  lines.push(`Message:`);
+  lines.push(input.message?.trim() ? input.message.trim() : "(none)");
+  lines.push(``);
+  lines.push(`Open in admin: ${adminUrl}`);
 
   return { subject, text: lines.join("\n") };
 }

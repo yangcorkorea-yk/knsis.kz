@@ -11,6 +11,9 @@ function makePayload(overrides: Partial<LeadSubmit> = {}): LeadSubmit {
   return {
     phone: "+77012345678",
     name: "Aigerim",
+    whatsappId: undefined,
+    telegramId: undefined,
+    preferredLanguage: "kr",
     treatmentSlugs: ["botox-jaw"],
     regions: ["seoul"],
     kind: ["korea"],
@@ -185,5 +188,35 @@ describe("createLead", () => {
     };
     await createLead(makePayload(), makeDeps({ insertLead }));
     expect(captured?.channelPref).toBe("inapp");
+  });
+
+  it("forwards whatsappId / telegramId / preferredLanguage to insertLead", async () => {
+    let captured: Parameters<CreateLeadDeps["insertLead"]>[0] | undefined;
+    const insertLead: CreateLeadDeps["insertLead"] = async (p) => {
+      captured = p;
+      return { code: p.code };
+    };
+    await createLead(
+      makePayload({
+        whatsappId: "+7 701 ...",
+        telegramId: "@aigerim",
+        preferredLanguage: "ru",
+      }),
+      makeDeps({ insertLead }),
+    );
+    expect(captured?.whatsappId).toBe("+7 701 ...");
+    expect(captured?.telegramId).toBe("@aigerim");
+    expect(captured?.preferredLanguage).toBe("ru");
+  });
+
+  it("passes nulls when WA / TG are omitted (form left empty)", async () => {
+    let captured: Parameters<CreateLeadDeps["insertLead"]>[0] | undefined;
+    const insertLead: CreateLeadDeps["insertLead"] = async (p) => {
+      captured = p;
+      return { code: p.code };
+    };
+    await createLead(makePayload(), makeDeps({ insertLead }));
+    expect(captured?.whatsappId).toBeNull();
+    expect(captured?.telegramId).toBeNull();
   });
 });

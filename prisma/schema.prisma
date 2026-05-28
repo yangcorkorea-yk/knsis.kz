@@ -169,6 +169,21 @@ model Lead {
   /// key without collision.
   idempotencyKey String?
 
+  /// WhatsApp identifier (phone or jid the manager opens
+  /// outside the platform). Pure informational — `lib/messaging/send.ts`
+  /// still rejects writes to Channel.wa per hard rule §8.
+  whatsappId String?
+
+  /// Telegram identifier (@username or phone). Same contract
+  /// as whatsappId — informational only, no automated outbound.
+  telegramId String?
+
+  /// Locale the user wants their consult conducted in. Distinct
+  /// from User.locale (the site UI locale) — a KZ-site user can
+  /// request a KR consultation, etc. Falls back to User.locale
+  /// when the form omits the value.
+  preferredLanguage Locale?
+
   koreaVisit KoreaVisit?
   messages   Message[]
   notes      Note[]
