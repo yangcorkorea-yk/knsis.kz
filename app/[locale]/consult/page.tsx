@@ -82,6 +82,7 @@ export default async function ConsultPage({ params: { locale } }: { params: { lo
         <ConsultForm
           locale={activeLocale}
           treatments={treatments}
+          turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ""}
           labels={{
             disclaimerBody: t("disclaimer.body"),
             disclaimerAriaLabel: t("disclaimer.aria_label"),

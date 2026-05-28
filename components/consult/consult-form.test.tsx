@@ -57,7 +57,9 @@ const LABELS = {
 };
 
 function render(treatments = TREATMENTS) {
-  return renderToString(<ConsultForm locale="kr" treatments={treatments} labels={LABELS} />);
+  return renderToString(
+    <ConsultForm locale="kr" treatments={treatments} labels={LABELS} turnstileSiteKey="" />,
+  );
 }
 
 describe("ConsultForm (M3-01 initial render — step 1)", () => {

@@ -31,6 +31,8 @@ import { createLead } from "@/lib/leads/create";
 import { defaultDeps as codeGenDefaults, makeLeadCode } from "@/lib/leads/code-gen";
 import { leadSubmitSchema } from "@/lib/leads/schema";
 import { sendLeadCreatedEmail } from "@/lib/notifications/lead-created";
+import { checkLeadRateLimits } from "@/lib/ratelimit/lead-limits";
+import { verifyTurnstileToken } from "@/lib/turnstile/verify";
 import { tr, type TrilingualText } from "@/lib/i18n/tr";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +62,43 @@ export async function POST(req: Request) {
   }
   const payload = parsed.data;
   const idempotencyKey = req.headers.get("idempotency-key") ?? undefined;
+
+  // Step 2.5 — Turnstile gate (skipped automatically in dev when
+  // TURNSTILE_SECRET_KEY is blank). Runs before the rate-limit
+  // check so a CAPTCHA-failing bot doesn't poison the user/phone
+  // window with attempts.
+  const turnstileToken = req.headers.get("cf-turnstile-response");
+  const remoteIp =
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    null;
+  const turnstile = await verifyTurnstileToken(turnstileToken, { remoteIp });
+  if (!turnstile.ok) {
+    return NextResponse.json({ ok: false, code: turnstile.code }, { status: 403 });
+  }
+
+  // Step 2.6 — rate limits (5 leads / user / day, 1 lead / phone /
+  // 10 min). User-bound instead of IP-bound (PII hygiene); phone
+  // bucket catches the cookie-cycle attacker. Per the lead-channel-
+  // strategy doc, idempotency-key reuse short-circuits inside
+  // createLead so a retry of a successful submit doesn't bump
+  // these counters.
+  const rateCheck = await checkLeadRateLimits(
+    { userId: ensured.userId, phone: payload.phone },
+    {
+      countLeadsForUser: ({ userId, since }) =>
+        prisma.lead.count({
+          where: { userId, createdAt: { gte: since } },
+        }),
+      countLeadsForPhone: ({ phone, since }) =>
+        prisma.lead.count({
+          where: { user: { phone }, createdAt: { gte: since } },
+        }),
+    },
+  );
+  if (!rateCheck.ok) {
+    return NextResponse.json({ ok: false, code: rateCheck.code }, { status: 429 });
+  }
 
   // Step 3 — orchestrate.
   const result = await createLead(payload, {

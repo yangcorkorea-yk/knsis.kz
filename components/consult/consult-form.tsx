@@ -37,12 +37,13 @@
  */
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import type { Resolver, SubmitHandler } from "react-hook-form";
 import { CTA } from "@/components/ui/cta";
 import { Input } from "@/components/ui/input";
 import { MedicalDisclaimer } from "@/components/treatments/medical-disclaimer";
+import { TurnstileWidget } from "@/components/consult/turnstile-widget";
 import { CITY_SLUGS } from "@/lib/discover/filters";
 import {
   leadSubmitSchema,
@@ -116,6 +117,12 @@ interface Props {
   locale: Locale;
   treatments: TreatmentOption[];
   labels: Labels;
+  /**
+   * From NEXT_PUBLIC_TURNSTILE_SITE_KEY. Empty string = dev mock
+   * (widget not rendered; server siteverify also skipped via
+   * blank TURNSTILE_SECRET_KEY).
+   */
+  turnstileSiteKey: string;
 }
 
 type FormShape = LeadSubmit;
@@ -123,14 +130,18 @@ type FormShape = LeadSubmit;
 const STORAGE_KEY = "knsis_consult_draft_v1";
 const TOTAL_STEPS = 3;
 
-export function ConsultForm({ locale, treatments, labels }: Props) {
+export function ConsultForm({ locale, treatments, labels, turnstileSiteKey }: Props) {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [photos, setPhotos] = useState<PhotoRef[]>([]);
   const [uploadingCount, setUploadingCount] = useState(0);
   const [submitState, setSubmitState] = useState<
     { kind: "idle" } | { kind: "submitting" } | { kind: "error"; message: string }
   >({ kind: "idle" });
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const idempotencyKey = useRef<string>(crypto.randomUUID());
+  const handleTurnstileToken = useCallback((token: string) => {
+    setTurnstileToken(token || null);
+  }, []);
   const restoredOnce = useRef(false);
   const formId = useId();
 
@@ -198,12 +209,14 @@ export function ConsultForm({ locale, treatments, labels }: Props) {
   const onSubmit: SubmitHandler<FormShape> = async (values) => {
     setSubmitState({ kind: "submitting" });
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey.current,
+      };
+      if (turnstileToken) headers["cf-turnstile-response"] = turnstileToken;
       const res = await fetch("/api/leads", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": idempotencyKey.current,
-        },
+        headers,
         body: JSON.stringify({ ...values, photos }),
       });
       if (res.status === 429) {
@@ -387,6 +400,10 @@ export function ConsultForm({ locale, treatments, labels }: Props) {
         </section>
       )}
 
+      {currentStep === 3 && (
+        <TurnstileWidget siteKey={turnstileSiteKey} onToken={handleTurnstileToken} />
+      )}
+
       {submitState.kind === "error" && (
         <p className="text-sm text-rose-deep" role="alert">
           {labels.errors[submitState.message] ?? submitState.message}
@@ -409,7 +426,11 @@ export function ConsultForm({ locale, treatments, labels }: Props) {
             type="submit"
             size="md"
             fullWidth={true}
-            disabled={submitState.kind === "submitting" || uploadingCount > 0}
+            disabled={
+              submitState.kind === "submitting" ||
+              uploadingCount > 0 ||
+              (!!turnstileSiteKey && !turnstileToken)
+            }
           >
             {submitState.kind === "submitting" ? labels.submitting : labels.submit}
           </CTA>
