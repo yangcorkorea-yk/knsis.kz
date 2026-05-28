@@ -66,7 +66,14 @@ interface Labels {
   // Page-level
   disclaimerBody: string;
   disclaimerAriaLabel: string;
-  stepProgress: (current: number, total: number) => string;
+  /**
+   * Pre-formatted step-progress strings, indexed by step-1
+   * (i.e. `stepProgressByStep[0]` is the copy for step 1).
+   * Server pre-computes via `t("step_progress", …)` because
+   * Next.js App Router won't pass functions from a server
+   * component to a client component (runtime serialization).
+   */
+  stepProgressByStep: readonly string[];
 
   // Step titles
   stepContactTitle: string;
@@ -260,7 +267,7 @@ export function ConsultForm({ locale, treatments, labels, turnstileSiteKey }: Pr
       <MedicalDisclaimer body={labels.disclaimerBody} ariaLabel={labels.disclaimerAriaLabel} />
 
       <p className="text-xs text-ink-mute" aria-live="polite">
-        {labels.stepProgress(currentStep, TOTAL_STEPS)}
+        {labels.stepProgressByStep[currentStep - 1] ?? ""}
       </p>
 
       {currentStep === 1 && (

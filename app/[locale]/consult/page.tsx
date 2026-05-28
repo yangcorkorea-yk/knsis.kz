@@ -86,7 +86,9 @@ export default async function ConsultPage({ params: { locale } }: { params: { lo
           labels={{
             disclaimerBody: t("disclaimer.body"),
             disclaimerAriaLabel: t("disclaimer.aria_label"),
-            stepProgress: (current, total) => t("step_progress", { current, total }),
+            stepProgressByStep: [1, 2, 3].map((current) =>
+              t("step_progress", { current, total: 3 }),
+            ),
 
             stepContactTitle: t("steps.contact.title"),
             stepGoalTitle: t("steps.goal.title"),

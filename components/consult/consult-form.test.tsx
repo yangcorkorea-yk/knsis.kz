@@ -21,7 +21,7 @@ const TREATMENTS: TreatmentOption[] = [
 const LABELS = {
   disclaimerBody: "DISCLAIMER BODY",
   disclaimerAriaLabel: "DISCLAIMER ARIA",
-  stepProgress: (c: number, t: number) => `step ${c}/${t}`,
+  stepProgressByStep: ["step 1/3", "step 2/3", "step 3/3"] as const,
   stepContactTitle: "STEP CONTACT",
   stepGoalTitle: "STEP GOAL",
   stepPhotosTitle: "STEP PHOTOS",
