@@ -73,6 +73,26 @@ body {
 }
 
 /*
+ * Pill-row scrollbar visual cleanup. The horizontal overflow on
+ * filter pill rows (M2-02 categories, M2-04 clinics, M2-06 reviews)
+ * is deliberate — there are more pills than fit on a mobile width
+ * — but the visible scrollbar reads as ugly. Hiding it keeps the
+ * intentional scroll behaviour (swipe / drag) while removing the
+ * ~12 px chrome bar. See `docs/runbook/horizontal-scroll-pills.md`
+ * for the full pattern (and the reason this isn't a global rule —
+ * page-content scrollers MUST keep their scrollbars visible).
+ */
+@layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
  * Mobile-first horizontal-overflow guard. Any rogue element that
  * would push the document wider than the viewport (rare — usually
  * a flex item that refuses to shrink, an SVG without max-width,

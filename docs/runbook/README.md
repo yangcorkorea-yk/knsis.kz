@@ -33,3 +33,8 @@ Operational notes that bit us once and shouldn't again.
   branch sync, prisma generate, migration deploy, db:seed
   verification, Vercel env vars, admin user check, PWA service
   worker reset.
+- [horizontal-scroll-pills.md](./horizontal-scroll-pills.md) —
+  pill-row scroll behaviour stays (swipe + drag); the chrome
+  scrollbar is hidden via the `.scrollbar-none` utility on the
+  scrolling container. Don't apply to page-content scrollers —
+  those need a visible scrollbar.

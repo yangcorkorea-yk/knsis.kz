@@ -1,22 +1,22 @@
 "use client";
 
 /*
- * components/discover/filter-bar.tsx — three horizontally scrolling
- * pill rows (Area / Concern / Language). Stateless.
+ * components/discover/filter-bar.tsx — three filter axes (Area /
+ * Concern / Language) for the M2-02 categories page. Stateless.
  *
- * The owning <CategoriesIsland> holds the filter state and runs the
- * in-memory list filter; pills repaint synchronously when the parent
- * re-renders, with zero network round-trip. That's the whole point
- * of the client-side filtering refactor — see
- * docs/runbook/optimistic-feedback.md §"When client-side filtering
- * wins" for why this beat the previous useTransition + optimistic
- * pattern.
+ * Axis rendering is delegated to <FilterAxis>, which switches
+ * automatically between pills (≤ 7 options) and a native dropdown
+ * (≥ 8 options). Today's Concern axis lands in the dropdown
+ * branch (9 TreatmentCategory values); Area + Language stay as
+ * pills (4 each).
  *
- * Pill is exported so its rendered output can be locked down by unit
- * tests independently of the FilterBar composition.
+ * Pill is still exported so the M2-02 Pill regression tests + the
+ * M2-04 / M2-06 / M2-08 filter bars that reuse it continue to
+ * work unchanged.
  */
 
 import { useTranslations } from "next-intl";
+import { FilterAxis } from "@/components/discover/filter-axis";
 import {
   CITY_SLUGS,
   CONCERNS,
@@ -36,86 +36,33 @@ export function FilterBar({ filters, onToggle, onClear }: FilterBarProps) {
   const t = useTranslations("categories.filter");
   return (
     <div className="space-y-3" role="group" aria-label={t("group_label")}>
-      <PillRow
-        axis="area"
-        labelKey="area.label"
-        clearKey="area.all"
-        values={CITY_SLUGS}
-        labelOf={(v) => t(`area.${v}`)}
+      <FilterAxis
+        axisId="area"
+        groupLabel={t("area.label")}
+        allLabel={t("area.all")}
         active={filters.area ?? null}
+        options={CITY_SLUGS.map((v) => ({ value: v, label: t(`area.${v}`) }))}
         onSelect={(v) => onToggle("area", v)}
         onClear={() => onClear("area")}
       />
-      <PillRow
-        axis="concern"
-        labelKey="concern.label"
-        clearKey="concern.all"
-        values={CONCERNS}
-        labelOf={(v) => t(`concern.${v}`)}
+      <FilterAxis
+        axisId="concern"
+        groupLabel={t("concern.label")}
+        allLabel={t("concern.all")}
         active={filters.concern ?? null}
+        options={CONCERNS.map((v) => ({ value: v, label: t(`concern.${v}`) }))}
         onSelect={(v) => onToggle("concern", v)}
         onClear={() => onClear("concern")}
       />
-      <PillRow
-        axis="language"
-        labelKey="language.label"
-        clearKey="language.all"
-        values={INTERPRETER_LANGS}
-        labelOf={(v) => t(`language.${v}`)}
+      <FilterAxis
+        axisId="language"
+        groupLabel={t("language.label")}
+        allLabel={t("language.all")}
         active={filters.language ?? null}
+        options={INTERPRETER_LANGS.map((v) => ({ value: v, label: t(`language.${v}`) }))}
         onSelect={(v) => onToggle("language", v)}
         onClear={() => onClear("language")}
       />
-    </div>
-  );
-}
-
-interface PillRowProps<V extends string> {
-  axis: FilterKey;
-  labelKey: string;
-  clearKey: string;
-  values: readonly V[];
-  labelOf: (v: V) => string;
-  active: string | null;
-  onSelect: (v: V) => void;
-  onClear: () => void;
-}
-
-function PillRow<V extends string>({
-  axis,
-  labelKey,
-  clearKey,
-  values,
-  labelOf,
-  active,
-  onSelect,
-  onClear,
-}: PillRowProps<V>) {
-  const t = useTranslations("categories.filter");
-  const groupId = `filter-${axis}`;
-  return (
-    <div aria-labelledby={groupId}>
-      <h3
-        id={groupId}
-        className="mb-1.5 px-4 text-[11px] font-semibold uppercase tracking-widest text-ink-mute"
-      >
-        {t(labelKey)}
-      </h3>
-      <div className="flex snap-x snap-mandatory scroll-pl-4 scroll-pr-4 gap-2 overflow-x-auto pb-1">
-        <Pill aria-pressed={active === null} onClick={onClear} highlighted={active === null}>
-          {t(clearKey)}
-        </Pill>
-        {values.map((v) => (
-          <Pill
-            key={v}
-            aria-pressed={active === v}
-            onClick={() => onSelect(v)}
-            highlighted={active === v}
-          >
-            {labelOf(v)}
-          </Pill>
-        ))}
-      </div>
     </div>
   );
 }
@@ -133,12 +80,10 @@ export function Pill({
       {...rest}
       className={cn(
         "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-        // Bind the scrollable row's left / right padding to the first
-        // and last pill themselves. Container padding on a horizontal
-        // overflow:auto box is unreliable across browsers, and the
-        // earlier arbitrary-variant attempt (`[&>*:first-child]:ml-4`)
-        // didn't survive Tailwind's default content scanner. Plain
-        // first: / last: variants are core Tailwind and always emit.
+        // Scroll-row gutter: 16 px margin on the first + last pill
+        // of any row (core Tailwind variants, always emit; the
+        // arbitrary-variant version we tried at PR #6 / a35c6fb
+        // didn't survive Tailwind's content scanner).
         "first:ml-4 last:mr-4",
         // Focus ring uses the neutral ink-mute (#8A8A8A) instead of any
         // rose tone — after a pill is tapped to off-switch, the

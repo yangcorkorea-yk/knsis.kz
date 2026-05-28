@@ -1,19 +1,18 @@
 "use client";
 
 /*
- * components/clinics/clinic-filter-bar.tsx — three pill rows for
- * the /[locale]/clinics list (city / kind / language). Stateless,
- * same shape as `components/discover/filter-bar.tsx` from M2-02 —
- * reuses the exported Pill primitive for visual + a11y parity
- * (rose active treatment, ink-mute focus ring, no rose hover, the
- * scroll-row first/last gutter on every Pill).
+ * components/clinics/clinic-filter-bar.tsx — three filter axes
+ * (Area / Kind / Language) for the M2-04 clinics list. Stateless.
  *
- * Filter state lives in the owning <ClinicsIsland>; pill repaints
- * happen synchronously since all filtering runs in-memory over the
- * bulk-fetched clinic set.
+ * Each axis delegates to the shared <FilterAxis> primitive, which
+ * auto-switches between pill row (≤ 7 options) and native dropdown
+ * (≥ 8 options). Today every clinic axis has ≤ 4 options so they
+ * all render as pills; the dropdown branch trips when an operator
+ * grows the seeded clinic / treatment set past 7 in M5.
  */
 
 import { useTranslations } from "next-intl";
+import { FilterAxis } from "@/components/discover/filter-axis";
 import {
   CITY_SLUGS,
   CLINIC_KINDS,
@@ -21,7 +20,6 @@ import {
   type FilterKey,
   INTERPRETER_LANGS,
 } from "@/lib/discover/filters";
-import { Pill } from "@/components/discover/filter-bar";
 
 interface FilterBarProps {
   filters: DiscoveryFilters;
@@ -33,86 +31,33 @@ export function ClinicFilterBar({ filters, onToggle, onClear }: FilterBarProps) 
   const t = useTranslations("clinics.filter");
   return (
     <div className="space-y-3" role="group" aria-label={t("group_label")}>
-      <PillRow
-        axis="area"
-        labelKey="area.label"
-        clearKey="area.all"
-        values={CITY_SLUGS}
-        labelOf={(v) => t(`area.${v}`)}
+      <FilterAxis
+        axisId="clinics-area"
+        groupLabel={t("area.label")}
+        allLabel={t("area.all")}
         active={filters.area ?? null}
+        options={CITY_SLUGS.map((v) => ({ value: v, label: t(`area.${v}`) }))}
         onSelect={(v) => onToggle("area", v)}
         onClear={() => onClear("area")}
       />
-      <PillRow
-        axis="kind"
-        labelKey="kind.label"
-        clearKey="kind.all"
-        values={CLINIC_KINDS}
-        labelOf={(v) => t(`kind.${v}`)}
+      <FilterAxis
+        axisId="clinics-kind"
+        groupLabel={t("kind.label")}
+        allLabel={t("kind.all")}
         active={filters.kind ?? null}
+        options={CLINIC_KINDS.map((v) => ({ value: v, label: t(`kind.${v}`) }))}
         onSelect={(v) => onToggle("kind", v)}
         onClear={() => onClear("kind")}
       />
-      <PillRow
-        axis="language"
-        labelKey="language.label"
-        clearKey="language.all"
-        values={INTERPRETER_LANGS}
-        labelOf={(v) => t(`language.${v}`)}
+      <FilterAxis
+        axisId="clinics-language"
+        groupLabel={t("language.label")}
+        allLabel={t("language.all")}
         active={filters.language ?? null}
+        options={INTERPRETER_LANGS.map((v) => ({ value: v, label: t(`language.${v}`) }))}
         onSelect={(v) => onToggle("language", v)}
         onClear={() => onClear("language")}
       />
-    </div>
-  );
-}
-
-interface PillRowProps<V extends string> {
-  axis: FilterKey;
-  labelKey: string;
-  clearKey: string;
-  values: readonly V[];
-  labelOf: (v: V) => string;
-  active: string | null;
-  onSelect: (v: V) => void;
-  onClear: () => void;
-}
-
-function PillRow<V extends string>({
-  axis,
-  labelKey,
-  clearKey,
-  values,
-  labelOf,
-  active,
-  onSelect,
-  onClear,
-}: PillRowProps<V>) {
-  const t = useTranslations("clinics.filter");
-  const groupId = `clinic-filter-${axis}`;
-  return (
-    <div aria-labelledby={groupId}>
-      <h3
-        id={groupId}
-        className="mb-1.5 px-4 text-[11px] font-semibold uppercase tracking-widest text-ink-mute"
-      >
-        {t(labelKey)}
-      </h3>
-      <div className="flex snap-x snap-mandatory scroll-pl-4 scroll-pr-4 gap-2 overflow-x-auto pb-1">
-        <Pill aria-pressed={active === null} onClick={onClear} highlighted={active === null}>
-          {t(clearKey)}
-        </Pill>
-        {values.map((v) => (
-          <Pill
-            key={v}
-            aria-pressed={active === v}
-            onClick={() => onSelect(v)}
-            highlighted={active === v}
-          >
-            {labelOf(v)}
-          </Pill>
-        ))}
-      </div>
     </div>
   );
 }
