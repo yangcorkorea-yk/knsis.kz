@@ -101,11 +101,31 @@ secondary surfaces — it's the difference between a _content
 container_ (acceptable cream) and an _input affordance_
 (needs to pop).
 
+## Horizontal strips — hide the scrollbar
+
+Pages that use horizontal scroll for a row of cards (home's
+Korea-clinics / Local-clinics / Reviews strips, M2-02 filter
+pills) must apply the `scrollbar-none` utility on the
+scrolling container alongside `overflow-x-auto`:
+
+```tsx
+<ol className="scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-4">
+```
+
+Without `scrollbar-none` the browser renders its native
+scrollbar — on Windows that includes left / right arrow
+buttons at the scrollbar ends which read as
+out-of-pattern UI on a touch-first design. See
+`horizontal-scroll-pills.md` for the utility's CSS source.
+
 ## When you add a new public page
 
 1. Use the standard `<main>` class block above (with
    `md:max-w-3xl`) unless the page is intentionally
-   mobile-only (document the exception inline).
+   mobile-only (document the exception inline). **This
+   includes the home page** — the home was the original
+   sweep miss when consult's `md:max-w-3xl` fix landed; the
+   home strips also needed the `md:max-w-3xl` widen.
 2. Don't put a `<header>` inside a wrapper that already
    applies `px-4`.
 3. Don't wrap `MedicalDisclaimer` / `ConsentBanner` /
@@ -116,3 +136,7 @@ container_ (acceptable cream) and an _input affordance_
 5. If you write a raw `<textarea>`, copy the same
    `border border-line bg-paper` class fragment used in
    `components/consult/consult-form.tsx`.
+6. Every `overflow-x-auto` scroller carries `scrollbar-none`
+   unless it's a _page-content_ scroller (those need a
+   visible scrollbar — see horizontal-scroll-pills.md for
+   the distinction).

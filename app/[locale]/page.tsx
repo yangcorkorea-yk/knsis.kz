@@ -84,7 +84,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
   ]);
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 bg-warm pb-24">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 bg-warm pb-24 md:max-w-3xl">
       {/* 1 · Hero */}
       <section className="px-4 pt-8">
         <p className="text-xs font-bold uppercase tracking-widest text-rose-deep">
@@ -163,7 +163,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
         {reviews.length === 0 ? (
           <p className="pr-4 text-sm text-ink-mute">{t("empty")}</p>
         ) : (
-          <ol className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-4">
+          <ol className="scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-4">
             {reviews.map((r) => (
               <li
                 key={r.id}
