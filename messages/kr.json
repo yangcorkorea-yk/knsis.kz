@@ -167,6 +167,73 @@
     "body": "요청하신 페이지를 찾을 수 없습니다.",
     "home_link": "홈으로"
   },
+  "consult": {
+    "title": "상담 신청",
+    "subtitle": "관심 시술과 지역을 알려주시면 매니저가 1:1로 연락드립니다.",
+    "step_progress": "{current}/{total}단계",
+    "disclaimer": {
+      "aria_label": "상담 안내",
+      "body": "신청 내용은 매니저가 검토 후 연락드립니다. 의료적 판단은 실제 진료 시 의사와 상담하시기 바랍니다."
+    },
+    "steps": {
+      "contact": {
+        "title": "연락처",
+        "phone_label": "전화번호",
+        "phone_help": "매니저가 연락드릴 번호입니다.",
+        "phone_placeholder": "+7 701 234 5678",
+        "name_label": "이름 (선택)",
+        "name_help": "익명을 원하시면 비워두세요.",
+        "name_placeholder": "이름"
+      },
+      "goal": {
+        "title": "관심 시술",
+        "treatment_label": "시술 (1개 이상)",
+        "treatment_empty": "아직 등록된 시술이 없습니다.",
+        "region_label": "선호 지역 (1개 이상)",
+        "kind_label": "방법",
+        "kind": {
+          "korea": "한국 방문",
+          "local": "현지 클리닉"
+        }
+      },
+      "photos": {
+        "title": "사진 · 메시지 · 동의",
+        "photo_label": "참고 사진 (선택, 최대 3장)",
+        "photo_help": "JPEG, PNG, HEIC · 한 장당 5MB 이하 · 위치 정보는 자동 삭제됩니다.",
+        "photo_add_button": "사진 추가",
+        "photo_remove_button": "삭제",
+        "photo_uploading": "업로드 중…",
+        "message_label": "추가 메시지 (선택)",
+        "message_help": "구체적인 고민이나 일정이 있으면 적어주세요.",
+        "message_placeholder": "예: 다음 달 서울 방문 예정, 회복 기간 짧은 시술 선호",
+        "consent_tos_label": "이용약관 및 개인정보 처리방침에 동의합니다 (필수)",
+        "consent_mkt_label": "신규 시술 · 프로모션 안내를 받겠습니다 (선택)",
+        "consent_required_note": "* 필수 항목"
+      }
+    },
+    "button": {
+      "back": "이전",
+      "next": "다음",
+      "submit": "상담 신청",
+      "submitting": "신청 중…"
+    },
+    "errors": {
+      "phone_required": "전화번호를 입력해주세요.",
+      "phone_format": "올바른 전화번호 형식이 아닙니다.",
+      "name_too_long": "이름은 80자 이하로 입력해주세요.",
+      "treatment_required": "시술을 1개 이상 선택해주세요.",
+      "region_required": "지역을 1개 이상 선택해주세요.",
+      "kind_required": "방법을 1개 이상 선택해주세요.",
+      "photo_count": "사진은 최대 3장까지 업로드 가능합니다.",
+      "photo_size": "사진 한 장당 5MB 이하로 업로드해주세요.",
+      "photo_mime": "JPEG, PNG, HEIC 형식만 지원됩니다.",
+      "photo_upload_failed": "사진 업로드에 실패했습니다. 다시 시도해주세요.",
+      "message_too_long": "메시지는 2000자 이하로 작성해주세요.",
+      "consent_tos_required": "이용약관에 동의해주세요.",
+      "submit_failed": "신청에 실패했습니다. 잠시 후 다시 시도해주세요.",
+      "submit_rate_limited": "오늘 신청 가능한 횟수를 초과했습니다."
+    }
+  },
   "clinics": {
     "title": "클리닉",
     "subtitle": "언어와 분야로 클리닉을 찾아보세요.",
