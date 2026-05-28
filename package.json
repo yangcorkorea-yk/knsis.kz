@@ -32,8 +32,10 @@
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
+    "@hookform/resolvers": "^5.4.0",
     "@prisma/client": "^5.18.0",
     "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/supabase-js": "^2.106.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -42,7 +44,10 @@
     "next-intl": "^3.26.5",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "tailwind-merge": "^3.6.0"
+    "react-hook-form": "^7.76.1",
+    "resend": "^6.12.4",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",

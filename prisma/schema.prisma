@@ -162,6 +162,13 @@ model Lead {
   message      String?
   // NO PRICE FIELD. EVER.
 
+  /// Idempotency key from the `Idempotency-Key` request header on
+  /// POST /api/leads. Lets the client safely retry submit on a
+  /// flaky network without creating duplicate leads. Scoped per
+  /// user so two different users can reuse the same client-side
+  /// key without collision.
+  idempotencyKey String?
+
   koreaVisit KoreaVisit?
   messages   Message[]
   notes      Note[]
@@ -172,6 +179,7 @@ model Lead {
   @@index([status, createdAt(sort: Desc)])
   @@index([ownerId, status])
   @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, idempotencyKey])
 }
 
 model Clinic {
