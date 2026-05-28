@@ -62,3 +62,9 @@ Operational notes that bit us once and shouldn't again.
   the three-environment (local / Vercel preview / production)
   matrix: what each layer catches, what each misses, and why
   the preview visual sign-off is non-negotiable.
+- [page-layout-consistency.md](./page-layout-consistency.md) —
+  the `mx-auto max-w-md md:max-w-3xl` column contract every
+  public page shares + the "header outside any padded wrapper"
+  rule + the `bg-paper` input affordance rule. M3 sign-off
+  surfaced the consequences of breaking either: page jumps
+  between adjacent navigations + invisible input boundaries.
