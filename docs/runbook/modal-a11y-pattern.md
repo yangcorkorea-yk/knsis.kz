@@ -25,8 +25,8 @@ the same focus return everywhere.
 ## What we DON'T do
 
 - **No `focus-trap-react` / no Radix Dialog.** Two `<button>`s
-  - an Esc handler covers the modal's keyboard surface; the
-    dependency cost isn't justified.
+  plus an Esc handler covers the modal's keyboard surface; the
+  dependency cost isn't justified.
 - **No `inert` on background content.** Browser support is
   uneven and `aria-modal` already signals "background is
   inert" to assistive tech.
