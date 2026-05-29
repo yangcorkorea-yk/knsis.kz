@@ -23,6 +23,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:staff": "tsx scripts/seed-staff.ts",
     "db:studio": "prisma studio",
     "i18n:check": "tsx scripts/i18n-check.ts",
     "price:check": "tsx scripts/no-price-guard.ts",
