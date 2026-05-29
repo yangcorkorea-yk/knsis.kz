@@ -19,10 +19,26 @@
  *   - The page is always reachable; no auth gate.
  */
 
+import { CalendarCheck, ClipboardCheck, MessageCircle } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ensureGuestUserFromRequest } from "@/lib/auth/ensure-guest-user";
 import { prisma } from "@/lib/db/client";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+
+/*
+ * M3-hotfix polish: the "next steps" section originally rendered
+ * as a plain <ol> with a rose-soft left gutter — readable but
+ * the three steps blended into a flat list rather than a journey.
+ * PM sign-off (Option B) replaced the gutter with numbered
+ * rose-deep badge tiles + per-step lucide icons. ~1 KB bundle
+ * impact via tree-shaken lucide imports already used elsewhere
+ * (Shield in MedicalDisclaimer).
+ */
+const NEXT_STEPS = [
+  { id: 1, Icon: ClipboardCheck },
+  { id: 2, Icon: MessageCircle },
+  { id: 3, Icon: CalendarCheck },
+] as const;
 
 export const dynamic = "force-dynamic";
 
@@ -72,19 +88,24 @@ export default async function ConsultDonePage({ params: { locale }, searchParams
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-bold text-ink">{t("next_steps_title")}</h2>
-        <ol className="flex flex-col gap-3 border-l-2 border-rose-soft pl-4 text-sm text-ink-body">
-          <li>
-            <p className="font-semibold text-ink">{t("step_1_title")}</p>
-            <p className="text-xs text-ink-mute">{t("step_1_body")}</p>
-          </li>
-          <li>
-            <p className="font-semibold text-ink">{t("step_2_title")}</p>
-            <p className="text-xs text-ink-mute">{t("step_2_body")}</p>
-          </li>
-          <li>
-            <p className="font-semibold text-ink">{t("step_3_title")}</p>
-            <p className="text-xs text-ink-mute">{t("step_3_body")}</p>
-          </li>
+        <ol className="flex flex-col gap-4">
+          {NEXT_STEPS.map(({ id, Icon }) => (
+            <li key={id} className="flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-deep text-sm font-bold text-white"
+              >
+                {id}
+              </span>
+              <div className="flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="font-semibold text-ink">{t(`step_${id}_title`)}</p>
+                  <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-ink-mute" />
+                </div>
+                <p className="mt-1 text-xs text-ink-mute">{t(`step_${id}_body`)}</p>
+              </div>
+            </li>
+          ))}
         </ol>
       </section>
 

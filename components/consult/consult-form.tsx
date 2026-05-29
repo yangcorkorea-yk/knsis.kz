@@ -575,8 +575,105 @@ function CheckboxGroup<TName extends "treatmentSlugs" | "regions" | "kind">({
 }
 
 const MAX_PHOTOS = 3;
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+/**
+ * Hard upper bound on input file size. Vercel function payload
+ * limit is 4.5 MB, but our server-side sharp pipeline (M3-02)
+ * accepts files up to ~5 MB; client compression below brings
+ * anything larger into safe range. 20 MB sanity cap prevents
+ * a user from accidentally picking a 100 MB 4K video frame.
+ */
+const MAX_PHOTO_BYTES = 20 * 1024 * 1024;
+/**
+ * Files larger than this get client-side compressed before
+ * upload. 2 MB is well below the Vercel 4.5 MB function payload
+ * limit even after multipart overhead, and keeps the
+ * compression-skipped fast path for already-small files
+ * (iPhone HEIC, social-media exports, etc.).
+ */
+const COMPRESS_TRIGGER_BYTES = 2 * 1024 * 1024;
+/**
+ * Target longest edge after compression. Mirrors the
+ * `MAX_LONG_EDGE_PX` constant the server-side sharp pipeline
+ * uses (lib/uploads/process.ts) so the client doesn't waste
+ * bytes the server would discard anyway.
+ */
+const COMPRESS_MAX_EDGE_PX = 2048;
+/** JPEG quality after compression — matches the server's sharp config. */
+const COMPRESS_JPEG_QUALITY = 0.85;
+/**
+ * Mimes that the client knows how to compress via Canvas.
+ * HEIC / HEIF skip compression — Chrome's <canvas> can't decode
+ * them, and iPhone HEIC originals are usually under the Vercel
+ * limit already (~1.5-2.5 MB for a 12 MP shot). They pass through
+ * raw and the server's sharp pipeline (with libheif) handles
+ * decode + re-encode.
+ */
+const COMPRESSIBLE_MIMES: ReadonlySet<string> = new Set(["image/jpeg", "image/png"]);
 const ACCEPTED_MIMES = ["image/jpeg", "image/png", "image/heic", "image/heif"];
+
+/**
+ * Client-side image compression via Canvas API. Zero new deps,
+ * works on iOS 12+ / Android Chrome / desktop. Solves the
+ * Vercel function payload trap (4.5 MB hard limit) that
+ * surfaced during M3 production smoke — 5-8 MB JPEGs from
+ * mid-range phones used to fail with an opaque "upload failed"
+ * error before the byte stream ever reached our route handler.
+ *
+ * Strategy:
+ *   - Skip files smaller than COMPRESS_TRIGGER_BYTES (no-op
+ *     fast path)
+ *   - Skip HEIC / HEIF (not decodable in client Canvas; the
+ *     originals usually fit under the Vercel limit anyway, and
+ *     the server's sharp pipeline handles decode + re-encode)
+ *   - For jpeg / png > 2 MB: decode via FileReader → <img>,
+ *     resize so longest edge ≤ 2048 px, re-encode to JPEG
+ *     quality 0.85
+ *
+ * EXIF strip continues to live server-side (sharp re-encode,
+ * hard rule §3 guarantee). The client compression is a payload-
+ * size fix, not a privacy fix; the server still gets the final
+ * say on what's persisted.
+ */
+async function compressIfNeeded(file: File): Promise<File> {
+  if (file.size <= COMPRESS_TRIGGER_BYTES) return file;
+  if (!COMPRESSIBLE_MIMES.has(file.type)) return file;
+
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error("file read failed"));
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = () => reject(new Error("image decode failed"));
+    i.src = dataUrl;
+  });
+
+  const longEdge = Math.max(img.naturalWidth, img.naturalHeight);
+  const scale = Math.min(1, COMPRESS_MAX_EDGE_PX / longEdge);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(img.naturalWidth * scale);
+  canvas.height = Math.round(img.naturalHeight * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas 2d context unavailable");
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error("canvas toBlob failed"))),
+      "image/jpeg",
+      COMPRESS_JPEG_QUALITY,
+    );
+  });
+
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
 
 function PhotoUploader({
   photos,
@@ -609,29 +706,68 @@ function PhotoUploader({
       return;
     }
     const list = Array.from(files).slice(0, slotsLeft);
-    for (const file of list) {
-      if (file.size > MAX_PHOTO_BYTES) {
-        setError(labels.errors.photo_size ?? "photo_size");
+
+    // Multi-file stale-closure trap (M3 smoke surfaced):
+    //
+    // The previous shape incremented + decremented `uploadingCount`
+    // and called `setPhotos([...photos, data])` inside the loop. Each
+    // closure read the handler-invocation-time React state, so iteration
+    // 2/3 saw the *same* `photos` array as iteration 1, overwriting
+    // earlier accepted uploads. Symptom: select 3 files → only 1 lands.
+    //
+    // `setPhotos` is wrapped by the parent to also `setValue("photos", ...)`
+    // for RHF, so we can't switch to a functional updater without
+    // restructuring the prop contract. Pattern below sidesteps the
+    // closure entirely by accumulating in a local array + committing
+    // once at the end of the batch.
+    //
+    // Busy state: increment once for the whole batch, decrement once
+    // at the end. "Busy during this batch" is the only invariant the
+    // UI needs (the button is disabled when uploadingCount > 0).
+    setUploadingCount(uploadingCount + 1);
+
+    const accepted: PhotoRef[] = [];
+    let firstError: string | null = null;
+
+    for (const rawFile of list) {
+      if (rawFile.size > MAX_PHOTO_BYTES) {
+        firstError ??= labels.errors.photo_size ?? "photo_size";
         continue;
       }
-      if (!ACCEPTED_MIMES.includes(file.type)) {
-        setError(labels.errors.photo_mime ?? "photo_mime");
+      if (!ACCEPTED_MIMES.includes(rawFile.type)) {
+        firstError ??= labels.errors.photo_mime ?? "photo_mime";
         continue;
       }
-      setUploadingCount(uploadingCount + 1);
+
+      // Compress jpeg / png > 2 MB before upload (Vercel function
+      // payload trap fix). HEIC / HEIF pass through; small files
+      // skip via the fast path inside compressIfNeeded.
+      let file: File;
+      try {
+        file = await compressIfNeeded(rawFile);
+      } catch {
+        firstError ??= labels.errors.photo_compress_failed ?? "photo_compress_failed";
+        continue;
+      }
+
       try {
         const fd = new FormData();
         fd.append("file", file);
         const res = await fetch("/api/uploads", { method: "POST", body: fd });
         if (!res.ok) throw new Error("upload failed");
         const data = (await res.json()) as PhotoRef;
-        setPhotos([...photos, data]);
+        accepted.push(data);
       } catch {
-        setError(labels.errors.photo_upload_failed ?? "photo_upload_failed");
-      } finally {
-        setUploadingCount(Math.max(0, uploadingCount - 1));
+        firstError ??= labels.errors.photo_upload_failed ?? "photo_upload_failed";
       }
     }
+
+    if (accepted.length > 0) {
+      setPhotos([...photos, ...accepted]);
+    }
+    if (firstError) setError(firstError);
+    setUploadingCount(Math.max(0, uploadingCount));
+
     if (inputRef.current) inputRef.current.value = "";
   }
 

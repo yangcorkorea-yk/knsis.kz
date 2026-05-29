@@ -76,3 +76,13 @@ Operational notes that bit us once and shouldn't again.
   rule + the `bg-paper` input affordance rule. M3 sign-off
   surfaced the consequences of breaking either: page jumps
   between adjacent navigations + invisible input boundaries.
+- [vercel-payload-limit.md](./vercel-payload-limit.md) —
+  Vercel Node functions cap request bodies at 4.5 MB.
+  Server-side processing of raw uploads (M3-02 photo flow,
+  chosen for the EXIF-strip hard-rule guarantee) hit this
+  constantly on 5-8 MB Android JPEGs during M3 smoke. Fix:
+  client-side Canvas API compression (~30 lines, zero deps)
+  shrinks jpeg/png >2 MB before upload; HEIC/HEIF pass
+  through. EXIF strip stays server-side. Diagnostic
+  checklist for opaque "upload failed" + when to swap to
+  presigned PUT.
