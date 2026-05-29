@@ -52,29 +52,51 @@ Production smoke matrix surfaced it the moment env vars were
 correctly configured. Lead row persisted, response 200, no
 email delivered, no error visible.
 
-Fix (M3 hotfix branch):
+## Iteration history
+
+1. **M3-03 ship**: `void notifyPm(...).catch(...)`. Broken on
+   Vercel as described above.
+2. **M3 hotfix (PR #14)**: `await notifyPm(...)` inside try /
+   catch. Works; adds ~300-700 ms to the response (invisible
+   during the client's redirect to `/consult/done`).
+3. **M3 closure (this codebase)**: `waitUntil(notifyPm(...))`
+   from `@vercel/functions`. The runtime keeps the function
+   context alive until the registered promise resolves, so the
+   user's response returns in <100 ms AND the background work
+   actually completes.
+
+Shipped pattern:
 
 ```ts
+import { waitUntil } from "@vercel/functions";
+
 if (!result.reused) {
-  console.log(`[lead-created] code=${result.code} — sending PM alert`);
-  try {
-    await notifyPm(result.code, locale, payload);
-    console.log(`[lead-created] code=${result.code} — PM alert dispatched`);
-  } catch (err) {
-    console.error(
-      `[lead-created] code=${result.code} — PM alert failed (non-fatal):`,
-      err instanceof Error ? err.message : err,
-    );
-  }
+  console.log(`[lead-created] code=${result.code} — scheduling PM alert`);
+  waitUntil(
+    notifyPm(result.code, locale, payload)
+      .then(() => {
+        console.log(`[lead-created] code=${result.code} — PM alert dispatched`);
+      })
+      .catch((err) => {
+        console.error(
+          `[lead-created] code=${result.code} — PM alert failed (non-fatal):`,
+          err instanceof Error ? err.message : err,
+        );
+      }),
+  );
 }
 return NextResponse.json({ code: result.code });
 ```
 
-The `await` adds ~300-700 ms to the response (Resend API
-round-trip). For lead submit this is invisible — the client is
-already mid-redirect to `/consult/done`. The try/catch keeps
-"email failure is non-fatal" semantics intact (Lead row is
-already in the DB; M5 admin inbox can still surface it).
+The promise is registered with `waitUntil` so the runtime
+tracks completion. The `.then` / `.catch` chain preserves the
+non-fatal-error semantics (Lead row is already persisted; the
+PM still sees it in the M5 admin inbox when M5-03 ships).
+
+**M-POST queue carve preserved**: `@vercel/functions`
+`waitUntil` is a runtime helper, not a job queue (Inngest /
+SQS class). CLAUDE.md §4 "real queue M-POST" not triggered.
+Inngest etc. still defer to M-POST.
 
 ## The structured-log requirement
 
@@ -86,31 +108,38 @@ function on the email path now logs at entry, at success
 matrix runs, the Function Invocation panel must show the
 chain — silence again would mean the bug recurred.
 
-## When to use a real background pattern
+## When to graduate to a real queue
 
-The await-everything approach works for MVP scale (low traffic,
-non-critical background work). Once any of these are true,
+`waitUntil` covers MVP scale (Resend send, structured logs,
+short-lived background work). Once any of these become true,
 revisit:
 
-- Background work routinely exceeds 2-3 seconds (user
-  perceives the latency)
-- Background work failure rate matters for the response
-  (e.g., billing webhooks where the response shouldn't return
-  until the webhook is confirmed queued)
-- Concurrent function-instance budget gets tight on Vercel
+- Background work routinely exceeds **30 seconds** (Vercel's
+  function execution cap; `waitUntil` doesn't extend it)
+- Failure recovery / retries matter (Resend transient errors,
+  webhook retries, etc.) — `waitUntil` doesn't retry
+- Background work needs durability across deploys (a long
+  task started before a deploy gets killed when the new
+  version takes over)
+- The same job needs to fire from multiple routes (queue
+  centralisation > per-route duplication)
 
-Options at that point:
+Options at that point — all **M-POST** per CLAUDE.md §4:
 
-- **`unstable_after` from `next/server`** (Next.js 15+) — the
-  framework's blessed way to schedule post-response work.
-  Vercel keeps the function alive long enough for the
-  scheduled task to complete.
-- **Vercel's `waitUntil` from `@vercel/functions`** — same
-  pattern, available today on Next.js 14 if `unstable_after`
-  isn't.
-- **Real queue (Inngest / SQS / similar)** — M-POST per
-  CLAUDE.md §4. The route enqueues a job; a separate worker
-  processes it; the response returns immediately.
+- **Inngest** — durable function queue, retry semantics, fan-
+  out. The codebase already reserves the env vars
+  (`INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`) under the
+  M-POST commented block in `.env.example`.
+- **Supabase Edge Function** + cron / pg_cron triggers — for
+  scheduled work tied to DB state.
+- **Direct queue (SQS / Redis Streams / etc.)** — overkill
+  for our profile today.
+
+Note: `unstable_after` from `next/server` (Next.js 15+)
+exposes the same `waitUntil` mechanic with framework-blessed
+typing. We're on Next.js 14.2.5 so it's not available; if /
+when we upgrade, the swap is purely cosmetic (same runtime
+behaviour).
 
 For knsis.kz at MVP scale (< 100 leads/day), `await` is the
 correct choice.
