@@ -706,28 +706,47 @@ function PhotoUploader({
       return;
     }
     const list = Array.from(files).slice(0, slotsLeft);
+
+    // Multi-file stale-closure trap (M3 smoke surfaced):
+    //
+    // The previous shape incremented + decremented `uploadingCount`
+    // and called `setPhotos([...photos, data])` inside the loop. Each
+    // closure read the handler-invocation-time React state, so iteration
+    // 2/3 saw the *same* `photos` array as iteration 1, overwriting
+    // earlier accepted uploads. Symptom: select 3 files → only 1 lands.
+    //
+    // `setPhotos` is wrapped by the parent to also `setValue("photos", ...)`
+    // for RHF, so we can't switch to a functional updater without
+    // restructuring the prop contract. Pattern below sidesteps the
+    // closure entirely by accumulating in a local array + committing
+    // once at the end of the batch.
+    //
+    // Busy state: increment once for the whole batch, decrement once
+    // at the end. "Busy during this batch" is the only invariant the
+    // UI needs (the button is disabled when uploadingCount > 0).
+    setUploadingCount(uploadingCount + 1);
+
+    const accepted: PhotoRef[] = [];
+    let firstError: string | null = null;
+
     for (const rawFile of list) {
       if (rawFile.size > MAX_PHOTO_BYTES) {
-        setError(labels.errors.photo_size ?? "photo_size");
+        firstError ??= labels.errors.photo_size ?? "photo_size";
         continue;
       }
       if (!ACCEPTED_MIMES.includes(rawFile.type)) {
-        setError(labels.errors.photo_mime ?? "photo_mime");
+        firstError ??= labels.errors.photo_mime ?? "photo_mime";
         continue;
       }
 
       // Compress jpeg / png > 2 MB before upload (Vercel function
       // payload trap fix). HEIC / HEIF pass through; small files
-      // skip via the fast path inside compressIfNeeded. Compression
-      // is grouped under the same `uploadingCount` busy state so
-      // the user sees "uploading…" instead of a freeze.
-      setUploadingCount(uploadingCount + 1);
+      // skip via the fast path inside compressIfNeeded.
       let file: File;
       try {
         file = await compressIfNeeded(rawFile);
       } catch {
-        setError(labels.errors.photo_compress_failed ?? "photo_compress_failed");
-        setUploadingCount(Math.max(0, uploadingCount - 1));
+        firstError ??= labels.errors.photo_compress_failed ?? "photo_compress_failed";
         continue;
       }
 
@@ -737,13 +756,18 @@ function PhotoUploader({
         const res = await fetch("/api/uploads", { method: "POST", body: fd });
         if (!res.ok) throw new Error("upload failed");
         const data = (await res.json()) as PhotoRef;
-        setPhotos([...photos, data]);
+        accepted.push(data);
       } catch {
-        setError(labels.errors.photo_upload_failed ?? "photo_upload_failed");
-      } finally {
-        setUploadingCount(Math.max(0, uploadingCount - 1));
+        firstError ??= labels.errors.photo_upload_failed ?? "photo_upload_failed";
       }
     }
+
+    if (accepted.length > 0) {
+      setPhotos([...photos, ...accepted]);
+    }
+    if (firstError) setError(firstError);
+    setUploadingCount(Math.max(0, uploadingCount));
+
     if (inputRef.current) inputRef.current.value = "";
   }
 
