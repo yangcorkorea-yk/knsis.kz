@@ -32,6 +32,37 @@ These don't block M3 sign-off because:
   workflows; bringing in mock images earlier creates churn.
 - WBS critical path is M3 → M5 → M6; visual polish is M7.
 
+## Item 5 — Admin leads list: last-4 phone masking option
+
+M5-01+03 batch ships with phone exposed only inside the lead
+drawer. List columns show `code` / `status` / `name` / `city` /
+`kind` / `createdAt` — phone hidden by design (PII minimisation).
+
+If operational use surfaces real friction ("I can't tell which
+lead is which without opening the drawer"), add a masked phone
+column showing only the last 4 digits:
+
+```
++7 *** *** 8144
+```
+
+Behaviours to spec at that point:
+
+- Always rendered as `tel:` link (managers click → call) — full
+  number sent through the URL handler, only display is masked
+- Hover/focus reveals full number for accessible scan
+- Search (`?q=`) substring matches the full unmasked number (the
+  PM searching for last-4 `8144` still finds it)
+
+Defer because:
+
+- Drawer-only default is the privacy-conservative call (CLAUDE.md
+  §2 rule 3 — PII minimisation principle)
+- One drawer open per lead-of-interest is a small cost when the
+  list shows `name` + `city` + `kind` for fast scanning
+- Trigger to ship: a week of operational use where the PM
+  reports the friction
+
 ## Item 2 — Language switcher on home top-right
 
 Current: language switcher lives on `/[locale]/me` (mobile

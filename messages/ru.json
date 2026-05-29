@@ -258,6 +258,42 @@
     "contact_title": "Срочный вопрос?",
     "contact_body": "Дополнительные вопросы — через чат в приложении. Вне рабочего времени ответ может занять больше времени."
   },
+  "admin": {
+    "shell": {
+      "sign_out": "Выйти",
+      "coming_soon": "В разработке",
+      "sidebar": {
+        "dashboard": "Дашборд",
+        "leads": "Заявки",
+        "customers": "Клиенты",
+        "clinics": "Клиники",
+        "reviews": "Отзывы",
+        "managers": "Менеджеры",
+        "before_after": "До и после"
+      },
+      "desktop_only": {
+        "title": "Откройте на десктопе",
+        "body": "Админ-панель оптимизирована для десктопа (≥1024px)."
+      }
+    },
+    "sign_in": {
+      "title": "Вход для администратора",
+      "subtitle": "Войдите под учётной записью сотрудника.",
+      "email_label": "Email",
+      "email_placeholder": "you@knsis.kz",
+      "password_label": "Пароль",
+      "submit": "Войти",
+      "submitting": "Вход…",
+      "error": {
+        "invalid_credentials": "Неверный email или пароль.",
+        "unknown": "Не удалось войти. Попробуйте ещё раз."
+      }
+    },
+    "leads": {
+      "placeholder_title": "Список заявок",
+      "placeholder_body": "Список заявок и drawer-панель появятся в M5-03 batch."
+    }
+  },
   "notfound": {
     "body": "Запрошенная страница не найдена.",
     "home_link": "На главную"

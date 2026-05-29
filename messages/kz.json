@@ -258,6 +258,42 @@
     "contact_title": "Жедел сұрағыңыз бар ма?",
     "contact_body": "Қосымша сұрақтарды қосымшадағы чат арқылы жіберіңіз. Жұмыс уақытынан тыс жауап кешігуі мүмкін."
   },
+  "admin": {
+    "shell": {
+      "sign_out": "Шығу",
+      "coming_soon": "Дайындалуда",
+      "sidebar": {
+        "dashboard": "Бақылау тақтасы",
+        "leads": "Өтінімдер",
+        "customers": "Клиенттер",
+        "clinics": "Клиникалар",
+        "reviews": "Пікірлер",
+        "managers": "Менеджерлер",
+        "before_after": "Алдыңғы және кейінгі"
+      },
+      "desktop_only": {
+        "title": "Жұмыс үстелінде ашыңыз",
+        "body": "Әкімші панелі жұмыс үстелі (≥1024px) үшін оңтайландырылған."
+      }
+    },
+    "sign_in": {
+      "title": "Әкімші кіру",
+      "subtitle": "Қызметкер аккаунтымен кіріңіз.",
+      "email_label": "Email",
+      "email_placeholder": "you@knsis.kz",
+      "password_label": "Құпиясөз",
+      "submit": "Кіру",
+      "submitting": "Кіру…",
+      "error": {
+        "invalid_credentials": "Email немесе құпиясөз дұрыс емес.",
+        "unknown": "Кіру сәтсіз аяқталды. Сәл кейінірек қайталап көріңіз."
+      }
+    },
+    "leads": {
+      "placeholder_title": "Өтінімдер тізімі",
+      "placeholder_body": "Өтінімдер тізімі мен сурғыма (drawer) M5-03 batch-та жасалады."
+    }
+  },
   "notfound": {
     "body": "Сұратылған бет табылмады.",
     "home_link": "Басты бетке оралу"

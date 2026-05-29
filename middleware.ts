@@ -10,6 +10,12 @@ import { DEFAULT_LOCALE, LOCALES } from "@/lib/i18n/config";
  * Zero DB / Prisma imports here — guest session rows are written
  * lazily by M1-02's ensureGuestUser() on the first meaningful POST,
  * not on every page view.
+ *
+ * /admin/* is excluded from the locale matcher — the admin tree is
+ * a parallel root with its own /admin/[locale] segment (M5-01) and
+ * must not be rewritten through next-intl's marketing-locale
+ * resolver, which would turn /admin/kz/sign-in into
+ * /kz/admin/kz/sign-in → 404.
  */
 
 const intlMiddleware = createMiddleware({
@@ -40,5 +46,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  matcher: ["/((?!api|admin|_next|_vercel|.*\\..*).*)"],
 };
