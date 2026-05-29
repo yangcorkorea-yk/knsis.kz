@@ -28,6 +28,7 @@
  */
 
 import { Prisma } from "@prisma/client";
+import { waitUntil } from "@vercel/functions";
 import { NextResponse } from "next/server";
 import { ensureGuestUserFromRequest } from "@/lib/auth/ensure-guest-user";
 import { prisma } from "@/lib/db/client";
@@ -178,31 +179,38 @@ export async function POST(req: Request) {
   // Step 4 — fire PM alert (only on a fresh create; the
   // idempotent reuse path already alerted the first time).
   //
-  // Awaited on purpose. The original `void notifyPm(...).catch(...)`
-  // pattern hit a Vercel serverless trap: the moment the response
-  // is returned, the function context terminates and any
-  // in-flight promises (Resend.send + the Treatment prefetch
-  // inside notifyPm) get cut off. Smoke matrix surfaced: HTTP
-  // 200 + lead persisted + zero outgoing Resend requests in the
-  // function panel + zero entries in the Resend dashboard.
+  // History:
+  //   - M3-03 shipped `void notifyPm(...).catch(...)` (fire-and-forget).
+  //     Vercel killed the function context the moment the response
+  //     returned, cutting the Resend.send() fetch mid-flight. No
+  //     log, no error, no email. Captured in
+  //     `docs/runbook/vercel-fire-and-forget.md`.
+  //   - M3 hotfix (PR #14) switched to `await notifyPm(...)`. Worked,
+  //     added ~300-700 ms to lead-submit latency.
+  //   - M3 closure (this commit): switched to `waitUntil(notifyPm(...))`
+  //     from `@vercel/functions`. Vercel keeps the function context
+  //     alive until the registered promise resolves, so the user's
+  //     response returns in <100 ms again AND the background work
+  //     actually completes (no cut-off, unlike the original
+  //     fire-and-forget). M-POST queue carve (CLAUDE.md §4) is
+  //     untouched — `waitUntil` is a runtime helper, not a job queue.
   //
-  // The await adds ~300-700 ms to the lead-submit response,
-  // invisible to the user (they're already mid-redirect to
-  // /consult/done). Non-fatal: any error inside notifyPm is
-  // logged but does NOT fail the route (Lead row is already
-  // persisted; the PM can still find it in the admin inbox once
-  // M5 ships).
+  // Error inside notifyPm is logged but non-fatal: Lead row is
+  // already persisted, M5 admin inbox surfaces it once M5 ships.
   if (!result.reused) {
-    console.log(`[lead-created] code=${result.code} locale=${locale} — sending PM alert`);
-    try {
-      await notifyPm(result.code, locale, payload);
-      console.log(`[lead-created] code=${result.code} — PM alert dispatched`);
-    } catch (err) {
-      console.error(
-        `[lead-created] code=${result.code} — PM alert failed (non-fatal):`,
-        err instanceof Error ? err.message : err,
-      );
-    }
+    console.log(`[lead-created] code=${result.code} locale=${locale} — scheduling PM alert`);
+    waitUntil(
+      notifyPm(result.code, locale, payload)
+        .then(() => {
+          console.log(`[lead-created] code=${result.code} — PM alert dispatched`);
+        })
+        .catch((err) => {
+          console.error(
+            `[lead-created] code=${result.code} — PM alert failed (non-fatal):`,
+            err instanceof Error ? err.message : err,
+          );
+        }),
+    );
   }
 
   // Step 5 — return.
