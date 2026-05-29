@@ -259,6 +259,50 @@
         "prev": "이전",
         "next": "다음",
         "summary": "{from}–{to} / {total}"
+      },
+      "drawer": {
+        "back": "목록으로",
+        "no_photos": "사진 없음",
+        "none": "—",
+        "fields": {
+          "name": "이름",
+          "phone": "전화번호",
+          "email": "이메일",
+          "whatsapp": "WhatsApp",
+          "telegram": "Telegram",
+          "preferred_language": "상담 언어",
+          "channel_pref": "연락 채널",
+          "regions": "지역",
+          "kind": "유형",
+          "treatments": "관심 시술",
+          "owner": "담당 매니저",
+          "clinic": "클리닉",
+          "message": "메시지",
+          "photos": "사진",
+          "created_at": "생성",
+          "updated_at": "업데이트"
+        },
+        "locale": {
+          "kz": "카자흐어",
+          "ru": "러시아어",
+          "kr": "한국어"
+        }
+      },
+      "notes": {
+        "title": "메모",
+        "empty": "메모가 없습니다."
+      },
+      "activity": {
+        "title": "활동 로그",
+        "empty": "활동이 없습니다.",
+        "actions": {
+          "lead_status_update": "상태 변경",
+          "lead_owner_assign": "매니저 배정",
+          "lead_owner_unassign": "매니저 해제",
+          "lead_clinic_assign": "클리닉 배정",
+          "lead_clinic_unassign": "클리닉 해제",
+          "lead_note_add": "메모 추가"
+        }
       }
     }
   },

@@ -335,6 +335,50 @@
         "prev": "Алдыңғы",
         "next": "Келесі",
         "summary": "{from}–{to} / {total}"
+      },
+      "drawer": {
+        "back": "Тізімге оралу",
+        "no_photos": "Фотолар жоқ",
+        "none": "—",
+        "fields": {
+          "name": "Аты",
+          "phone": "Телефон",
+          "email": "Email",
+          "whatsapp": "WhatsApp",
+          "telegram": "Telegram",
+          "preferred_language": "Қалаған тіл",
+          "channel_pref": "Байланыс арнасы",
+          "regions": "Қала",
+          "kind": "Түр",
+          "treatments": "Қалаған емшаралар",
+          "owner": "Менеджер",
+          "clinic": "Клиника",
+          "message": "Хабарлама",
+          "photos": "Фотолар",
+          "created_at": "Жасалған",
+          "updated_at": "Жаңартылған"
+        },
+        "locale": {
+          "kz": "Қазақша",
+          "ru": "Орысша",
+          "kr": "Корейше"
+        }
+      },
+      "notes": {
+        "title": "Жазбалар",
+        "empty": "Жазбалар әлі жоқ."
+      },
+      "activity": {
+        "title": "Әрекеттер тарихы",
+        "empty": "Әрекет жоқ.",
+        "actions": {
+          "lead_status_update": "Күй өзгерді",
+          "lead_owner_assign": "Менеджер тағайындалды",
+          "lead_owner_unassign": "Менеджер алынды",
+          "lead_clinic_assign": "Клиника тағайындалды",
+          "lead_clinic_unassign": "Клиника алынды",
+          "lead_note_add": "Жазба қосылды"
+        }
       }
     }
   },
