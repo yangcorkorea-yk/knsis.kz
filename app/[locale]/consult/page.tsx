@@ -70,6 +70,7 @@ export default async function ConsultPage({ params: { locale } }: { params: { lo
     "photo_count",
     "photo_size",
     "photo_mime",
+    "photo_compress_failed",
     "photo_upload_failed",
     "message_too_long",
     "consent_tos_required",
