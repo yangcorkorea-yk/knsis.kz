@@ -58,6 +58,54 @@ Deferred because:
 
 Not blocking soft launch.
 
+## Item 3 — `await notifyPm` → `waitUntil(notifyPm)` (latency recovery)
+
+M3 hotfix (PR #14) switched the PM-alert email path from
+`void notifyPm(...).catch(...)` to `await notifyPm(...)` to
+work around the Vercel fire-and-forget trap
+(`docs/runbook/vercel-fire-and-forget.md`).
+
+The await adds ~300-700 ms to the `POST /api/leads` response.
+Invisible to users today (they're already mid-redirect to
+`/consult/done`), but the latency can come back via the
+Vercel-blessed pattern:
+
+```ts
+import { waitUntil } from "@vercel/functions";
+
+waitUntil(notifyPm(result.code, locale, payload));
+return NextResponse.json({ code: result.code });
+```
+
+`waitUntil` registers the promise with the runtime so the
+function context stays alive past the response send. The
+PM-alert send completes in the background; user response
+returns in <100 ms again.
+
+Defer because:
+
+- Current `await` shape is functionally complete + structured
+  logs landed; the latency is below the M3 perception threshold
+- `@vercel/functions` is a new dep (read it for the API surface
+  first — confirm it's MVP-scope-compatible, no telemetry
+  side-effects)
+- Worth bundling with the M4-04 transactional email work
+  (customer receipts) — same pattern applies to those
+  `send()` calls; switch all of them together
+
+M-POST carve check: `@vercel/functions` is a runtime helper,
+not a queue (Inngest / SQS class). Hard rule §4 ("real queue
+M-POST") not triggered. **Safe to land at M3 closure batch or
+inside M4-04.**
+
+## Item 4+ — TBD from M3 production smoke (steps 2/3/4)
+
+Reserved for polish items surfaced by the M3 production smoke
+matrix in progress (step 2 = `/kz` lead, step 3 = visual
+regression sweep across home + clinics + reviews + consult,
+step 4 = rate-limit positive). Populate as the matrix
+completes.
+
 ## Item 2 — Language switcher on home top-right
 
 Current: language switcher lives on `/[locale]/me` (mobile
