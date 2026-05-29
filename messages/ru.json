@@ -290,8 +290,52 @@
       }
     },
     "leads": {
+      "title": "Заявки",
+      "search_placeholder": "Поиск по коду, имени или телефону",
+      "empty": "Заявок пока нет.",
+      "empty_filtered": "По выбранным фильтрам заявок не найдено.",
+      "unassigned": "Не назначено",
       "placeholder_title": "Список заявок",
-      "placeholder_body": "Список заявок и drawer-панель появятся в M5-03 batch."
+      "placeholder_body": "Список заявок и drawer-панель появятся в M5-03 batch.",
+      "table": {
+        "code": "Код",
+        "status": "Статус",
+        "name": "Имя",
+        "city": "Город",
+        "kind": "Тип",
+        "created_at": "Создано"
+      },
+      "status": {
+        "new": "Новая",
+        "contacted": "На связи",
+        "in_progress": "В работе",
+        "scheduled": "Запланирована",
+        "done": "Завершена",
+        "on_hold": "На паузе"
+      },
+      "kind": {
+        "korea": "В Корею",
+        "local": "В Казахстане"
+      },
+      "filter": {
+        "status_label": "Статус",
+        "kind_label": "Тип",
+        "region_label": "Город",
+        "owner_label": "Менеджер",
+        "has_photo": "Только с фото",
+        "clear": "Сбросить"
+      },
+      "region": {
+        "seoul": "Сеул",
+        "busan": "Пусан",
+        "almaty": "Алматы",
+        "astana": "Астана"
+      },
+      "pagination": {
+        "prev": "Назад",
+        "next": "Вперёд",
+        "summary": "{from}–{to} из {total}"
+      }
     }
   },
   "notfound": {

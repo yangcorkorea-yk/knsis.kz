@@ -290,8 +290,52 @@
       }
     },
     "leads": {
+      "title": "Өтінімдер",
+      "search_placeholder": "Код, аты немесе телефон бойынша іздеу",
+      "empty": "Әзірге өтінімдер жоқ.",
+      "empty_filtered": "Сүзгілерге сай өтінімдер табылмады.",
+      "unassigned": "Тағайындалмаған",
       "placeholder_title": "Өтінімдер тізімі",
-      "placeholder_body": "Өтінімдер тізімі мен сурғыма (drawer) M5-03 batch-та жасалады."
+      "placeholder_body": "Өтінімдер тізімі мен сурғыма (drawer) M5-03 batch-та жасалады.",
+      "table": {
+        "code": "Код",
+        "status": "Күй",
+        "name": "Аты",
+        "city": "Қала",
+        "kind": "Түр",
+        "created_at": "Жасалған"
+      },
+      "status": {
+        "new": "Жаңа",
+        "contacted": "Хабарласқан",
+        "in_progress": "Жұмыста",
+        "scheduled": "Жоспарланған",
+        "done": "Аяқталды",
+        "on_hold": "Кідірісте"
+      },
+      "kind": {
+        "korea": "Кореяға",
+        "local": "Қазақстанда"
+      },
+      "filter": {
+        "status_label": "Күй",
+        "kind_label": "Түр",
+        "region_label": "Қала",
+        "owner_label": "Менеджер",
+        "has_photo": "Тек фотосы барлар",
+        "clear": "Тазалау"
+      },
+      "region": {
+        "seoul": "Сеул",
+        "busan": "Пусан",
+        "almaty": "Алматы",
+        "astana": "Астана"
+      },
+      "pagination": {
+        "prev": "Алдыңғы",
+        "next": "Келесі",
+        "summary": "{from}–{to} / {total}"
+      }
     }
   },
   "notfound": {
