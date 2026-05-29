@@ -205,28 +205,132 @@ empty state + error messages). KR PM-quality + KZ/RU first-write
 - ❌ Customers / Clinics admin / Review mod / Managers / B-A
   admin (M5-04 / 05 / 06 / 07 / 08 — batch 2)
 
-## Open questions before code
+## Open questions — PM sign-off ratified (defaults + Q1 picked)
 
-1. **Single staff seed user**: PM is the only staff user
-   today. Plan: seed one `User` row with `role=admin` +
-   `passwordHash` via a one-shot script. Confirm the seed
-   email + a one-time password generation pattern (env var
-   set once → script reads → hashes → inserts → done).
-2. **`unassigned` sentinel**: owner / clinic dropdowns need
-   an "unassigned" option that maps to `null`. Confirm copy:
-   KR `"미배정"`, KZ `"Тағайындалмаған"`, RU `"Не назначено"`?
-3. **Status mutation guardrails**: any forbidden transitions?
-   E.g., `done → new` allowed for the PM to re-open, or
-   forbidden? Default: all transitions allowed, audit log
-   captures who reverted what.
-4. **Activity log scope**: drawer's activity tab — show only
-   AuditLog rows on this lead, OR include Note creation + future
-   Message events? Default: AuditLog only (Note add IS an
-   AuditLog entry by design); Message events join in M4-02.
-5. **Phone fields**: should `User.phone` render in the list
-   table (PII exposure in the list view) or only inside the
-   drawer? Default: drawer only. List shows only the lead
-   `code` + status + city + createdAt for quick scan.
+1. **Staff seed user — Pattern (a) bcrypt hash in env var.**
+   PM runs locally once:
+   ```bash
+   node -e "console.log(require('bcryptjs').hashSync('<chosen-password>', 12))"
+   ```
+   Copies the resulting `$2b$...` string into `STAFF_SEED_PASSWORD_HASH`
+   env var alongside `STAFF_SEED_EMAIL` (e.g. `yangcorkorea@gmail.com`).
+   `prisma/seed.ts` extension (or a one-shot `scripts/seed-staff.ts`)
+   reads both env vars, inserts the User row with `role=admin` +
+   `passwordHash` set to the env value as-is (no further hashing).
+   **Plaintext never crosses the Vercel boundary** — only the bcrypt
+   hash exists in env. PM rotates the hash via Vercel env-var update
+   any time, no code change.
+2. **Unassigned sentinel — ratified.** KR `"미배정"` / KZ
+   `"Тағайындалмаған"` / RU `"Не назначено"`. KZ + RU first-write
+   quality; M7 native QA window can fine-tune.
+3. **Status transition — open (no guardrails).** MVP picks
+   flexibility; AuditLog catches every transition so erroneous
+   reverts are traceable + reversible. Add `?confirm=1` query
+   guard only if the workflow stabilises and accidental clicks
+   become a pattern.
+4. **Activity log scope — AuditLog only.** Note adds are
+   AuditLog entries by design (`action: "lead.note.add"`).
+   Message events join in M4-02 by adding `entity: "Message"`
+   rows + filtering them into the same activity feed. No
+   separate `Activity` table.
+5. **List phone exposure — drawer only.** List columns:
+   `code` + `status` + `name` + `city` + `kind` + `createdAt`.
+   Phone + WA + TG + photos visible only inside the drawer.
+   Name is included (already lower-identifiable than phone +
+   helps quick scan).
+
+## PM recommendations (ratified)
+
+### `withAudit` helper — enforce hard rule §5 at the surface
+
+Original spec sketched mutation orchestration inline. PM
+recommendation: lift the `prisma.$transaction(...)` + `auditLog`
+pattern into a single helper so individual mutation files
+cannot drift:
+
+```ts
+// lib/admin/with-audit.ts
+export async function withAudit<T>(params: {
+  actorId: string;
+  action: string;
+  entity: "Lead" | "Clinic" | "Review" | "User";
+  entityId: string;
+  ip: string | null;
+  ua: string | null;
+  /**
+   * Reads the entity's pre-mutation state inside the transaction.
+   * Caller selects exactly the fields it'll mutate.
+   */
+  loadBefore: (tx: Prisma.TransactionClient) => Promise<unknown>;
+  /**
+   * Performs the actual mutation. Returns the post-state for the
+   * audit-log `after` column.
+   */
+  mutate: (tx: Prisma.TransactionClient, before: unknown) => Promise<unknown>;
+}): Promise<{ before: unknown; after: unknown; changed: boolean }>;
+```
+
+The helper:
+
+- Opens a `prisma.$transaction`
+- Calls `loadBefore` (caller selects field shape)
+- Calls `mutate` (caller does the actual update + returns the
+  `after` snapshot)
+- Calls `auditLog` inside the same transaction
+- Skips the audit insert if `before === after` (deep-equal) to
+  avoid no-op log noise
+- Commits atomically
+
+Per-mutation file (`lead-mutations.ts` etc.) becomes:
+
+```ts
+export async function updateLeadStatus(deps: ...): Promise<...> {
+  return withAudit({
+    actorId: deps.actorId,
+    action: "lead.status.update",
+    entity: "Lead",
+    entityId: deps.leadId,
+    ip: deps.ip,
+    ua: deps.ua,
+    loadBefore: (tx) =>
+      tx.lead.findUniqueOrThrow({
+        where: { id: deps.leadId },
+        select: { status: true },
+      }),
+    mutate: async (tx, before) => {
+      await tx.lead.update({
+        where: { id: deps.leadId },
+        data: { status: deps.newStatus },
+      });
+      return { status: deps.newStatus };
+    },
+  });
+}
+```
+
+Future implementer who writes `updateLeadFoo` without `withAudit`
+fails the rule §5 review immediately — the pattern is the
+checklist.
+
+### Phone last-4 masking on list — polish backlog
+
+Not in batch 1. Logged in `docs/decisions/polish-backlog.md`
+Item 5; revisit only if the drawer-only default produces real
+operational friction.
+
+## Updated file structure (adds `lib/admin/with-audit.ts`)
+
+```
+lib/admin/
+├── audit-log.ts                # raw auditLog() — used only by with-audit
+├── with-audit.ts               # the helper described above (single surface for every mutation)
+├── lead-mutations.ts           # updateLeadStatus / assignOwner / assignClinic / addNote — all use withAudit
+└── filters.ts                  # URL-state filter parse + serialize
+```
+
+Original sketch in §"File structure plan" above replaced —
+mutation files never touch `prisma.$transaction` or `auditLog`
+directly.
 
 ## Hard rule check (M5-01 + M5-03)
 

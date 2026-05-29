@@ -32,79 +32,36 @@ These don't block M3 sign-off because:
   workflows; bringing in mock images earlier creates churn.
 - WBS critical path is M3 → M5 → M6; visual polish is M7.
 
-## Item 1.5 — `/consult/done` "next steps" visual hierarchy
+## Item 5 — Admin leads list: last-4 phone masking option
 
-Current state (post-M3): plain `<ol>` with `border-l-2 rose-soft`
-gutter + `font-semibold` step titles + small body text. M3 smoke
-matrix surfaced: visual hierarchy reads weak — the three steps
-look like a list, not a journey.
+M5-01+03 batch ships with phone exposed only inside the lead
+drawer. List columns show `code` / `status` / `name` / `city` /
+`kind` / `createdAt` — phone hidden by design (PII minimisation).
 
-Target visual:
+If operational use surfaces real friction ("I can't tell which
+lead is which without opening the drawer"), add a masked phone
+column showing only the last 4 digits:
 
-- Numbered tile per step (rounded square with the digit in
-  rose-deep)
-- Step title in larger weight
-- Optional small icon per step (검토 / 연락 / 일정)
-- Tighter rhythm between steps
-
-Deferred because:
-
-- The current implementation is functionally complete — copy
-  is accurate, screen-readers parse it correctly
-- The fix is decorative; landing it here means a follow-up
-  PR that visual-polish-touches nothing else
-- Fits naturally inside the M7 visual polish batch alongside
-  bottom tab bar + category tiles + design-token finishing
-
-Not blocking soft launch.
-
-## Item 3 — `await notifyPm` → `waitUntil(notifyPm)` (latency recovery)
-
-M3 hotfix (PR #14) switched the PM-alert email path from
-`void notifyPm(...).catch(...)` to `await notifyPm(...)` to
-work around the Vercel fire-and-forget trap
-(`docs/runbook/vercel-fire-and-forget.md`).
-
-The await adds ~300-700 ms to the `POST /api/leads` response.
-Invisible to users today (they're already mid-redirect to
-`/consult/done`), but the latency can come back via the
-Vercel-blessed pattern:
-
-```ts
-import { waitUntil } from "@vercel/functions";
-
-waitUntil(notifyPm(result.code, locale, payload));
-return NextResponse.json({ code: result.code });
+```
++7 *** *** 8144
 ```
 
-`waitUntil` registers the promise with the runtime so the
-function context stays alive past the response send. The
-PM-alert send completes in the background; user response
-returns in <100 ms again.
+Behaviours to spec at that point:
+
+- Always rendered as `tel:` link (managers click → call) — full
+  number sent through the URL handler, only display is masked
+- Hover/focus reveals full number for accessible scan
+- Search (`?q=`) substring matches the full unmasked number (the
+  PM searching for last-4 `8144` still finds it)
 
 Defer because:
 
-- Current `await` shape is functionally complete + structured
-  logs landed; the latency is below the M3 perception threshold
-- `@vercel/functions` is a new dep (read it for the API surface
-  first — confirm it's MVP-scope-compatible, no telemetry
-  side-effects)
-- Worth bundling with the M4-04 transactional email work
-  (customer receipts) — same pattern applies to those
-  `send()` calls; switch all of them together
-
-M-POST carve check: `@vercel/functions` is a runtime helper,
-not a queue (Inngest / SQS class). Hard rule §4 ("real queue
-M-POST") not triggered. **Safe to land at M3 closure batch or
-inside M4-04.**
-
-## Item 4+ — TBD from M3 production smoke (steps 2/3/4)
-
-Reserved for polish items surfaced by the M3 production smoke
-matrix in progress (step 2 = `/kz` lead, step 3 = visual
-regression sweep across home + clinics + reviews + consult,
-step 4 = rate-limit positive). Populate as the matrix
-completes.
+- Drawer-only default is the privacy-conservative call (CLAUDE.md
+  §2 rule 3 — PII minimisation principle)
+- One drawer open per lead-of-interest is a small cost when the
+  list shows `name` + `city` + `kind` for fast scanning
+- Trigger to ship: a week of operational use where the PM
+  reports the friction
 
 ## Item 2 — Language switcher on home top-right
 
