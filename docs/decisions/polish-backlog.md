@@ -32,6 +32,32 @@ These don't block M3 sign-off because:
   workflows; bringing in mock images earlier creates churn.
 - WBS critical path is M3 → M5 → M6; visual polish is M7.
 
+## Item 1.5 — `/consult/done` "next steps" visual hierarchy
+
+Current state (post-M3): plain `<ol>` with `border-l-2 rose-soft`
+gutter + `font-semibold` step titles + small body text. M3 smoke
+matrix surfaced: visual hierarchy reads weak — the three steps
+look like a list, not a journey.
+
+Target visual:
+
+- Numbered tile per step (rounded square with the digit in
+  rose-deep)
+- Step title in larger weight
+- Optional small icon per step (검토 / 연락 / 일정)
+- Tighter rhythm between steps
+
+Deferred because:
+
+- The current implementation is functionally complete — copy
+  is accurate, screen-readers parse it correctly
+- The fix is decorative; landing it here means a follow-up
+  PR that visual-polish-touches nothing else
+- Fits naturally inside the M7 visual polish batch alongside
+  bottom tab bar + category tiles + design-token finishing
+
+Not blocking soft launch.
+
 ## Item 2 — Language switcher on home top-right
 
 Current: language switcher lives on `/[locale]/me` (mobile

@@ -132,15 +132,23 @@ export async function sendLeadCreatedEmail(input: LeadCreatedInput): Promise<Sen
   const from = process.env.RESEND_FROM;
   const to = process.env.RESEND_NOTIFY_TO;
   if (!apiKey || !from || !to) {
+    console.error(
+      `[lead-created] resend env missing: apiKey=${!!apiKey} from=${!!from} to=${!!to}`,
+    );
     return { ok: false, error: "resend env not configured" };
   }
   const { subject, text } = formatLeadCreatedEmail(input);
   try {
     const client = new Resend(apiKey);
     const res = await client.emails.send({ from, to, subject, text });
-    if (res.error) return { ok: false, error: res.error.message };
+    if (res.error) {
+      console.error(`[lead-created] resend API error: ${res.error.message}`);
+      return { ok: false, error: res.error.message };
+    }
+    console.log(`[lead-created] resend ok messageId=${res.data?.id ?? "unknown"}`);
     return { ok: true, messageId: res.data?.id ?? "unknown" };
   } catch (e) {
+    console.error(`[lead-created] resend threw: ${e instanceof Error ? e.message : "unknown"}`);
     return { ok: false, error: e instanceof Error ? e.message : "unknown" };
   }
 }
