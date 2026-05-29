@@ -177,10 +177,32 @@ export async function POST(req: Request) {
 
   // Step 4 — fire PM alert (only on a fresh create; the
   // idempotent reuse path already alerted the first time).
+  //
+  // Awaited on purpose. The original `void notifyPm(...).catch(...)`
+  // pattern hit a Vercel serverless trap: the moment the response
+  // is returned, the function context terminates and any
+  // in-flight promises (Resend.send + the Treatment prefetch
+  // inside notifyPm) get cut off. Smoke matrix surfaced: HTTP
+  // 200 + lead persisted + zero outgoing Resend requests in the
+  // function panel + zero entries in the Resend dashboard.
+  //
+  // The await adds ~300-700 ms to the lead-submit response,
+  // invisible to the user (they're already mid-redirect to
+  // /consult/done). Non-fatal: any error inside notifyPm is
+  // logged but does NOT fail the route (Lead row is already
+  // persisted; the PM can still find it in the admin inbox once
+  // M5 ships).
   if (!result.reused) {
-    void notifyPm(result.code, locale, payload).catch(() => {
-      // Notification failures are non-fatal — Lead is persisted.
-    });
+    console.log(`[lead-created] code=${result.code} locale=${locale} — sending PM alert`);
+    try {
+      await notifyPm(result.code, locale, payload);
+      console.log(`[lead-created] code=${result.code} — PM alert dispatched`);
+    } catch (err) {
+      console.error(
+        `[lead-created] code=${result.code} — PM alert failed (non-fatal):`,
+        err instanceof Error ? err.message : err,
+      );
+    }
   }
 
   // Step 5 — return.

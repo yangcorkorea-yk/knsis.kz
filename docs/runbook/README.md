@@ -62,6 +62,14 @@ Operational notes that bit us once and shouldn't again.
   the three-environment (local / Vercel preview / production)
   matrix: what each layer catches, what each misses, and why
   the preview visual sign-off is non-negotiable.
+- [vercel-fire-and-forget.md](./vercel-fire-and-forget.md) —
+  `void someBg().catch(() => {})` after `NextResponse.json(...)`
+  silently fails on Vercel: the response returns, the function
+  context tears down, the unawaited promise's `await fetch(...)`
+  never resolves. Diagnose pattern + fix (await + structured
+  log) + the swap path to `unstable_after` / `waitUntil` when
+  MVP outgrows the simple await. M3 PM-alert email shipped
+  with this bug — surfaced + fixed at smoke matrix.
 - [page-layout-consistency.md](./page-layout-consistency.md) —
   the `mx-auto max-w-md md:max-w-3xl` column contract every
   public page shares + the "header outside any padded wrapper"
