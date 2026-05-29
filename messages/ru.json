@@ -366,7 +366,16 @@
       },
       "notes": {
         "title": "Заметки",
-        "empty": "Заметок пока нет."
+        "empty": "Заметок пока нет.",
+        "placeholder": "Добавить заметку…",
+        "submit": "Добавить",
+        "submitting": "Добавление…"
+      },
+      "controls": {
+        "status_label": "Статус",
+        "owner_label": "Менеджер",
+        "clinic_label": "Клиника",
+        "clinic_none": "—"
       },
       "activity": {
         "title": "История действий",

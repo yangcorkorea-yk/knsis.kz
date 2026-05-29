@@ -290,7 +290,16 @@
       },
       "notes": {
         "title": "메모",
-        "empty": "메모가 없습니다."
+        "empty": "메모가 없습니다.",
+        "placeholder": "메모 추가…",
+        "submit": "추가",
+        "submitting": "추가 중…"
+      },
+      "controls": {
+        "status_label": "상태",
+        "owner_label": "담당 매니저",
+        "clinic_label": "클리닉",
+        "clinic_none": "—"
       },
       "activity": {
         "title": "활동 로그",

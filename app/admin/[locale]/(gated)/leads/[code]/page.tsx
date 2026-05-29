@@ -16,18 +16,26 @@
  * + notes list + activity feed.
  */
 
+import { Role } from "@prisma/client";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { LeadActivityLog } from "@/components/admin/lead-activity-log";
+import { LeadClinicControl } from "@/components/admin/lead-clinic-control";
 import {
   LeadDrawerFields,
   type LeadDrawerFieldsLabels,
 } from "@/components/admin/lead-drawer-fields";
+import { LeadNoteComposer } from "@/components/admin/lead-note-composer";
 import { LeadNotesList } from "@/components/admin/lead-notes-list";
+import { LeadOwnerControl } from "@/components/admin/lead-owner-control";
+import { LeadStatusControl } from "@/components/admin/lead-status-control";
+import { requireRole } from "@/lib/auth/require-role";
 import { CITY_SLUGS, type CitySlug } from "@/lib/discover/filters";
 import { LEAD_STATUSES } from "@/lib/admin/leads/filters";
 import { fetchLeadDrawerByCode } from "@/lib/admin/leads/drawer-queries";
+import { fetchClinicOptions, fetchStaffOptions } from "@/lib/admin/leads/queries";
+import { EDITOR_ROLES } from "@/lib/admin/mutation-helpers";
 import { isLocale, LOCALES, type Locale } from "@/lib/i18n/config";
 
 export const dynamic = "force-dynamic";
@@ -42,12 +50,24 @@ export default async function AdminLeadDrawerPage({
   const activeLocale: Locale = isLocale(locale) ? locale : "kz";
   setRequestLocale(activeLocale);
 
-  const payload = await fetchLeadDrawerByCode(code);
+  // Layout already enforces requireRole(STAFF_ROLES); we re-check
+  // here to surface the actor's role for permission-gated controls.
+  // The cookie roundtrip is cheap; the gate is the source of truth.
+  const gate = await requireRole([Role.support, Role.manager, Role.head, Role.admin]);
+  if (!gate.ok) redirect(`/admin/${activeLocale}/sign-in`);
+  const canEdit = (EDITOR_ROLES as readonly Role[]).includes(gate.session.role);
+
+  const [payload, staffOptions, clinicOptions] = await Promise.all([
+    fetchLeadDrawerByCode(code),
+    canEdit ? fetchStaffOptions() : Promise.resolve([]),
+    canEdit ? fetchClinicOptions() : Promise.resolve([]),
+  ]);
   if (!payload) notFound();
 
   const t = await getTranslations("admin.leads");
   const td = await getTranslations("admin.leads.drawer");
   const tn = await getTranslations("admin.leads.notes");
+  const tc = await getTranslations("admin.leads.controls");
   const ta = await getTranslations("admin.leads.activity");
   const tact = await getTranslations("admin.leads.activity.actions");
 
@@ -120,11 +140,71 @@ export default async function AdminLeadDrawerPage({
           labels={fieldsLabels}
           dateFormat={(d) => fmt.format(d)}
         />
+        {canEdit && (
+          <section className="grid grid-cols-1 gap-4 rounded-md bg-ground/40 p-4 md:grid-cols-3">
+            <div className="flex flex-col gap-1.5 md:col-span-3">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-ink-mute">
+                {tc("status_label")}
+              </span>
+              <LeadStatusControl
+                code={payload.lead.code}
+                current={payload.lead.status}
+                labels={
+                  Object.fromEntries(LEAD_STATUSES.map((s) => [s, t(`status.${s}`)])) as Record<
+                    (typeof LEAD_STATUSES)[number],
+                    string
+                  >
+                }
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-ink-mute">
+                {tc("owner_label")}
+              </span>
+              <LeadOwnerControl
+                code={payload.lead.code}
+                currentOwnerId={payload.lead.owner?.id ?? null}
+                staffOptions={staffOptions.map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                  email: s.email,
+                }))}
+                labels={{ unassigned: t("unassigned"), placeholder: tc("owner_label") }}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-ink-mute">
+                {tc("clinic_label")}
+              </span>
+              <LeadClinicControl
+                code={payload.lead.code}
+                currentClinicId={payload.lead.clinic?.id ?? null}
+                clinicOptions={clinicOptions.map((c) => ({
+                  id: c.id,
+                  label:
+                    (c.name && (c.name[activeLocale] ?? c.name.kz ?? c.name.ru ?? c.name.kr)) ??
+                    c.slug,
+                }))}
+                labels={{ none: tc("clinic_none"), placeholder: tc("clinic_label") }}
+              />
+            </div>
+          </section>
+        )}
         <LeadNotesList
           notes={payload.notes}
           labels={{ title: tn("title"), empty: tn("empty") }}
           dateFormat={(d) => fmt.format(d)}
         />
+        {canEdit && (
+          <LeadNoteComposer
+            code={payload.lead.code}
+            labels={{
+              placeholder: tn("placeholder"),
+              submit: tn("submit"),
+              submitting: tn("submitting"),
+            }}
+          />
+        )}
         <LeadActivityLog
           rows={payload.audit}
           labels={{

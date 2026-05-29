@@ -366,7 +366,16 @@
       },
       "notes": {
         "title": "Жазбалар",
-        "empty": "Жазбалар әлі жоқ."
+        "empty": "Жазбалар әлі жоқ.",
+        "placeholder": "Жаңа жазба қосу…",
+        "submit": "Қосу",
+        "submitting": "Қосылуда…"
+      },
+      "controls": {
+        "status_label": "Күй",
+        "owner_label": "Менеджер",
+        "clinic_label": "Клиника",
+        "clinic_none": "—"
       },
       "activity": {
         "title": "Әрекеттер тарихы",

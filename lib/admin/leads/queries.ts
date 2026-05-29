@@ -92,6 +92,34 @@ export interface StaffOption {
   email: string;
 }
 
+export interface ClinicOptionRow {
+  id: string;
+  /** `Clinic.name` Json `{ kz, ru, kr }`. Caller picks by active locale. */
+  name: Record<string, string> | null;
+  slug: string;
+}
+
+/**
+ * Clinic options for the lead drawer's clinic-assignment dropdown.
+ * Returns all clinics regardless of verify-state (admin can assign
+ * to any, including suspended, for triage purposes).
+ */
+export async function fetchClinicOptions(): Promise<ClinicOptionRow[]> {
+  const rows = await prisma.clinic.findMany({
+    where: { deletedAt: null },
+    orderBy: [{ slug: "asc" }],
+    select: { id: true, slug: true, name: true },
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    name:
+      typeof r.name === "object" && r.name !== null && !Array.isArray(r.name)
+        ? (r.name as Record<string, string>)
+        : null,
+  }));
+}
+
 /**
  * Staff users for the owner filter dropdown + drawer assignment
  * control. Returns active (non-deleted) members of STAFF_ROLES. The
