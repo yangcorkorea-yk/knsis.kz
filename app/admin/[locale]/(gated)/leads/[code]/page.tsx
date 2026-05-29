@@ -1,5 +1,5 @@
 /*
- * /admin/[locale]/leads/[code] — M5-03 lead drawer (read-only).
+ * /admin/[locale]/leads/[code] — M5-03 lead drawer.
  *
  * Server page. Direct-link addressable: closes the M3 PM-alert
  * email loop (`Open: /admin/{locale}/leads/{code}`) which has been
@@ -11,9 +11,17 @@
  * (inherited from (gated)/layout.tsx), and the back link returns
  * to the list (the browser back-stack preserves filter state).
  *
- * Mutation controls (status / owner / clinic / notes) land in the
- * next commit. This one is read-only: fields + signed photo gallery
- * + notes list + activity feed.
+ * Sections (top-down):
+ *   1. Fields — all the PII-sensitive surface (phone tel: link,
+ *      WA / TG universal links, photo gallery via 5-min signed URLs).
+ *   2. Controls (canEdit only) — status pill picker, owner +
+ *      clinic dropdowns. Every mutation routes through withAudit.
+ *   3. Notes list + composer (canEdit only).
+ *   4. Activity log — newest-first AuditLog rows for this Lead.
+ *
+ * Permission split (PM spec):
+ *   - support → read-only (no control surface rendered)
+ *   - manager / head / admin → full read + write
  */
 
 import { Role } from "@prisma/client";
