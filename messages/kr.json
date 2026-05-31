@@ -214,8 +214,105 @@
       }
     },
     "leads": {
+      "title": "리드",
+      "search_placeholder": "코드 · 이름 · 전화번호로 검색",
+      "empty": "아직 등록된 리드가 없습니다.",
+      "empty_filtered": "필터에 해당하는 리드가 없습니다.",
+      "unassigned": "미배정",
       "placeholder_title": "리드 목록",
-      "placeholder_body": "리드 목록 + 상세 드로어 작업은 M5-03 batch에서 박힙니다."
+      "placeholder_body": "리드 목록 + 상세 드로어 작업은 M5-03 batch에서 박힙니다.",
+      "table": {
+        "code": "코드",
+        "status": "상태",
+        "name": "이름",
+        "city": "지역",
+        "kind": "유형",
+        "created_at": "생성"
+      },
+      "status": {
+        "new": "신규",
+        "contacted": "연락 완료",
+        "in_progress": "진행 중",
+        "scheduled": "예약됨",
+        "done": "완료",
+        "on_hold": "보류"
+      },
+      "kind": {
+        "korea": "한국",
+        "local": "현지"
+      },
+      "filter": {
+        "status_label": "상태",
+        "kind_label": "유형",
+        "region_label": "지역",
+        "owner_label": "담당 매니저",
+        "has_photo": "사진 있는 리드만",
+        "clear": "초기화"
+      },
+      "region": {
+        "seoul": "서울",
+        "busan": "부산",
+        "almaty": "알마티",
+        "astana": "아스타나"
+      },
+      "pagination": {
+        "prev": "이전",
+        "next": "다음",
+        "summary": "{from}–{to} / {total}"
+      },
+      "drawer": {
+        "back": "목록으로",
+        "no_photos": "사진 없음",
+        "none": "—",
+        "fields": {
+          "name": "이름",
+          "phone": "전화번호",
+          "email": "이메일",
+          "whatsapp": "WhatsApp",
+          "telegram": "Telegram",
+          "preferred_language": "상담 언어",
+          "channel_pref": "연락 채널",
+          "regions": "지역",
+          "kind": "유형",
+          "treatments": "관심 시술",
+          "owner": "담당 매니저",
+          "clinic": "클리닉",
+          "message": "메시지",
+          "photos": "사진",
+          "created_at": "생성",
+          "updated_at": "업데이트"
+        },
+        "locale": {
+          "kz": "카자흐어",
+          "ru": "러시아어",
+          "kr": "한국어"
+        }
+      },
+      "notes": {
+        "title": "메모",
+        "empty": "메모가 없습니다.",
+        "placeholder": "메모 추가…",
+        "submit": "추가",
+        "submitting": "추가 중…"
+      },
+      "controls": {
+        "status_label": "상태",
+        "owner_label": "담당 매니저",
+        "clinic_label": "클리닉",
+        "clinic_none": "—"
+      },
+      "activity": {
+        "title": "활동 로그",
+        "empty": "활동이 없습니다.",
+        "actions": {
+          "lead_status_update": "상태 변경",
+          "lead_owner_assign": "매니저 배정",
+          "lead_owner_unassign": "매니저 해제",
+          "lead_clinic_assign": "클리닉 배정",
+          "lead_clinic_unassign": "클리닉 해제",
+          "lead_note_add": "메모 추가"
+        }
+      }
     }
   },
   "consult": {
