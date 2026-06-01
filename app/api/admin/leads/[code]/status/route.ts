@@ -10,9 +10,11 @@
  * 403 wrong role, 404 lead code unresolved, 400 body shape, 200 ok.
  */
 
+import { waitUntil } from "@vercel/functions";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/require-role";
+import { dispatchLeadEvent } from "@/lib/admin/lead-events";
 import { updateLeadStatus } from "@/lib/admin/lead-mutations";
 import { EDITOR_ROLES, extractClientMeta, mapMutationError } from "@/lib/admin/mutation-helpers";
 import { LEAD_STATUSES } from "@/lib/admin/leads/filters";
@@ -42,11 +44,37 @@ export async function PATCH(req: Request, { params }: { params: { code: string }
 
   const meta = extractClientMeta(req);
   try {
+    const newStatus = parsed.data.status as (typeof LEAD_STATUSES)[number];
     const result = await updateLeadStatus(
       { actorId: gate.session.userId, ip: meta.ip, ua: meta.ua },
       params.code,
-      parsed.data.status as (typeof LEAD_STATUSES)[number],
+      newStatus,
     );
+    // Fire the customer-facing notification (inbox row + email)
+    // only if the mutation actually changed state. waitUntil keeps
+    // the response under ~100ms while the dispatcher completes in
+    // background — same pattern as the M3 PM-alert closure.
+    if (result.changed) {
+      waitUntil(
+        dispatchLeadEvent(params.code, {
+          name: "consult.status_changed",
+          input: { leadCode: params.code, newStatus },
+        })
+          .then((res) => {
+            if (!res.ok) {
+              console.warn(
+                `[lead-events] status_changed code=${params.code} skipped: ${res.reason}`,
+              );
+            }
+          })
+          .catch((err) =>
+            console.error(
+              `[lead-events] status_changed code=${params.code} failed:`,
+              err instanceof Error ? err.message : err,
+            ),
+          ),
+      );
+    }
     return NextResponse.json({ ok: true, changed: result.changed }, { status: 200 });
   } catch (err) {
     const mapped = mapMutationError(err);
