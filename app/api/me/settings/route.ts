@@ -33,7 +33,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SAFE_RETURN_RE = /^\/[a-z0-9_/?&=.-]+$/i;
 const emailSchema = z.string().trim().toLowerCase().regex(EMAIL_RE);
 
-export async function PATCH(req: Request) {
+/**
+ * Browser HTML forms support GET and POST only — not PATCH. The
+ * settings page POSTs from a `<form method="post">`, so we expose
+ * the handler as POST. Programmatic callers (none yet) follow the
+ * same shape. JSON-PATCH semantics aren't appropriate here anyway
+ * since the form posts a complete section-snapshot, not a diff.
+ */
+export async function POST(req: Request) {
   const guestId = await readGuestSession();
   if (!guestId) {
     return NextResponse.json({ ok: false, error: "no_session" }, { status: 401 });
