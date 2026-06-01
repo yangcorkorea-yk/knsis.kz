@@ -127,6 +127,14 @@ model User {
   consentMkt   Boolean   @default(false)
   consentedAt  DateTime?
 
+  /// Channels the user accepts notifications on. Shape:
+  ///   { inapp: boolean, email: boolean }
+  /// Each key must be in lib/messaging/send.ts MVP_CHANNELS. Stored
+  /// as Json so future channels (wa/tg/sms in M6 batch) extend
+  /// without re-migration. Read via lib/messaging/notif-channels.ts
+  /// which validates the shape on every load.
+  notifChannels Json @default("{\"inapp\": true, \"email\": true}")
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
