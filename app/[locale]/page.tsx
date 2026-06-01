@@ -95,7 +95,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-body">{t("hero.subtitle")}</p>
         <CTA asChild className="mt-5" size="lg">
-          <Link href={`/${activeLocale}/consult/new`}>{t("hero.cta_consult")}</Link>
+          <Link href={`/${activeLocale}/consult`}>{t("hero.cta_consult")}</Link>
         </CTA>
       </section>
 
