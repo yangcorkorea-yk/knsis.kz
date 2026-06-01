@@ -73,7 +73,7 @@ export default async function MePage({ params: { locale } }: { params: { locale:
         <CardContent className="space-y-3 pt-3">
           <p className="text-sm text-ink-mute">{t("consults.empty")}</p>
           <CTA asChild variant="soft" size="md">
-            <Link href={`/${activeLocale}/consult/new`}>{t("consults.cta_new")}</Link>
+            <Link href={`/${activeLocale}/consult`}>{t("consults.cta_new")}</Link>
           </CTA>
         </CardContent>
       </Card>
